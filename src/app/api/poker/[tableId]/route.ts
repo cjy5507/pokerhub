@@ -92,7 +92,13 @@ export async function GET(
           }
 
           // Auto-start hand if table is waiting with 2+ active players and no hand
+          // Wait 3 seconds after hand completes before starting new one
           if (table.status === 'waiting' && !table.currentHandId && !isStartingHand) {
+            if (table.lastActivityAt) {
+              const timeSinceActivity = Date.now() - new Date(table.lastActivityAt).getTime();
+              if (timeSinceActivity < 3000) return; // Skip this poll, wait for delay
+            }
+
             const activePlayerCount = await db
               .select({ count: sql`count(*)::int` })
               .from(pokerTableSeats)
@@ -202,6 +208,61 @@ export async function GET(
               .leftJoin(users, eq(pokerTableSeats.userId, users.id))
               .where(eq(pokerTableSeats.tableId, tableId));
 
+            // Reconstruct bet/fold/allIn state from actions
+            let seatBetState = new Map<number, { betInRound: number; totalBetInHand: number; isFolded: boolean; isAllIn: boolean }>();
+
+            if (table.currentHandId) {
+              const hand = await db
+                .select()
+                .from(pokerGameHands)
+                .where(eq(pokerGameHands.id, table.currentHandId))
+                .limit(1)
+                .then((rows: any) => rows[0]);
+
+              if (hand) {
+                // Initialize all seats
+                for (const seat of seats) {
+                  seatBetState.set(seat.seatNumber, {
+                    betInRound: 0,
+                    totalBetInHand: 0,
+                    isFolded: false,
+                    isAllIn: false,
+                  });
+                }
+
+                // Load actions and replay to reconstruct state
+                const actions = await db
+                  .select()
+                  .from(pokerGameActions)
+                  .where(eq(pokerGameActions.handId, hand.id))
+                  .orderBy(pokerGameActions.createdAt);
+
+                // Replay all actions to get totalBetInHand, isFolded, isAllIn
+                for (const act of actions) {
+                  const state = seatBetState.get(act.seatNumber);
+                  if (!state) continue;
+
+                  if (act.actionType === 'fold') {
+                    state.isFolded = true;
+                  } else if (['call', 'bet', 'raise', 'all_in', 'post_sb', 'post_bb'].includes(act.actionType)) {
+                    state.totalBetInHand += act.amount;
+                    if (act.actionType === 'all_in') {
+                      state.isAllIn = true;
+                    }
+                  }
+                }
+
+                // Compute betInRound for current street only
+                const currentStreetActions = actions.filter((a: any) => a.street === hand.status);
+                for (const act of currentStreetActions) {
+                  const state = seatBetState.get(act.seatNumber);
+                  if (state && ['call', 'bet', 'raise', 'all_in', 'post_sb', 'post_bb'].includes(act.actionType)) {
+                    state.betInRound += act.amount;
+                  }
+                }
+              }
+            }
+
             // Load hole cards for current hand
             let holeCardsMap = new Map<number, any>();
             if (table.currentHandId) {
@@ -250,6 +311,11 @@ export async function GET(
                 isActive: seat.isActive,
                 isSittingOut: seat.isSittingOut,
                 holeCards,
+                // Add game state fields
+                betInRound: seatBetState.get(seat.seatNumber)?.betInRound ?? 0,
+                totalBetInHand: seatBetState.get(seat.seatNumber)?.totalBetInHand ?? 0,
+                isFolded: seatBetState.get(seat.seatNumber)?.isFolded ?? false,
+                isAllIn: seatBetState.get(seat.seatNumber)?.isAllIn ?? false,
               };
             }
 

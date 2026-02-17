@@ -619,7 +619,9 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
   // Compute action availability
   const callAmount = Math.max(0, gameState.currentBet - (heroSeat?.betInRound ?? 0));
   const canCheck = callAmount === 0;
-  const minRaiseTotal = gameState.minRaise;
+  const minRaiseTotal = gameState.currentBet > 0
+    ? gameState.currentBet + gameState.minRaise
+    : gameState.minRaise;
   const maxRaiseTotal = heroSeat?.chipStack ?? 0;
 
   // Set initial raise amount
@@ -1451,19 +1453,21 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
 
                 {/* Main action buttons row */}
                 <div className="flex gap-2 items-stretch">
-                  {/* Fold - small, understated */}
-                  <button
-                    onClick={() => handleAction('fold')}
-                    disabled={actionPending}
-                    className={cn(
-                      'w-16 md:w-20 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-[0.95]',
-                      'bg-[#1a1a1a] border border-[#333] text-red-400/80',
-                      'hover:bg-[#222] hover:text-red-400 hover:border-red-500/30',
-                      actionPending && 'opacity-50 cursor-not-allowed'
-                    )}
-                  >
-                    폴드
-                  </button>
+                  {/* Only show fold when there's a bet to face (PokerStars style) */}
+                  {!canCheck && (
+                    <button
+                      onClick={() => handleAction('fold')}
+                      disabled={actionPending}
+                      className={cn(
+                        'w-16 md:w-20 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-[0.95]',
+                        'bg-[#1a1a1a] border border-[#333] text-red-400/80',
+                        'hover:bg-[#222] hover:text-red-400 hover:border-red-500/30',
+                        actionPending && 'opacity-50 cursor-not-allowed'
+                      )}
+                    >
+                      폴드
+                    </button>
+                  )}
 
                   {/* Check/Call - large, prominent */}
                   <button
@@ -1481,7 +1485,16 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
                       actionPending && 'opacity-50 cursor-not-allowed'
                     )}
                   >
-                    {canCheck ? '체크' : `콜 ${callAmount.toLocaleString()}`}
+                    {canCheck ? '체크' : (
+                      <span className="flex flex-col items-center leading-tight">
+                        <span>콜 {callAmount.toLocaleString()}</span>
+                        {gameState.pot > 0 && (
+                          <span className="text-[9px] opacity-70">
+                            ({Math.round(callAmount / (gameState.pot + callAmount) * 100)}%)
+                          </span>
+                        )}
+                      </span>
+                    )}
                   </button>
 
                   {/* Raise/Bet - toggles slider or confirms */}
@@ -1516,8 +1529,8 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
                           ? '올인'
                           : `${gameState.currentBet > 0 ? '레이즈' : '벳'} ${raiseAmount.toLocaleString()}`
                         : gameState.currentBet > 0
-                          ? '레이즈'
-                          : '벳'}
+                          ? `레이즈 ${minRaiseTotal.toLocaleString()}`
+                          : `벳 ${gameState.bigBlind.toLocaleString()}`}
                     </button>
                   )}
                 </div>

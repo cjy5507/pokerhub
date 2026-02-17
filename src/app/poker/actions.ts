@@ -436,14 +436,6 @@ export async function performAction(tableId: string, action: PlayerAction, amoun
   try {
     const result = await processGameAction(tableId, session.userId, action, amount);
 
-    // If hand is complete, start next hand after a brief delay
-    if (result.success && result.events?.includes('hand_complete')) {
-      // Start next hand after 3 seconds
-      setTimeout(() => {
-        startHand(tableId).catch(console.error);
-      }, 3000);
-    }
-
     if (!result.success) {
       throw new Error(result.error || 'Action failed');
     }

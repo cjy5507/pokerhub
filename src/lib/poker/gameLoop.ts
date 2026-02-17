@@ -143,8 +143,7 @@ export async function processAction(
           seat.isFolded = true;
         } else if (['call', 'bet', 'raise', 'all_in', 'post_sb', 'post_bb'].includes(act.actionType)) {
           seat.totalBetInHand += act.amount;
-          seat.chipStack -= act.amount;
-          if (act.actionType === 'all_in' || seat.chipStack === 0) {
+          if (seat.chipStack === 0) {
             seat.isAllIn = true;
           }
         }
@@ -174,6 +173,65 @@ export async function processAction(
         }
       }
 
+      // Recompute actionClosedBySeat from action history
+      let actionClosedBySeat: number | null = null;
+      let closerHasActed = true;
+
+      if (hand.status === 'preflop') {
+        // Preflop: closer starts as BB
+        actionClosedBySeat = hand.bigBlindSeat;
+        closerHasActed = false;
+      } else {
+        // Postflop: closer is the last acting player before first-to-act
+        // (i.e., walk backwards from the first-to-act position)
+        const len = seatsArray.length;
+        // Find first-to-act (first active non-folded non-allIn left of dealer)
+        let firstToActSeat: number | null = null;
+        for (let i = 1; i <= len; i++) {
+          const idx = (hand.dealerSeat + i) % len;
+          const s = seatsArray[idx];
+          if (s && !s.isFolded && !s.isAllIn && s.isActive && !s.isSittingOut) {
+            firstToActSeat = idx;
+            break;
+          }
+        }
+        if (firstToActSeat !== null) {
+          for (let i = 1; i <= len; i++) {
+            const idx = (firstToActSeat - i + len) % len;
+            const s = seatsArray[idx];
+            if (s && !s.isFolded && !s.isAllIn && s.isActive && !s.isSittingOut) {
+              actionClosedBySeat = idx;
+              break;
+            }
+          }
+        }
+        closerHasActed = false;
+      }
+
+      // Scan street actions for most recent aggressive action
+      for (const act of streetActions) {
+        if (['bet', 'raise', 'all_in'].includes(act.actionType)) {
+          actionClosedBySeat = act.seatNumber;
+          closerHasActed = true;
+        }
+      }
+
+      // If closer has folded or is all-in, advance to next active
+      if (actionClosedBySeat !== null) {
+        const closerSeat = seatsArray[actionClosedBySeat];
+        if (closerSeat && (closerSeat.isFolded || closerSeat.isAllIn)) {
+          for (let i = 1; i <= seatsArray.length; i++) {
+            const idx = (actionClosedBySeat! + i) % seatsArray.length;
+            const s = seatsArray[idx];
+            if (s && !s.isFolded && !s.isAllIn && s.isActive && !s.isSittingOut) {
+              actionClosedBySeat = idx;
+              closerHasActed = true;
+              break;
+            }
+          }
+        }
+      }
+
       // Build full GameState
       const gameState: GameState = {
         tableId: table.id,
@@ -193,7 +251,8 @@ export async function processAction(
         dealerSeat: hand.dealerSeat,
         seats: seatsArray,
         lastAction: null,
-        actionClosedBySeat: null,
+        actionClosedBySeat,
+        closerHasActed,
         turnTimeLeft: 30,
         status: table.status as any,
       };
@@ -230,11 +289,11 @@ export async function processAction(
       await tx
         .update(pokerGameHands)
         .set({
-          potTotal: newState.pot || gameState.pot,
-          currentBet: newState.currentBet || gameState.currentBet,
-          minRaise: newState.minRaise || gameState.minRaise,
+          potTotal: newState.pot ?? gameState.pot,
+          currentBet: newState.currentBet ?? gameState.currentBet,
+          minRaise: newState.minRaise ?? gameState.minRaise,
           currentSeat: newCurrentSeat,
-          status: newState.street || gameState.street,
+          status: newState.street ?? gameState.street,
           turnStartedAt: newCurrentSeat !== null ? new Date() : null,
         })
         .where(eq(pokerGameHands.id, hand.id));
@@ -257,49 +316,69 @@ export async function processAction(
 
       // 7. If hand complete, resolve showdown
       if (isHandComplete) {
-        // Use full community cards for showdown evaluation
         const fullCC = (hand.fullCommunityCards as Card[]) || [];
         const mergedState = { ...gameState, ...newState } as GameState;
-        // If multiple players remain (not a fold-win), reveal all community cards
-        const activePlayers = mergedState.seats.filter(
+        const remainingPlayers = mergedState.seats.filter(
           (s: SeatState | null) => s !== null && !s.isFolded && s.isActive
         );
-        if (activePlayers.length > 1) {
+
+        if (remainingPlayers.length <= 1) {
+          // Fold-win: engine already awarded pot in applyAction.
+          // Just update results for the winner and mark hand complete.
+          for (const result of results) {
+            const seat = mergedState.seats[result.seatNumber];
+            if (seat && !seat.isFolded) {
+              await tx
+                .update(pokerGameResults)
+                .set({
+                  chipChange: mergedState.pot,
+                  isWinner: true,
+                })
+                .where(
+                  and(
+                    eq(pokerGameResults.handId, hand.id),
+                    eq(pokerGameResults.seatNumber, result.seatNumber)
+                  )
+                );
+            }
+          }
+        } else {
+          // Multi-player showdown
           mergedState.communityCards = fullCC;
-        }
 
-        const showdown = engine.resolveShowdown(mergedState, holeCardsMap);
+          const showdown = engine.resolveShowdown(mergedState, holeCardsMap);
 
-        // Update results
-        for (const result of showdown.results) {
-          await tx
-            .update(pokerGameResults)
-            .set({
-              chipChange: result.chipChange,
-              isWinner: result.chipChange > 0,
-              handRank: result.handRank,
-            })
-            .where(
-              and(
-                eq(pokerGameResults.handId, hand.id),
-                eq(pokerGameResults.seatNumber, result.seatNumber)
-              )
-            );
-        }
-
-        // Update seat stacks with winnings
-        for (const winner of showdown.winners) {
-          const seat = updatedSeats[winner.seatNumber];
-          if (seat) {
+          // Update results
+          for (const result of showdown.results) {
             await tx
-              .update(pokerTableSeats)
-              .set({ chipStack: seat.chipStack + winner.amount })
+              .update(pokerGameResults)
+              .set({
+                chipChange: result.chipChange,
+                isWinner: result.chipChange > 0,
+                handRank: result.handRank,
+              })
               .where(
                 and(
-                  eq(pokerTableSeats.tableId, tableId),
-                  eq(pokerTableSeats.seatNumber, winner.seatNumber)
+                  eq(pokerGameResults.handId, hand.id),
+                  eq(pokerGameResults.seatNumber, result.seatNumber)
                 )
               );
+          }
+
+          // Update seat stacks with winnings
+          for (const winner of showdown.winners) {
+            const seat = updatedSeats[winner.seatNumber];
+            if (seat) {
+              await tx
+                .update(pokerTableSeats)
+                .set({ chipStack: seat.chipStack + winner.amount })
+                .where(
+                  and(
+                    eq(pokerTableSeats.tableId, tableId),
+                    eq(pokerTableSeats.seatNumber, winner.seatNumber)
+                  )
+                );
+            }
           }
         }
 
@@ -317,7 +396,7 @@ export async function processAction(
         // Clear current hand and set table back to waiting
         await tx
           .update(pokerTables)
-          .set({ currentHandId: null, status: 'waiting' })
+          .set({ currentHandId: null, status: 'waiting', lastActivityAt: new Date() })
           .where(eq(pokerTables.id, tableId));
       } else if (newState.currentSeat === null && newState.street !== 'showdown') {
         // Betting round complete, advance street using pre-dealt community cards
@@ -364,17 +443,96 @@ export async function processAction(
           }
         }
 
-        await tx
-          .update(pokerGameHands)
-          .set({
-            status: newStreet,
-            communityCards: revealedCards,
-            currentSeat: firstToAct,
-            currentBet: 0,
-            minRaise: table.bigBlind,
-            turnStartedAt: firstToAct !== null ? new Date() : null,
-          })
-          .where(eq(pokerGameHands.id, hand.id));
+        // If no one can act but multiple players remain (all-in run-out),
+        // auto-advance through remaining streets to showdown
+        if (firstToAct === null) {
+          const activeCount = (newState.seats || gameState.seats).filter(
+            (s: SeatState | null) => s !== null && !s.isFolded && s.isActive && !s.isSittingOut
+          ).length;
+
+          if (activeCount > 1 && newStreet !== 'showdown') {
+            let advStreet = newStreet;
+            while (advStreet !== 'showdown' && advStreet !== 'river') {
+              switch (advStreet) {
+                case 'flop': advStreet = 'turn'; break;
+                case 'turn': advStreet = 'river'; break;
+                default: advStreet = 'showdown'; break;
+              }
+            }
+            if (advStreet === 'river') {
+              advStreet = 'showdown';
+            }
+            newStreet = advStreet;
+            revealedCards = fullCC.slice(0, 5);
+          }
+        }
+
+        if (newStreet === 'showdown') {
+          // Resolve showdown immediately for all-in run-out
+          const mergedState = { ...gameState, ...newState } as GameState;
+          mergedState.communityCards = fullCC.slice(0, 5);
+          mergedState.pot = newState.pot ?? gameState.pot;
+
+          const showdown = engine.resolveShowdown(mergedState, holeCardsMap);
+
+          for (const result of showdown.results) {
+            await tx
+              .update(pokerGameResults)
+              .set({
+                chipChange: result.chipChange,
+                isWinner: result.chipChange > 0,
+                handRank: result.handRank,
+              })
+              .where(
+                and(
+                  eq(pokerGameResults.handId, hand.id),
+                  eq(pokerGameResults.seatNumber, result.seatNumber)
+                )
+              );
+          }
+
+          for (const winner of showdown.winners) {
+            const seat = (newState.seats || gameState.seats)[winner.seatNumber];
+            if (seat) {
+              await tx
+                .update(pokerTableSeats)
+                .set({ chipStack: seat.chipStack + winner.amount })
+                .where(
+                  and(
+                    eq(pokerTableSeats.tableId, tableId),
+                    eq(pokerTableSeats.seatNumber, winner.seatNumber)
+                  )
+                );
+            }
+          }
+
+          await tx
+            .update(pokerGameHands)
+            .set({
+              status: 'complete',
+              communityCards: fullCC.slice(0, 5),
+              completedAt: new Date(),
+              currentSeat: null,
+            })
+            .where(eq(pokerGameHands.id, hand.id));
+
+          await tx
+            .update(pokerTables)
+            .set({ currentHandId: null, status: 'waiting', lastActivityAt: new Date() })
+            .where(eq(pokerTables.id, tableId));
+        } else {
+          await tx
+            .update(pokerGameHands)
+            .set({
+              status: newStreet,
+              communityCards: revealedCards,
+              currentSeat: firstToAct,
+              currentBet: 0,
+              minRaise: table.bigBlind,
+              turnStartedAt: firstToAct !== null ? new Date() : null,
+            })
+            .where(eq(pokerGameHands.id, hand.id));
+        }
       }
 
       return {

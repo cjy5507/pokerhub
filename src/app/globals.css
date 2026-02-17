@@ -1,26 +1,640 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+
+  /* ============================================================
+   * PokerHub Design System - CSS Custom Properties
+   * These map directly to design-tokens.ts values
+   * Use as: bg-ph-bg, text-ph-text, border-ph-border, etc.
+   * ============================================================ */
+
+  /* Backgrounds (darkest to lightest) */
+  --color-ph-deep: #0a0a0a;
+  --color-ph-bg: #121212;
+  --color-ph-header: #1a1a1a;
+  --color-ph-surface: #1e1e1e;
+  --color-ph-elevated: #2a2a2a;
+  --color-ph-footer: #0d0d0d;
+
+  /* Text hierarchy */
+  --color-ph-text: #e0e0e0;
+  --color-ph-text-secondary: #a0a0a0;
+  --color-ph-text-muted: #888888;
+  --color-ph-text-dim: #666666;
+  --color-ph-text-inverse: #000000;
+
+  /* Brand gold */
+  --color-ph-gold: #c9a227;
+  --color-ph-gold-hover: #d4af37;
+  --color-ph-gold-pressed: #a68523;
+  --color-ph-gold-light: #f4e5b8;
+  --color-ph-gold-dim: rgba(201, 162, 39, 0.2);
+
+  /* Borders */
+  --color-ph-border: #333333;
+  --color-ph-border-subtle: #222222;
+  --color-ph-border-medium: #444444;
+
+  /* Status */
+  --color-ph-success: #22c55e;
+  --color-ph-success-dim: rgba(34, 197, 94, 0.15);
+  --color-ph-error: #ef4444;
+  --color-ph-error-dim: rgba(239, 68, 68, 0.15);
+  --color-ph-warning: #eab308;
+  --color-ph-warning-dim: rgba(234, 179, 8, 0.15);
+  --color-ph-info: #3b82f6;
+  --color-ph-info-dim: rgba(59, 130, 246, 0.15);
+
+  /* Poker table */
+  --color-ph-felt: #35654d;
+  --color-ph-felt-dark: #2d5542;
+  --color-ph-enter: #0d7c50;
+  --color-ph-enter-hover: #0a6340;
+  --color-ph-card-red: #dc2626;
+
+  /* Level tiers */
+  --color-ph-bronze: #cd7f32;
+  --color-ph-silver: #c0c0c0;
+  --color-ph-platinum: #e5e4e2;
+  --color-ph-diamond: #b9f2ff;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+  --background: #121212;
+  --foreground: #e0e0e0;
+  --card: #1e1e1e;
+  --card-foreground: #e0e0e0;
+  --popover: #1e1e1e;
+  --popover-foreground: #e0e0e0;
+  --primary: #c9a227;
+  --primary-foreground: #000000;
+  --secondary: #2a2a2a;
+  --secondary-foreground: #e0e0e0;
+  --muted: #2a2a2a;
+  --muted-foreground: #a0a0a0;
+  --accent: #2a2a2a;
+  --accent-foreground: #e0e0e0;
+  --destructive: #ef4444;
+  --border: #333333;
+  --input: #333333;
+  --ring: #c9a227;
+  --chart-1: #c9a227;
+  --chart-2: #22c55e;
+  --chart-3: #3b82f6;
+  --chart-4: #ef4444;
+  --chart-5: #eab308;
+  --sidebar: #1e1e1e;
+  --sidebar-foreground: #e0e0e0;
+  --sidebar-primary: #c9a227;
+  --sidebar-primary-foreground: #000000;
+  --sidebar-accent: #2a2a2a;
+  --sidebar-accent-foreground: #e0e0e0;
+  --sidebar-border: #333333;
+  --sidebar-ring: #c9a227;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  *:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--color-ph-bg), 0 0 0 4px var(--color-ph-gold);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ============================================================
+ * PokerHub Custom Animations
+ * ============================================================ */
+
+@keyframes cardFlip {
+  0% {
+    transform: rotateY(0deg);
+  }
+  100% {
+    transform: rotateY(180deg);
+  }
+}
+
+@keyframes levelUp {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes likePop {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.3);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -100%) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes goldPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(201, 162, 39, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(201, 162, 39, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ============================================================
+ * Tiptap Editor Styles
+ * ============================================================ */
+
+.ProseMirror {
+  min-height: 300px;
+  color: var(--color-ph-text);
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--color-ph-text-muted);
+  pointer-events: none;
+  height: 0;
+}
+
+.ProseMirror h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 1rem 0 0.5rem;
+  color: var(--color-ph-text);
+}
+
+.ProseMirror h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0.75rem 0 0.5rem;
+  color: var(--color-ph-text);
+}
+
+.ProseMirror p {
+  margin: 0.5rem 0;
+  line-height: 1.7;
+}
+
+.ProseMirror ul,
+.ProseMirror ol {
+  padding-left: 1.5rem;
+  margin: 0.5rem 0;
+}
+
+.ProseMirror li {
+  margin: 0.25rem 0;
+}
+
+.ProseMirror blockquote {
+  border-left: 3px solid var(--color-ph-gold);
+  padding-left: 1rem;
+  margin: 0.5rem 0;
+  color: var(--color-ph-text-secondary);
+  font-style: italic;
+}
+
+.ProseMirror pre {
+  background: var(--color-ph-surface);
+  border: 1px solid var(--color-ph-border);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+.ProseMirror code {
+  background: var(--color-ph-surface);
+  padding: 0.15rem 0.3rem;
+  border-radius: 0.25rem;
+  font-size: 0.9em;
+}
+
+.ProseMirror a {
+  color: var(--color-ph-gold);
+  text-decoration: underline;
+}
+
+.ProseMirror img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  margin: 1rem 0;
+}
+
+.ProseMirror hr {
+  border: none;
+  border-top: 1px solid var(--color-ph-border);
+  margin: 1.5rem 0;
+}
+
+.ProseMirror:focus {
+  outline: none;
+}
+
+/* ============================================================
+ * Poker Card Symbol Styles
+ * ============================================================ */
+
+.poker-card-spade,
+.poker-card-club {
+  color: var(--color-ph-text);
+  font-weight: bold;
+}
+
+.poker-card-heart,
+.poker-card-diamond {
+  color: var(--color-ph-error);
+  font-weight: bold;
+}
+
+/* ============================================================
+ * Utility: Scrollbar Hide
+ * ============================================================ */
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* ═══════════════════════════════════════════════════════════
+ * Poker Table Animations
+ * ═══════════════════════════════════════════════════════════ */
+
+/* Card dealing - card flies in from center with a slight bounce */
+@keyframes cardDeal {
+  0% { transform: scale(0.3) translateY(-100px); opacity: 0; }
+  60% { transform: scale(1.05) translateY(0); opacity: 1; }
+  80% { transform: scale(0.98); }
+  100% { transform: scale(1); }
+}
+
+/* Chip slide to pot - chips move toward center */
+@keyframes chipToPot {
+  0% { opacity: 1; transform: translate(0, 0) scale(1); }
+  70% { opacity: 1; transform: translate(var(--chip-dx, 0px), var(--chip-dy, 0px)) scale(0.8); }
+  100% { opacity: 0; transform: translate(var(--chip-dx, 0px), var(--chip-dy, 0px)) scale(0.5); }
+}
+
+/* Chip from pot to winner */
+@keyframes chipFromPot {
+  0% { opacity: 0; transform: scale(0.5); }
+  30% { opacity: 1; transform: scale(1.2); }
+  60% { transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* Pot win celebration pulse */
+@keyframes potWin {
+  0%, 100% { transform: scale(1); filter: brightness(1); }
+  25% { transform: scale(1.08); filter: brightness(1.3); }
+  50% { transform: scale(1.02); filter: brightness(1.1); }
+  75% { transform: scale(1.05); filter: brightness(1.2); }
+}
+
+/* Action badge pop-in */
+@keyframes actionBadgePop {
+  0% { transform: translateX(-50%) scale(0) translateY(8px); opacity: 0; }
+  50% { transform: translateX(-50%) scale(1.15) translateY(-2px); opacity: 1; }
+  100% { transform: translateX(-50%) scale(1) translateY(0); opacity: 1; }
+}
+
+/* Action badge fade-out */
+@keyframes actionBadgeFade {
+  0% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+}
+
+/* Seat glow pulse for active turn */
+@keyframes seatGlowPulse {
+  0%, 100% { box-shadow: 0 0 16px rgba(201, 162, 39, 0.4), 0 0 32px rgba(201, 162, 39, 0.15); }
+  50% { box-shadow: 0 0 28px rgba(201, 162, 39, 0.7), 0 0 56px rgba(201, 162, 39, 0.3); }
+}
+
+/* All-in badge pulse */
+@keyframes allInPulse {
+  0%, 100% { box-shadow: 0 0 12px rgba(239, 68, 68, 0.6), 0 2px 4px rgba(0, 0, 0, 0.4); }
+  50% { box-shadow: 0 0 24px rgba(239, 68, 68, 0.9), 0 4px 8px rgba(0, 0, 0, 0.4); }
+}
+
+/* Timer urgent shake */
+@keyframes timerShake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-1px); }
+  20%, 40%, 60%, 80% { transform: translateX(1px); }
+}
+
+/* Win chips scatter */
+@keyframes chipScatter {
+  0% { opacity: 0; transform: scale(0) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1.2) rotate(180deg); }
+  100% { opacity: 0.8; transform: scale(1) rotate(360deg); }
+}
+
+/* Dealing shuffle animation */
+@keyframes deckShuffle {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  25% { transform: translateX(-3px) rotate(-2deg); }
+  75% { transform: translateX(3px) rotate(2deg); }
+}
+
+/* Community card stagger reveal */
+@keyframes communityReveal {
+  0% { transform: translateY(-20px) rotateY(180deg) scale(0.7); opacity: 0; }
+  40% { transform: translateY(0) rotateY(90deg) scale(0.9); opacity: 0.5; }
+  100% { transform: translateY(0) rotateY(0deg) scale(1); opacity: 1; }
+}
+
+/* Hero card hover lift */
+@keyframes heroCardLift {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-4px); }
+}
+
+/* Pot amount change */
+@keyframes potBounce {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.15); }
+  60% { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+/* Button press feedback */
+@keyframes buttonPress {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+/* ═══════════════════════════════════════════════════════════
+ * Poker Animation Utilities
+ * ═══════════════════════════════════════════════════════════ */
+
+.animate-card-deal { animation: cardDeal 0.4s ease-out forwards; }
+.animate-chip-to-pot { animation: chipToPot 0.6s ease-in-out forwards; }
+.animate-chip-from-pot { animation: chipFromPot 0.5s ease-out forwards; }
+.animate-pot-win { animation: potWin 0.8s ease-in-out; }
+.animate-action-badge { animation: actionBadgePop 0.3s ease-out forwards; }
+.animate-seat-glow { animation: seatGlowPulse 2s ease-in-out infinite; }
+.animate-all-in-pulse { animation: allInPulse 1.5s ease-in-out infinite; }
+.animate-timer-shake { animation: timerShake 0.3s ease-in-out infinite; }
+.animate-community-reveal { animation: communityReveal 0.6s ease-out forwards; }
+.animate-pot-bounce { animation: potBounce 0.3s ease-out; }
+.animate-deck-shuffle { animation: deckShuffle 0.2s ease-in-out 3; }
+
+/* ═══════════════════════════════════════════════════════════
+ * PokerStars-Style Slider
+ * ═══════════════════════════════════════════════════════════ */
+
+.poker-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #1a1a1a 0%, #2a2a2a 100%);
+  outline: none;
+  cursor: pointer;
+}
+
+.poker-slider::-webkit-slider-track {
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #c9a227 0%, #d4af37 50%, #e4c04a 100%);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3), 0 0 6px rgba(201, 162, 39, 0.2);
+}
+
+.poker-slider::-moz-range-track {
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #c9a227 0%, #d4af37 50%, #e4c04a 100%);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3), 0 0 6px rgba(201, 162, 39, 0.2);
+  border: none;
+}
+
+/* Poker chip thumb */
+.poker-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #f4e5b8 0%, #d4af37 40%, #c9a227 70%, #a68523 100%);
+  border: 3px solid #f4e5b8;
+  box-shadow:
+    0 0 0 2px rgba(0, 0, 0, 0.3),
+    0 2px 8px rgba(0, 0, 0, 0.5),
+    0 0 12px rgba(201, 162, 39, 0.4),
+    inset 0 1px 2px rgba(255, 255, 255, 0.4);
+  cursor: grab;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.poker-slider::-moz-range-thumb {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #f4e5b8 0%, #d4af37 40%, #c9a227 70%, #a68523 100%);
+  border: 3px solid #f4e5b8;
+  box-shadow:
+    0 0 0 2px rgba(0, 0, 0, 0.3),
+    0 2px 8px rgba(0, 0, 0, 0.5),
+    0 0 12px rgba(201, 162, 39, 0.4),
+    inset 0 1px 2px rgba(255, 255, 255, 0.4);
+  cursor: grab;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.poker-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+  box-shadow:
+    0 0 0 2px rgba(0, 0, 0, 0.3),
+    0 4px 12px rgba(0, 0, 0, 0.5),
+    0 0 20px rgba(201, 162, 39, 0.6),
+    inset 0 1px 2px rgba(255, 255, 255, 0.4);
+}
+
+.poker-slider::-moz-range-thumb:hover {
+  transform: scale(1.1);
+  box-shadow:
+    0 0 0 2px rgba(0, 0, 0, 0.3),
+    0 4px 12px rgba(0, 0, 0, 0.5),
+    0 0 20px rgba(201, 162, 39, 0.6),
+    inset 0 1px 2px rgba(255, 255, 255, 0.4);
+}
+
+.poker-slider:active::-webkit-slider-thumb {
+  cursor: grabbing;
+  transform: scale(1.15);
+}
+
+.poker-slider:active::-moz-range-thumb {
+  cursor: grabbing;
+  transform: scale(1.15);
+}
+
+/* ═══════════════════════════════════════════════════════════
+ * Hero Card Hover & Deal Animations
+ * ═══════════════════════════════════════════════════════════ */
+
+.hero-card-hover {
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.hero-card-hover:hover {
+  transform: translateY(-6px) perspective(600px) rotateX(2deg);
+  filter: brightness(1.05);
+}
+
+@keyframes heroCardDeal3D {
+  0% {
+    transform: scale(0.3) translateY(-80px) perspective(600px) rotateX(15deg) rotateY(180deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.04) translateY(0) perspective(600px) rotateX(3deg) rotateY(0deg);
+    opacity: 1;
+  }
+  75% {
+    transform: scale(0.98) translateY(2px) perspective(600px) rotateX(0deg) rotateY(0deg);
+  }
+  100% {
+    transform: scale(1) translateY(0) perspective(600px) rotateX(0deg) rotateY(0deg);
+  }
 }

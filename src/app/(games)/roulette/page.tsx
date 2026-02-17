@@ -1,0 +1,412 @@
+'use client';
+
+import { useState } from 'react';
+import { cn } from '@/lib/utils';
+import {
+  TrendingUp,
+  TrendingDown,
+  History,
+  BarChart3,
+  Disc,
+  X,
+  Minus,
+  Plus,
+  Crown
+} from 'lucide-react';
+
+interface SpinResult {
+  multiplier: number;
+  winAmount: number;
+}
+
+interface SpinHistory {
+  bet: number;
+  multiplier: number;
+  win: number;
+  time: string;
+}
+
+interface Stats {
+  totalSpins: number;
+  totalBet: number;
+  totalWon: number;
+}
+
+const SEGMENTS = [
+  { multiplier: 0, color: '#ef4444', label: '0x', weight: 20, deg: 0 },
+  { multiplier: 0.5, color: '#f97316', label: '0.5x', weight: 25, deg: 45 },
+  { multiplier: 1, color: '#eab308', label: '1x', weight: 22, deg: 90 },
+  { multiplier: 1.5, color: '#84cc16', label: '1.5x', weight: 15, deg: 135 },
+  { multiplier: 2, color: '#22c55e', label: '2x', weight: 10, deg: 180 },
+  { multiplier: 3, color: '#3b82f6', label: '3x', weight: 5, deg: 225 },
+  { multiplier: 5, color: '#8b5cf6', label: '5x', weight: 2, deg: 270 },
+  { multiplier: 10, color: '#c9a227', label: '10x', weight: 1, deg: 315 },
+];
+
+const BET_AMOUNTS = [50, 100, 200, 500];
+
+export default function RoulettePage() {
+  const [currentPoints, setCurrentPoints] = useState(1250);
+  const [betAmount, setBetAmount] = useState(100);
+  const [isSpinning, setIsSpinning] = useState(false);
+  const [spinDegree, setSpinDegree] = useState(0);
+  const [result, setResult] = useState<SpinResult | null>(null);
+  const [history, setHistory] = useState<SpinHistory[]>([]);
+  const [stats, setStats] = useState<Stats>({
+    totalSpins: 0,
+    totalBet: 0,
+    totalWon: 0,
+  });
+  const [showResult, setShowResult] = useState(false);
+  const [winningSegmentIndex, setWinningSegmentIndex] = useState<number | null>(null);
+
+  const getRandomSegment = () => {
+    const random = Math.random() * 100;
+    let cumulative = 0;
+
+    for (let i = 0; i < SEGMENTS.length; i++) {
+      cumulative += SEGMENTS[i].weight;
+      if (random <= cumulative) {
+        return { segment: SEGMENTS[i], index: i };
+      }
+    }
+
+    return { segment: SEGMENTS[0], index: 0 };
+  };
+
+  const handleSpin = () => {
+    if (isSpinning || currentPoints < betAmount) return;
+
+    setIsSpinning(true);
+    setResult(null);
+    setShowResult(false);
+    setWinningSegmentIndex(null);
+
+    // Deduct bet
+    setCurrentPoints((prev) => prev - betAmount);
+
+    // Get random result
+    const { segment: selectedSegment, index: segmentIndex } = getRandomSegment();
+    const winAmount = Math.floor(betAmount * selectedSegment.multiplier);
+
+    // Calculate target rotation
+    const segmentOffset = Math.random() * 45;
+    const targetDeg = selectedSegment.deg + segmentOffset;
+
+    // Add 4 full rotations (1440 degrees) plus target
+    const finalRotation = spinDegree + 1440 + (360 - targetDeg);
+
+    setSpinDegree(finalRotation);
+
+    // After spin completes
+    setTimeout(() => {
+      setIsSpinning(false);
+      setResult({ multiplier: selectedSegment.multiplier, winAmount });
+      setShowResult(true);
+      setWinningSegmentIndex(segmentIndex);
+
+      // Update points
+      setCurrentPoints((prev) => prev + winAmount);
+
+      // Update history
+      const newEntry: SpinHistory = {
+        bet: betAmount,
+        multiplier: selectedSegment.multiplier,
+        win: winAmount,
+        time: new Date().toLocaleTimeString('ko-KR'),
+      };
+      setHistory((prev) => [newEntry, ...prev].slice(0, 20));
+
+      // Update stats
+      setStats((prev) => ({
+        totalSpins: prev.totalSpins + 1,
+        totalBet: prev.totalBet + betAmount,
+        totalWon: prev.totalWon + winAmount,
+      }));
+
+      // Clear winning segment highlight after 2 seconds
+      setTimeout(() => setWinningSegmentIndex(null), 2000);
+    }, 4000);
+  };
+
+  const profit = stats.totalWon - stats.totalBet;
+
+  const getResultIcon = (multiplier: number) => {
+    if (multiplier === 0) return <X className="w-8 h-8 text-red-400" />;
+    if (multiplier <= 1) return <Minus className="w-8 h-8 text-yellow-400" />;
+    if (multiplier < 5) return <Plus className="w-8 h-8 text-green-400" />;
+    return <Crown className="w-8 h-8 text-[#c9a227]" />;
+  };
+
+  const getResultColor = (multiplier: number) => {
+    if (multiplier === 0) return 'from-red-900/50 to-red-800/50 border-red-400';
+    if (multiplier <= 1) return 'from-yellow-900/50 to-yellow-800/50 border-yellow-400';
+    if (multiplier < 5) return 'from-green-900/50 to-green-800/50 border-green-400';
+    return 'from-amber-900/50 to-amber-800/50 border-[#c9a227]';
+  };
+
+  return (
+    <div className="min-h-screen bg-[#121212] text-[#e0e0e0] pb-20 px-4 py-6">
+      {/* Header */}
+      <div className="max-w-5xl mx-auto mb-8">
+        <div className="flex items-center justify-center gap-3 mb-4">
+          <Disc className="w-8 h-8 text-[#c9a227]" />
+          <h1 className="text-3xl font-bold">포인트 룰렛</h1>
+        </div>
+
+        {/* Current Points */}
+        <div className="bg-[#1e1e1e] border border-[#333] rounded-xl p-4 text-center">
+          <div className="text-sm text-[#a0a0a0] mb-1">보유 포인트</div>
+          <div className="text-3xl font-bold text-[#c9a227]">{currentPoints.toLocaleString()}P</div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-5xl mx-auto grid lg:grid-cols-2 gap-8">
+        {/* Left Column - Wheel */}
+        <div className="space-y-6">
+          {/* Wheel Container */}
+          <div className="bg-[#1e1e1e] border border-[#333] rounded-xl p-8">
+            <div className="relative mx-auto" style={{ width: '320px', height: '320px' }}>
+              {/* Pointer */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 z-20">
+                <div
+                  className="w-0 h-0 border-l-[20px] border-l-transparent border-r-[20px] border-r-transparent border-t-[40px] border-t-[#c9a227]"
+                  style={{ filter: 'drop-shadow(0 0 10px rgba(201,162,39,0.5))' }}
+                />
+              </div>
+
+              {/* Wheel */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div
+                  className={cn(
+                    "relative w-[300px] h-[300px] rounded-full shadow-[0_0_30px_rgba(201,162,39,0.3)] border-4 border-[#c9a227]/30",
+                    isSpinning && "shadow-[0_0_50px_rgba(201,162,39,0.6)] transition-transform duration-[4000ms] ease-out"
+                  )}
+                  style={{
+                    transform: `rotate(${spinDegree}deg)`,
+                    background: `conic-gradient(
+                      #ef4444 0deg 45deg,
+                      #f97316 45deg 90deg,
+                      #eab308 90deg 135deg,
+                      #84cc16 135deg 180deg,
+                      #22c55e 180deg 225deg,
+                      #3b82f6 225deg 270deg,
+                      #8b5cf6 270deg 315deg,
+                      #c9a227 315deg 360deg
+                    )`,
+                  }}
+                >
+                  {/* Segment Borders */}
+                  {SEGMENTS.map((segment, index) => (
+                    <div
+                      key={`border-${index}`}
+                      className="absolute w-full h-full"
+                      style={{
+                        transform: `rotate(${segment.deg}deg)`,
+                      }}
+                    >
+                      <div className="absolute left-1/2 top-0 w-[2px] h-full bg-black/20" />
+                    </div>
+                  ))}
+
+                  {/* Winning Segment Pulse */}
+                  {winningSegmentIndex !== null && (
+                    <div
+                      className="absolute inset-0 rounded-full animate-pulse"
+                      style={{
+                        background: `conic-gradient(
+                          transparent 0deg,
+                          transparent ${SEGMENTS[winningSegmentIndex].deg}deg,
+                          rgba(255,255,255,0.3) ${SEGMENTS[winningSegmentIndex].deg}deg,
+                          rgba(255,255,255,0.3) ${SEGMENTS[winningSegmentIndex].deg + 45}deg,
+                          transparent ${SEGMENTS[winningSegmentIndex].deg + 45}deg,
+                          transparent 360deg
+                        )`,
+                      }}
+                    />
+                  )}
+
+                  {/* Center Circle */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-16 h-16 rounded-full bg-[#1e1e1e] border-4 border-white shadow-lg" />
+                  </div>
+
+                  {/* Segment Labels */}
+                  {SEGMENTS.map((segment, index) => (
+                    <div
+                      key={index}
+                      className="absolute w-full h-full flex items-center justify-center text-white font-bold text-lg pointer-events-none"
+                      style={{
+                        transform: `rotate(${segment.deg + 22.5}deg)`,
+                      }}
+                    >
+                      <div
+                        className="absolute"
+                        style={{
+                          top: '50px',
+                          textShadow: '0 2px 8px rgba(0,0,0,0.9)',
+                        }}
+                      >
+                        {segment.label}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bet Selection */}
+          <div className="bg-[#1e1e1e] border border-[#333] rounded-xl p-6">
+            <div className="text-sm text-[#a0a0a0] mb-3">배팅 금액 선택</div>
+            <div className="grid grid-cols-4 gap-2 mb-4">
+              {BET_AMOUNTS.map((amount) => (
+                <button
+                  key={amount}
+                  onClick={() => setBetAmount(amount)}
+                  disabled={isSpinning}
+                  className={cn(
+                    "py-3 rounded-lg font-semibold transition-all",
+                    betAmount === amount
+                      ? "bg-[#c9a227] text-black shadow-[0_0_20px_rgba(201,162,39,0.4)]"
+                      : "bg-[#2a2a2a] text-[#e0e0e0] hover:bg-[#333]",
+                    isSpinning && "opacity-50 cursor-not-allowed"
+                  )}
+                >
+                  {amount}P
+                </button>
+              ))}
+            </div>
+
+            {/* Spin Button */}
+            <button
+              onClick={handleSpin}
+              disabled={isSpinning || currentPoints < betAmount}
+              className={cn(
+                "w-full py-4 rounded-xl font-bold text-xl transition-all",
+                isSpinning || currentPoints < betAmount
+                  ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+                  : "bg-gradient-to-r from-[#c9a227] to-[#d4af37] text-black hover:shadow-[0_0_30px_rgba(201,162,39,0.5)] hover:scale-[1.02]"
+              )}
+            >
+              {isSpinning ? "스핀 중..." : currentPoints < betAmount ? "포인트 부족" : "SPIN"}
+            </button>
+          </div>
+
+          {/* Result Display */}
+          {showResult && result && (
+            <div
+              className={cn(
+                "bg-gradient-to-br rounded-xl p-6 border-2",
+                getResultColor(result.multiplier)
+              )}
+            >
+              <div className="flex items-center justify-center gap-4">
+                {getResultIcon(result.multiplier)}
+                <div className="text-center">
+                  <div className="text-2xl font-bold mb-1">{result.multiplier}x</div>
+                  <div className={cn(
+                    "text-3xl font-bold",
+                    result.multiplier === 0
+                      ? "text-red-400"
+                      : result.multiplier <= 1
+                      ? "text-yellow-400"
+                      : result.multiplier < 5
+                      ? "text-green-400"
+                      : "text-[#c9a227]"
+                  )}>
+                    {result.winAmount > 0 ? "+" : ""}{result.winAmount.toLocaleString()}P
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Right Column - Stats & History */}
+        <div className="space-y-6">
+          {/* Statistics */}
+          <div className="bg-[#1e1e1e] border border-[#333] rounded-xl p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <BarChart3 className="w-5 h-5 text-[#c9a227]" />
+              <h2 className="text-lg font-bold">통계</h2>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-[#2a2a2a] rounded-lg p-4">
+                <div className="text-sm text-[#a0a0a0] mb-1">총 스핀</div>
+                <div className="text-2xl font-bold">{stats.totalSpins}</div>
+              </div>
+
+              <div className="bg-[#2a2a2a] rounded-lg p-4">
+                <div className="text-sm text-[#a0a0a0] mb-1">총 배팅</div>
+                <div className="text-2xl font-bold text-red-400">{stats.totalBet.toLocaleString()}P</div>
+              </div>
+
+              <div className="bg-[#2a2a2a] rounded-lg p-4">
+                <div className="text-sm text-[#a0a0a0] mb-1">총 획득</div>
+                <div className="text-2xl font-bold text-green-400">{stats.totalWon.toLocaleString()}P</div>
+              </div>
+
+              <div className="bg-[#2a2a2a] rounded-lg p-4">
+                <div className="text-sm text-[#a0a0a0] mb-1 flex items-center gap-1">
+                  {profit >= 0 ? (
+                    <TrendingUp className="w-4 h-4 text-green-400" />
+                  ) : (
+                    <TrendingDown className="w-4 h-4 text-red-400" />
+                  )}
+                  손익
+                </div>
+                <div className={cn(
+                  "text-2xl font-bold",
+                  profit >= 0 ? "text-green-400" : "text-red-400"
+                )}>
+                  {profit >= 0 ? "+" : ""}{profit.toLocaleString()}P
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* History */}
+          <div className="bg-[#1e1e1e] border border-[#333] rounded-xl p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <History className="w-5 h-5 text-[#c9a227]" />
+              <h2 className="text-lg font-bold">최근 기록</h2>
+            </div>
+
+            {history.length === 0 ? (
+              <div className="text-center py-8 text-[#a0a0a0]">
+                아직 스핀 기록이 없습니다
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                {history.map((spin, index) => (
+                  <div
+                    key={index}
+                    className="bg-[#2a2a2a] rounded-lg p-3 flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="text-xs text-[#a0a0a0]">{spin.time}</div>
+                      <div className="text-sm">
+                        <span className="text-[#a0a0a0]">{spin.bet}P</span>
+                        <span className="mx-2 text-[#888]">×</span>
+                        <span className="font-bold">{spin.multiplier}x</span>
+                      </div>
+                    </div>
+                    <div className={cn(
+                      "font-bold",
+                      spin.win > spin.bet ? "text-green-400" : spin.win === spin.bet ? "text-yellow-400" : "text-red-400"
+                    )}>
+                      {spin.win > spin.bet ? "+" : ""}{(spin.win - spin.bet).toLocaleString()}P
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

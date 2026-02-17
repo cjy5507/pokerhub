@@ -1,0 +1,467 @@
+'use client';
+
+import { useState } from 'react';
+import { cn } from '@/lib/utils';
+import { Card, GameType, TableSize, Position, Street, ActionType } from '@/types/poker';
+import { CardSelector } from '@/components/poker/CardSelector';
+import { InlineCards } from '@/components/poker/CardRenderer';
+import { TableVisualizer, PlayerSeat } from '@/components/poker/TableVisualizer';
+import { createHand } from '../../actions';
+import { useRouter } from 'next/navigation';
+import { ChevronLeft, ChevronRight, Send } from 'lucide-react';
+
+const POSITIONS_6MAX: Position[] = ['UTG', 'MP', 'CO', 'BTN', 'SB', 'BB'];
+const POSITIONS_9MAX: Position[] = ['UTG', 'UTG+1', 'UTG+2', 'MP', 'HJ', 'CO', 'BTN', 'SB', 'BB'];
+
+const TAGS = ['블러프', '밸류', '폴드', '쿨러', '배드빗', '블라인드디펜스', '3벳팟', '멀티웨이', '숏스택', '딥스택'];
+
+interface ActionInput {
+  position: Position;
+  action: ActionType;
+  amount?: number;
+}
+
+export default function ShareHandPage() {
+  const router = useRouter();
+  const [step, setStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Step 1: Game info
+  const [gameType, setGameType] = useState<GameType>('cash');
+  const [tableSize, setTableSize] = useState<TableSize>('6max');
+  const [stakes, setStakes] = useState('1/2');
+
+  // Step 2: Hero position
+  const [heroPosition, setHeroPosition] = useState<Position | null>(null);
+
+  // Step 3: Hero cards
+  const [heroCards, setHeroCards] = useState<Card[]>([]);
+
+  // Step 4: Board cards
+  const [flopCards, setFlopCards] = useState<Card[]>([]);
+  const [turnCard, setTurnCard] = useState<Card[]>([]);
+  const [riverCard, setRiverCard] = useState<Card[]>([]);
+
+  // Step 5: Actions
+  const [preflopActions, setPreflopActions] = useState<ActionInput[]>([]);
+  const [flopActions, setFlopActions] = useState<ActionInput[]>([]);
+  const [turnActions, setTurnActions] = useState<ActionInput[]>([]);
+  const [riverActions, setRiverActions] = useState<ActionInput[]>([]);
+
+  // Step 6: Analysis notes
+  const [notes, setNotes] = useState('');
+
+  // Step 7: Tags
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
+  const positions = tableSize === '6max' ? POSITIONS_6MAX : POSITIONS_9MAX;
+  const allSelectedCards = [...heroCards, ...flopCards, ...turnCard, ...riverCard];
+
+  const canProceed = () => {
+    if (step === 1) return stakes.length > 0;
+    if (step === 2) return heroPosition !== null;
+    if (step === 3) return heroCards.length === 2;
+    return true;
+  };
+
+  const handleSubmit = async () => {
+    if (!heroPosition) return;
+
+    setIsSubmitting(true);
+
+    const formData = new FormData();
+    formData.append('gameType', gameType);
+    formData.append('tableSize', tableSize);
+    formData.append('stakes', stakes);
+    formData.append('heroPosition', heroPosition);
+    formData.append('heroCards', JSON.stringify(heroCards));
+    formData.append('boardFlop', JSON.stringify(flopCards));
+    formData.append('boardTurn', JSON.stringify(turnCard));
+    formData.append('boardRiver', JSON.stringify(riverCard));
+    formData.append('preflopActions', JSON.stringify(preflopActions));
+    formData.append('flopActions', JSON.stringify(flopActions));
+    formData.append('turnActions', JSON.stringify(turnActions));
+    formData.append('riverActions', JSON.stringify(riverActions));
+    formData.append('notes', notes);
+    formData.append('tags', JSON.stringify(selectedTags));
+
+    try {
+      const result = await createHand(formData);
+      if (result.success) {
+        router.push(`/hands/${result.handId}`);
+      }
+    } catch (error) {
+      console.error('Failed to create hand:', error);
+      alert('핸드 저장에 실패했습니다.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Build preview data
+  const previewSeats: PlayerSeat[] = positions.map(pos => ({
+    position: pos,
+    stack: 200,
+    isHero: pos === heroPosition,
+    isActive: false,
+  }));
+
+  const communityCards = [
+    ...flopCards.map(c => c),
+    ...turnCard.map(c => c),
+    ...riverCard.map(c => c),
+  ].join(' ');
+
+  return (
+    <div className="min-h-screen bg-[#121212] text-[#e0e0e0]">
+      {/* Header */}
+      <div className="sticky top-0 z-50 bg-[#1e1e1e] border-b border-[#333]">
+        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+          <button
+            onClick={() => router.back()}
+            className="flex items-center gap-2 text-[#a0a0a0] hover:text-[#e0e0e0] transition-colors"
+          >
+            <ChevronLeft className="w-5 h-5" />
+            <span>취소</span>
+          </button>
+          <h1 className="text-lg font-bold text-[#c9a227]">핸드 공유하기</h1>
+          <div className="w-16" />
+        </div>
+
+        {/* Progress bar */}
+        <div className="h-1 bg-[#2a2a2a]">
+          <div
+            className="h-full bg-[#c9a227] transition-all duration-300"
+            style={{ width: `${(step / 7) * 100}%` }}
+          />
+        </div>
+      </div>
+
+      <div className="max-w-4xl mx-auto px-4 py-6 pb-24">
+        <div className="grid lg:grid-cols-2 gap-6">
+          {/* Input Section */}
+          <div className="space-y-6">
+            {/* Step 1: Game Info */}
+            {step === 1 && (
+              <div className="space-y-4">
+                <h2 className="text-xl font-bold">게임 정보</h2>
+
+                <div>
+                  <label className="block text-sm text-[#a0a0a0] mb-2">게임 타입</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => setGameType('cash')}
+                      className={cn(
+                        'py-3 rounded-lg font-medium transition-all',
+                        gameType === 'cash'
+                          ? 'bg-[#c9a227] text-black'
+                          : 'bg-[#2a2a2a] text-[#a0a0a0] hover:bg-[#333]'
+                      )}
+                    >
+                      캐시 게임
+                    </button>
+                    <button
+                      onClick={() => setGameType('tournament')}
+                      className={cn(
+                        'py-3 rounded-lg font-medium transition-all',
+                        gameType === 'tournament'
+                          ? 'bg-[#c9a227] text-black'
+                          : 'bg-[#2a2a2a] text-[#a0a0a0] hover:bg-[#333]'
+                      )}
+                    >
+                      토너먼트
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm text-[#a0a0a0] mb-2">테이블 사이즈</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => setTableSize('6max')}
+                      className={cn(
+                        'py-3 rounded-lg font-medium transition-all',
+                        tableSize === '6max'
+                          ? 'bg-[#c9a227] text-black'
+                          : 'bg-[#2a2a2a] text-[#a0a0a0] hover:bg-[#333]'
+                      )}
+                    >
+                      6-Max
+                    </button>
+                    <button
+                      onClick={() => setTableSize('9max')}
+                      className={cn(
+                        'py-3 rounded-lg font-medium transition-all',
+                        tableSize === '9max'
+                          ? 'bg-[#c9a227] text-black'
+                          : 'bg-[#2a2a2a] text-[#a0a0a0] hover:bg-[#333]'
+                      )}
+                    >
+                      9-Max
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm text-[#a0a0a0] mb-2">스테이크</label>
+                  <input
+                    type="text"
+                    value={stakes}
+                    onChange={(e) => setStakes(e.target.value)}
+                    placeholder="예: 1/2, 2/5, 5/10"
+                    className="w-full px-4 py-3 bg-[#2a2a2a] border border-[#333] rounded-lg text-[#e0e0e0] placeholder:text-[#888] focus:border-[#c9a227] focus:outline-none"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Step 2: Hero Position */}
+            {step === 2 && (
+              <div className="space-y-4">
+                <h2 className="text-xl font-bold">히어로 포지션 선택</h2>
+                <p className="text-sm text-[#a0a0a0]">당신이 앉은 위치를 선택하세요</p>
+
+                <div className="grid grid-cols-3 gap-2">
+                  {positions.map((pos) => (
+                    <button
+                      key={pos}
+                      onClick={() => setHeroPosition(pos)}
+                      className={cn(
+                        'py-4 rounded-lg font-bold transition-all',
+                        heroPosition === pos
+                          ? 'bg-[#c9a227] text-black shadow-[0_0_12px_rgba(201,162,39,0.4)]'
+                          : 'bg-[#2a2a2a] text-[#a0a0a0] hover:bg-[#333]'
+                      )}
+                    >
+                      {pos}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Step 3: Hero Cards */}
+            {step === 3 && (
+              <div className="space-y-4">
+                <h2 className="text-xl font-bold">히어로 카드</h2>
+                <p className="text-sm text-[#a0a0a0]">당신의 홀 카드 2장을 선택하세요</p>
+
+                {heroCards.length > 0 && (
+                  <div className="flex justify-center">
+                    <InlineCards notation={heroCards.join(' ')} size="lg" />
+                  </div>
+                )}
+
+                <CardSelector
+                  selectedCards={heroCards}
+                  disabledCards={allSelectedCards.filter(c => !heroCards.includes(c))}
+                  maxSelect={2}
+                  onSelect={setHeroCards}
+                />
+              </div>
+            )}
+
+            {/* Step 4: Board Cards */}
+            {step === 4 && (
+              <div className="space-y-6">
+                <h2 className="text-xl font-bold">보드 카드 (선택사항)</h2>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm text-[#a0a0a0] mb-2">플랍 (3장)</label>
+                    {flopCards.length > 0 && (
+                      <div className="flex justify-center mb-2">
+                        <InlineCards notation={flopCards.join(' ')} size="md" />
+                      </div>
+                    )}
+                    <CardSelector
+                      selectedCards={flopCards}
+                      disabledCards={allSelectedCards.filter(c => !flopCards.includes(c))}
+                      maxSelect={3}
+                      onSelect={setFlopCards}
+                    />
+                  </div>
+
+                  {flopCards.length === 3 && (
+                    <div>
+                      <label className="block text-sm text-[#a0a0a0] mb-2">턴 (1장)</label>
+                      {turnCard.length > 0 && (
+                        <div className="flex justify-center mb-2">
+                          <InlineCards notation={turnCard.join(' ')} size="md" />
+                        </div>
+                      )}
+                      <CardSelector
+                        selectedCards={turnCard}
+                        disabledCards={allSelectedCards.filter(c => !turnCard.includes(c))}
+                        maxSelect={1}
+                        onSelect={setTurnCard}
+                      />
+                    </div>
+                  )}
+
+                  {turnCard.length === 1 && (
+                    <div>
+                      <label className="block text-sm text-[#a0a0a0] mb-2">리버 (1장)</label>
+                      {riverCard.length > 0 && (
+                        <div className="flex justify-center mb-2">
+                          <InlineCards notation={riverCard.join(' ')} size="md" />
+                        </div>
+                      )}
+                      <CardSelector
+                        selectedCards={riverCard}
+                        disabledCards={allSelectedCards.filter(c => !riverCard.includes(c))}
+                        maxSelect={1}
+                        onSelect={setRiverCard}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Step 5: Actions */}
+            {step === 5 && (
+              <div className="space-y-4">
+                <h2 className="text-xl font-bold">액션 추가 (선택사항)</h2>
+                <p className="text-sm text-[#a0a0a0]">각 스트릿별로 액션을 기록하세요</p>
+
+                <div className="text-sm text-[#888] bg-[#2a2a2a] p-3 rounded-lg">
+                  나중에 추가 예정 - 현재는 건너뛸 수 있습니다
+                </div>
+              </div>
+            )}
+
+            {/* Step 6: Analysis Notes */}
+            {step === 6 && (
+              <div className="space-y-4">
+                <h2 className="text-xl font-bold">분석 노트</h2>
+                <p className="text-sm text-[#a0a0a0]">
+                  이 핸드에서 궁금한 점이나 생각을 적어주세요
+                </p>
+
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="예: 플랍에서 체크레이즈가 맞을까요? 턴에서 폴드해야 했을까요?"
+                  rows={6}
+                  className="w-full px-4 py-3 bg-[#2a2a2a] border border-[#333] rounded-lg text-[#e0e0e0] placeholder:text-[#888] focus:border-[#c9a227] focus:outline-none resize-none"
+                />
+              </div>
+            )}
+
+            {/* Step 7: Tags */}
+            {step === 7 && (
+              <div className="space-y-4">
+                <h2 className="text-xl font-bold">태그 선택</h2>
+                <p className="text-sm text-[#a0a0a0]">이 핸드와 관련된 태그를 선택하세요</p>
+
+                <div className="flex flex-wrap gap-2">
+                  {TAGS.map((tag) => {
+                    const isSelected = selectedTags.includes(tag);
+                    return (
+                      <button
+                        key={tag}
+                        onClick={() => {
+                          if (isSelected) {
+                            setSelectedTags(selectedTags.filter(t => t !== tag));
+                          } else {
+                            setSelectedTags([...selectedTags, tag]);
+                          }
+                        }}
+                        className={cn(
+                          'px-4 py-2 rounded-full text-sm font-medium transition-all',
+                          isSelected
+                            ? 'bg-[#c9a227] text-black'
+                            : 'bg-[#2a2a2a] text-[#a0a0a0] hover:bg-[#333] border border-[#333]'
+                        )}
+                      >
+                        #{tag}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Preview Section */}
+          <div className="lg:sticky lg:top-20 h-fit">
+            <div className="bg-[#1e1e1e] rounded-lg p-4 border border-[#333]">
+              <h3 className="text-sm font-bold text-[#a0a0a0] mb-4">미리보기</h3>
+
+              {heroPosition && (
+                <TableVisualizer
+                  seats={previewSeats}
+                  communityCards={communityCards || undefined}
+                  maxSeats={tableSize === '6max' ? 6 : 9}
+                />
+              )}
+
+              {heroCards.length === 2 && (
+                <div className="mt-4 flex justify-center">
+                  <div className="text-center">
+                    <div className="text-xs text-[#a0a0a0] mb-1">히어로 카드</div>
+                    <InlineCards notation={heroCards.join(' ')} size="md" />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Navigation */}
+      <div className="fixed bottom-0 left-0 right-0 bg-[#1e1e1e] border-t border-[#333] p-4">
+        <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
+          <button
+            onClick={() => setStep(Math.max(1, step - 1))}
+            disabled={step === 1}
+            className={cn(
+              'px-6 py-3 rounded-lg font-medium transition-all flex items-center gap-2',
+              step === 1
+                ? 'bg-[#2a2a2a] text-[#888] cursor-not-allowed'
+                : 'bg-[#2a2a2a] text-[#e0e0e0] hover:bg-[#333]'
+            )}
+          >
+            <ChevronLeft className="w-5 h-5" />
+            이전
+          </button>
+
+          <div className="text-sm text-[#a0a0a0]">
+            {step} / 7
+          </div>
+
+          {step < 7 ? (
+            <button
+              onClick={() => setStep(step + 1)}
+              disabled={!canProceed()}
+              className={cn(
+                'px-6 py-3 rounded-lg font-medium transition-all flex items-center gap-2',
+                canProceed()
+                  ? 'bg-[#c9a227] text-black hover:bg-[#d4af37]'
+                  : 'bg-[#2a2a2a] text-[#888] cursor-not-allowed'
+              )}
+            >
+              다음
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          ) : (
+            <button
+              onClick={handleSubmit}
+              disabled={isSubmitting || !canProceed()}
+              className={cn(
+                'px-6 py-3 rounded-lg font-medium transition-all flex items-center gap-2',
+                canProceed() && !isSubmitting
+                  ? 'bg-[#c9a227] text-black hover:bg-[#d4af37]'
+                  : 'bg-[#2a2a2a] text-[#888] cursor-not-allowed'
+              )}
+            >
+              {isSubmitting ? '저장 중...' : '핸드 공유'}
+              <Send className="w-5 h-5" />
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

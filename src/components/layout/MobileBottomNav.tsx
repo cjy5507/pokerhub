@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { Home, MessageSquare, MessageCircle, MessageSquareMore, User } from 'lucide-react';
+import { Home, Newspaper, Spade, MessageSquareMore, User } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useChat } from '@/components/chat/ChatProvider';
@@ -17,14 +17,14 @@ const navItems = [
     icon: Home,
   },
   {
-    label: '게시판',
-    href: '/board/free',
-    icon: MessageSquare,
+    label: '뉴스',
+    href: '/news',
+    icon: Newspaper,
   },
   {
-    label: '쓰레드',
-    href: '/threads',
-    icon: MessageCircle,
+    label: '포커',
+    href: '/poker',
+    icon: Spade,
   },
   {
     label: '채팅',

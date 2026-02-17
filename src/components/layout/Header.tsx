@@ -19,15 +19,15 @@ export default function Header() {
   const isLoggedIn = !!session;
 
   const navLinks = [
-    { label: '포커', href: '/poker' },
+    { label: '뉴스', href: '/news' },
     { label: '자유게시판', href: '/board/free' },
     { label: '전략게시판', href: '/board/strategy' },
-    { label: '뉴스', href: '/news' },
     { label: '쓰레드', href: '/threads' },
     { label: '핸드공유', href: '/hands' },
+    { label: '포커', href: '/poker' },
+    { label: '랭킹', href: '/rankings' },
     { label: '복권', href: '/lottery' },
     { label: '룰렛', href: '/roulette' },
-    { label: '랭킹', href: '/rankings' },
   ];
 
   return (

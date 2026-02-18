@@ -2,96 +2,119 @@
 
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
-import { Eye, TrendingUp, ThumbsUp } from 'lucide-react';
-import ChatSidebarPanel from '@/components/chat/ChatSidebarPanel';
+import { usePathname } from 'next/navigation';
+import { TrendingUp, ThumbsUp, MessageCircle } from 'lucide-react';
 import { useSession } from '@/components/providers/SessionProvider';
 
 type SidebarProps = {
   popularPosts: { id: string; title: string; likes: number; boardSlug: string }[];
   onlineCount: number;
+  todayPosts: number;
   userLevel?: number;
 };
 
-export default function Sidebar({ popularPosts, onlineCount, userLevel }: SidebarProps) {
+function SidebarLink({ href, label }: { href: string; label: string }) {
+  const pathname = usePathname();
+  const isActive = pathname === href || pathname.startsWith(href + '/');
+
+  return (
+    <Link
+      href={href}
+      className={cn(
+        'block px-2.5 py-1.5 rounded text-sm transition-colors',
+        isActive
+          ? 'bg-ph-gold-dim text-ph-gold font-medium'
+          : 'text-ph-text-secondary hover:text-ph-text hover:bg-ph-elevated'
+      )}
+    >
+      {label}
+    </Link>
+  );
+}
+
+export default function Sidebar({ popularPosts, onlineCount, todayPosts, userLevel }: SidebarProps) {
   const session = useSession();
   const isLoggedIn = !!session;
 
   return (
     <aside className="hidden lg:block w-full space-y-4">
-      {/* Online Visitors */}
-      <div className="bg-[#1e1e1e] rounded-lg p-4 border border-[#333]">
-        <div className="flex items-center gap-2 text-sm">
-          <Eye className="w-4 h-4 text-[#22c55e]" />
-          <span className="text-[#a0a0a0]">접속자</span>
-          <span className="font-bold text-[#c9a227]">{onlineCount}명</span>
-        </div>
-      </div>
-
-      {/* Live Chat Panel */}
-      <ChatSidebarPanel />
-
-      {/* User Card (logged in only) */}
+      {/* 1. User Card or Login CTA */}
       {isLoggedIn ? (
-        <div className="bg-[#1e1e1e] rounded-lg p-4 border border-[#333]">
+        <div className="bg-ph-surface rounded-lg p-4 border border-ph-border">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-full bg-[#c9a227] flex items-center justify-center text-lg font-bold text-black">
+            <div className="w-12 h-12 rounded-full bg-ph-gold flex items-center justify-center text-lg font-bold text-ph-text-inverse">
               {session?.nickname[0].toUpperCase()}
             </div>
             <div className="flex-1">
-              <p className="text-sm font-medium text-[#e0e0e0]">{session?.nickname}</p>
+              <p className="text-sm font-medium text-ph-text">{session?.nickname}</p>
               <div className="flex items-center gap-1.5">
-                <div className="px-1.5 py-0.5 rounded text-xs font-bold bg-yellow-500/20 text-yellow-400">
+                <div className="px-1.5 py-0.5 rounded text-xs font-bold bg-ph-gold-dim text-ph-gold">
                   Lv.{userLevel ?? 1}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Profile Link */}
           <Link
             href={`/profile/${session?.userId}`}
-            className="block px-3 py-2 bg-[#2a2a2a] rounded-lg hover:bg-[#333] transition-colors"
+            className="block px-3 py-2 bg-ph-elevated rounded-lg hover:bg-ph-border transition-colors"
           >
-            <p className="text-xs text-[#a0a0a0] mb-0.5">프로필에서 자세한 정보 확인</p>
-            <p className="text-sm font-medium text-[#c9a227]">내 프로필 보기 →</p>
+            <p className="text-xs text-ph-text-muted mb-0.5">프로필에서 자세한 정보 확인</p>
+            <p className="text-sm font-medium text-ph-gold">내 프로필 보기 →</p>
           </Link>
         </div>
       ) : (
-        <div className="bg-[#1e1e1e] rounded-lg p-4 border border-[#333]">
-          <p className="text-sm text-[#a0a0a0] mb-3">로그인하여 더 많은 기능을 이용하세요</p>
+        <div className="bg-ph-surface rounded-lg p-4 border border-ph-border">
+          <p className="text-sm text-ph-text-muted mb-3">로그인하여 더 많은 기능을 이용하세요</p>
           <Link
             href="/login"
-            className="block w-full px-4 py-2 text-sm font-medium bg-[#c9a227] hover:bg-[#b89220] text-black rounded-lg transition-colors text-center"
+            className="block w-full px-4 py-2 text-sm font-medium bg-ph-gold hover:bg-ph-gold-hover text-ph-text-inverse rounded-lg transition-colors text-center"
           >
             로그인
           </Link>
         </div>
       )}
 
-      {/* Popular Posts */}
-      <div className="bg-[#1e1e1e] rounded-lg p-4 border border-[#333]">
-        <div className="flex items-center gap-2 mb-3">
-          <TrendingUp className="w-4 h-4 text-[#c9a227]" />
-          <h3 className="text-sm font-semibold text-[#e0e0e0]">인기 글</h3>
+      {/* 2. Board Directory */}
+      <div className="bg-ph-surface rounded-lg p-4 border border-ph-border">
+        <h3 className="text-sm font-semibold text-ph-text mb-3">게시판</h3>
+        <div className="space-y-1">
+          <SidebarLink href="/board/free" label="자유게시판" />
+          <SidebarLink href="/board/strategy" label="전략게시판" />
+          <SidebarLink href="/hands" label="핸드공유" />
+          <SidebarLink href="/board/notice" label="공지사항" />
         </div>
-        <div className="space-y-2">
+        <div className="mt-3 pt-3 border-t border-ph-border space-y-1">
+          <SidebarLink href="/threads" label="쓰레드" />
+          <SidebarLink href="/poker" label="포인트포커" />
+          <SidebarLink href="/rankings" label="랭킹" />
+        </div>
+      </div>
+
+      {/* 3. Popular Posts (8 items) */}
+      <div className="bg-ph-surface rounded-lg p-4 border border-ph-border">
+        <div className="flex items-center gap-2 mb-3">
+          <TrendingUp className="w-4 h-4 text-ph-gold" />
+          <h3 className="text-sm font-semibold text-ph-text">인기 글</h3>
+        </div>
+        <div className="space-y-1.5">
           {popularPosts.map((post, index) => (
             <Link
               key={post.id}
               href={`/board/${post.boardSlug}/${post.id}`}
               className="block group"
             >
-              <div className="flex items-start gap-2">
-                <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center text-xs font-bold text-[#c9a227]">
+              <div className="flex items-start gap-2 py-0.5">
+                <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center text-xs font-bold text-ph-gold">
                   {index + 1}
                 </span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-[#e0e0e0] group-hover:text-[#c9a227] transition-colors line-clamp-2">
+                  <p className="text-xs text-ph-text group-hover:text-ph-gold transition-colors line-clamp-1">
                     {post.title}
                   </p>
                   <div className="flex items-center gap-1 mt-0.5">
-                    <ThumbsUp className="w-3 h-3 text-[#888]" />
-                    <span className="text-xs text-[#888]">{post.likes}</span>
+                    <ThumbsUp className="w-3 h-3 text-ph-text-muted" />
+                    <span className="text-xs text-ph-text-muted">{post.likes}</span>
                   </div>
                 </div>
               </div>
@@ -99,6 +122,32 @@ export default function Sidebar({ popularPosts, onlineCount, userLevel }: Sideba
           ))}
         </div>
       </div>
+
+      {/* 4. Stats Widget */}
+      <div className="bg-ph-surface rounded-lg p-4 border border-ph-border">
+        <div className="grid grid-cols-2 gap-3 text-center">
+          <div>
+            <p className="text-lg font-bold text-ph-gold">{onlineCount}</p>
+            <p className="text-xs text-ph-text-muted">접속자</p>
+          </div>
+          <div>
+            <p className="text-lg font-bold text-ph-text">{todayPosts}</p>
+            <p className="text-xs text-ph-text-muted">오늘 글</p>
+          </div>
+        </div>
+      </div>
+
+      {/* 5. Chat Link (collapsed) */}
+      <Link
+        href="/chat"
+        className="flex items-center justify-between bg-ph-surface rounded-lg px-4 py-3 border border-ph-border hover:bg-ph-elevated transition-colors group"
+      >
+        <div className="flex items-center gap-2">
+          <MessageCircle className="w-4 h-4 text-ph-gold" />
+          <span className="text-sm font-medium text-ph-text">실시간 채팅</span>
+        </div>
+        <span className="text-xs text-ph-text-muted group-hover:text-ph-gold transition-colors">→</span>
+      </Link>
     </aside>
   );
 }

@@ -53,54 +53,54 @@
    * ============================================================ */
 
   /* Backgrounds (darkest to lightest) */
-  --color-ph-deep: #0a0a0a;
-  --color-ph-bg: #121212;
-  --color-ph-header: #1a1a1a;
-  --color-ph-surface: #1e1e1e;
-  --color-ph-elevated: #2a2a2a;
-  --color-ph-footer: #0d0d0d;
+  --color-ph-deep: var(--ph-deep);
+  --color-ph-bg: var(--ph-bg);
+  --color-ph-header: var(--ph-header);
+  --color-ph-surface: var(--ph-surface);
+  --color-ph-elevated: var(--ph-elevated);
+  --color-ph-footer: var(--ph-footer);
 
   /* Text hierarchy */
-  --color-ph-text: #e0e0e0;
-  --color-ph-text-secondary: #a0a0a0;
-  --color-ph-text-muted: #888888;
-  --color-ph-text-dim: #666666;
-  --color-ph-text-inverse: #000000;
+  --color-ph-text: var(--ph-text);
+  --color-ph-text-secondary: var(--ph-text-secondary);
+  --color-ph-text-muted: var(--ph-text-muted);
+  --color-ph-text-dim: var(--ph-text-dim);
+  --color-ph-text-inverse: var(--ph-text-inverse);
 
   /* Brand gold */
-  --color-ph-gold: #c9a227;
-  --color-ph-gold-hover: #d4af37;
-  --color-ph-gold-pressed: #a68523;
-  --color-ph-gold-light: #f4e5b8;
-  --color-ph-gold-dim: rgba(201, 162, 39, 0.2);
+  --color-ph-gold: var(--ph-gold);
+  --color-ph-gold-hover: var(--ph-gold-hover);
+  --color-ph-gold-pressed: var(--ph-gold-pressed);
+  --color-ph-gold-light: var(--ph-gold-light);
+  --color-ph-gold-dim: var(--ph-gold-dim);
 
   /* Borders */
-  --color-ph-border: #333333;
-  --color-ph-border-subtle: #222222;
-  --color-ph-border-medium: #444444;
+  --color-ph-border: var(--ph-border);
+  --color-ph-border-subtle: var(--ph-border-subtle);
+  --color-ph-border-medium: var(--ph-border-medium);
 
   /* Status */
-  --color-ph-success: #22c55e;
-  --color-ph-success-dim: rgba(34, 197, 94, 0.15);
-  --color-ph-error: #ef4444;
-  --color-ph-error-dim: rgba(239, 68, 68, 0.15);
-  --color-ph-warning: #eab308;
-  --color-ph-warning-dim: rgba(234, 179, 8, 0.15);
-  --color-ph-info: #3b82f6;
-  --color-ph-info-dim: rgba(59, 130, 246, 0.15);
+  --color-ph-success: var(--ph-success);
+  --color-ph-success-dim: var(--ph-success-dim);
+  --color-ph-error: var(--ph-error);
+  --color-ph-error-dim: var(--ph-error-dim);
+  --color-ph-warning: var(--ph-warning);
+  --color-ph-warning-dim: var(--ph-warning-dim);
+  --color-ph-info: var(--ph-info);
+  --color-ph-info-dim: var(--ph-info-dim);
 
   /* Poker table */
-  --color-ph-felt: #35654d;
-  --color-ph-felt-dark: #2d5542;
-  --color-ph-enter: #0d7c50;
-  --color-ph-enter-hover: #0a6340;
-  --color-ph-card-red: #dc2626;
+  --color-ph-felt: var(--ph-felt);
+  --color-ph-felt-dark: var(--ph-felt-dark);
+  --color-ph-enter: var(--ph-enter);
+  --color-ph-enter-hover: var(--ph-enter-hover);
+  --color-ph-card-red: var(--ph-card-red);
 
   /* Level tiers */
-  --color-ph-bronze: #cd7f32;
-  --color-ph-silver: #c0c0c0;
-  --color-ph-platinum: #e5e4e2;
-  --color-ph-diamond: #b9f2ff;
+  --color-ph-bronze: var(--ph-bronze);
+  --color-ph-silver: var(--ph-silver);
+  --color-ph-platinum: var(--ph-platinum);
+  --color-ph-diamond: var(--ph-diamond);
 }
 
 :root {
@@ -136,6 +136,44 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* PokerHub Light Mode */
+  --ph-deep: #e8e8e8;
+  --ph-bg: #f5f5f5;
+  --ph-header: #ffffff;
+  --ph-surface: #ffffff;
+  --ph-elevated: #f0f0f0;
+  --ph-footer: #f8f8f8;
+  --ph-text: #1a1a1a;
+  --ph-text-secondary: #555555;
+  --ph-text-muted: #888888;
+  --ph-text-dim: #aaaaaa;
+  --ph-text-inverse: #ffffff;
+  --ph-gold: #b8941e;
+  --ph-gold-hover: #c9a227;
+  --ph-gold-pressed: #9a7a18;
+  --ph-gold-light: #f4e5b8;
+  --ph-gold-dim: rgba(184, 148, 30, 0.12);
+  --ph-border: #e0e0e0;
+  --ph-border-subtle: #eeeeee;
+  --ph-border-medium: #cccccc;
+  --ph-success: #16a34a;
+  --ph-success-dim: rgba(22, 163, 74, 0.1);
+  --ph-error: #dc2626;
+  --ph-error-dim: rgba(220, 38, 38, 0.1);
+  --ph-warning: #ca8a04;
+  --ph-warning-dim: rgba(202, 138, 4, 0.1);
+  --ph-info: #2563eb;
+  --ph-info-dim: rgba(37, 99, 235, 0.1);
+  --ph-felt: #35654d;
+  --ph-felt-dark: #2d5542;
+  --ph-enter: #0d7c50;
+  --ph-enter-hover: #0a6340;
+  --ph-card-red: #dc2626;
+  --ph-bronze: #cd7f32;
+  --ph-silver: #c0c0c0;
+  --ph-platinum: #e5e4e2;
+  --ph-diamond: #b9f2ff;
 }
 
 .dark {
@@ -170,6 +208,44 @@
   --sidebar-accent-foreground: #e0e0e0;
   --sidebar-border: #333333;
   --sidebar-ring: #c9a227;
+
+  /* PokerHub Dark Mode */
+  --ph-deep: #0a0a0a;
+  --ph-bg: #121212;
+  --ph-header: #1a1a1a;
+  --ph-surface: #1e1e1e;
+  --ph-elevated: #2a2a2a;
+  --ph-footer: #0d0d0d;
+  --ph-text: #e0e0e0;
+  --ph-text-secondary: #a0a0a0;
+  --ph-text-muted: #888888;
+  --ph-text-dim: #666666;
+  --ph-text-inverse: #000000;
+  --ph-gold: #c9a227;
+  --ph-gold-hover: #d4af37;
+  --ph-gold-pressed: #a68523;
+  --ph-gold-light: #f4e5b8;
+  --ph-gold-dim: rgba(201, 162, 39, 0.2);
+  --ph-border: #333333;
+  --ph-border-subtle: #222222;
+  --ph-border-medium: #444444;
+  --ph-success: #22c55e;
+  --ph-success-dim: rgba(34, 197, 94, 0.15);
+  --ph-error: #ef4444;
+  --ph-error-dim: rgba(239, 68, 68, 0.15);
+  --ph-warning: #eab308;
+  --ph-warning-dim: rgba(234, 179, 8, 0.15);
+  --ph-info: #3b82f6;
+  --ph-info-dim: rgba(59, 130, 246, 0.15);
+  --ph-felt: #35654d;
+  --ph-felt-dark: #2d5542;
+  --ph-enter: #0d7c50;
+  --ph-enter-hover: #0a6340;
+  --ph-card-red: #dc2626;
+  --ph-bronze: #cd7f32;
+  --ph-silver: #c0c0c0;
+  --ph-platinum: #e5e4e2;
+  --ph-diamond: #b9f2ff;
 }
 
 @layer base {

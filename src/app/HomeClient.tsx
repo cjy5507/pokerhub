@@ -1,207 +1,274 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
-import { ThumbsUp, Eye, Users, Gift } from 'lucide-react';
+import { Newspaper, ChevronRight, Megaphone, Flame } from 'lucide-react';
 import { formatRelativeTime } from '@/lib/utils/time';
-
-interface PostData {
-  id: string;
-  title: string;
-  boardSlug: string;
-  author: string;
-  authorId: string;
-  level: number;
-  views: number;
-  likes: number;
-  createdAt: string;
-}
+import { SOURCE_COLORS } from '@/lib/rss/feeds';
+import type { NewsItem } from '@/lib/rss';
+import type { PostData } from './page';
 
 interface HomeClientProps {
-  recentPosts: PostData[];
+  newsItems: NewsItem[];
+  noticePosts: PostData[];
+  freePosts: PostData[];
   strategyPosts: PostData[];
   handPosts: PostData[];
   hotPosts: PostData[];
 }
 
-export function HomeClient({ recentPosts, strategyPosts, handPosts, hotPosts }: HomeClientProps) {
-  const [activeTab, setActiveTab] = useState<'recent' | 'strategy' | 'hands' | 'hot'>('recent');
+/* ──────────────────────────────────────────────
+ * Notice Banner
+ * ────────────────────────────────────────────── */
 
-  const tabContent = {
-    recent: recentPosts,
-    strategy: strategyPosts,
-    hands: handPosts,
-  };
+function NoticeBanner({ notices }: { notices: PostData[] }) {
+  if (notices.length === 0) return null;
 
-  const currentPosts = activeTab === 'hot' ? hotPosts : tabContent[activeTab as 'recent' | 'strategy' | 'hands'];
+  const latest = notices[0];
 
   return (
-    <div className="space-y-3 pb-20 lg:pb-8">
-      {/* Mobile Top Bar - Pill Buttons */}
-      <section className="lg:hidden">
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide px-4 -mx-4 pb-2">
-          <Link
-            href="/attendance"
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1e1e1e] border border-[#333] rounded-full text-xs text-[#a0a0a0] hover:text-[#e0e0e0] hover:border-[#666] transition-colors whitespace-nowrap"
-          >
-            <Gift className="w-3 h-3" />
-            <span>출석체크</span>
-          </Link>
-          <Link
-            href="/users/online"
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1e1e1e] border border-[#333] rounded-full text-xs text-[#a0a0a0] hover:text-[#e0e0e0] hover:border-[#666] transition-colors whitespace-nowrap"
-          >
-            <Users className="w-3 h-3" />
-            <span>접속자 142명</span>
-          </Link>
-          <Link
-            href="/poker"
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1e1e1e] border border-[#333] rounded-full text-xs text-[#a0a0a0] hover:text-[#e0e0e0] hover:border-[#666] transition-colors whitespace-nowrap"
-          >
-            <span>포인트포커</span>
-          </Link>
-        </div>
-      </section>
+    <Link
+      href={`/board/notice/${latest.id}`}
+      className="flex items-center gap-3 bg-ph-surface border border-ph-border rounded-lg px-4 py-2.5 hover:bg-ph-elevated transition-colors"
+    >
+      <span className="shrink-0 inline-flex items-center gap-1 rounded bg-ph-gold-dim px-2 py-0.5 text-xs font-bold text-ph-gold">
+        <Megaphone className="w-3 h-3" />
+        공지
+      </span>
+      <span className="flex-1 text-sm text-ph-text truncate">
+        {latest.title}
+      </span>
+      <ChevronRight className="w-4 h-4 shrink-0 text-ph-text-muted" />
+    </Link>
+  );
+}
 
+/* ──────────────────────────────────────────────
+ * News Hero Section
+ * ────────────────────────────────────────────── */
+
+function NewsHero({ items }: { items: NewsItem[] }) {
+  if (items.length === 0) return null;
+
+  const featured = items[0];
+  const rest = items.slice(1, 4);
+
+  return (
+    <section>
+      <SectionHeader title="뉴스" icon={<Newspaper className="w-4 h-4" />} href="/news" />
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mt-2">
+        {/* Featured Card */}
+        <a
+          href={featured.link}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="lg:col-span-2 bg-ph-surface border border-ph-border rounded-lg p-4 hover:bg-ph-elevated transition-colors group"
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <SourceBadge source={featured.source} />
+            <span className="text-xs text-ph-text-muted">
+              {formatRelativeTime(featured.pubDate)}
+            </span>
+          </div>
+          <h3 className="text-base font-semibold text-ph-text group-hover:text-ph-gold transition-colors line-clamp-2 mb-1.5">
+            {featured.titleKo}
+          </h3>
+          <p className="text-sm text-ph-text-secondary line-clamp-2">
+            {featured.descriptionKo}
+          </p>
+        </a>
+
+        {/* Side list */}
+        <div className="flex flex-col gap-2">
+          {rest.map((item) => (
+            <a
+              key={item.id}
+              href={item.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-ph-surface border border-ph-border rounded-lg px-3 py-2.5 hover:bg-ph-elevated transition-colors group flex-1"
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <SourceBadge source={item.source} />
+                <span className="text-xs text-ph-text-muted">
+                  {formatRelativeTime(item.pubDate)}
+                </span>
+              </div>
+              <h4 className="text-sm text-ph-text group-hover:text-ph-gold transition-colors line-clamp-2">
+                {item.titleKo}
+              </h4>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function SourceBadge({ source }: { source: string }) {
+  const color = SOURCE_COLORS[source] || '#888';
+  return (
+    <span
+      className="inline-block text-[10px] font-semibold px-1.5 py-0.5 rounded"
+      style={{ color, backgroundColor: `${color}18` }}
+    >
+      {source}
+    </span>
+  );
+}
+
+/* ──────────────────────────────────────────────
+ * Board Preview Section
+ * ────────────────────────────────────────────── */
+
+function BoardPreview({
+  title,
+  posts,
+  href,
+  icon,
+}: {
+  title: string;
+  posts: PostData[];
+  href: string;
+  icon?: React.ReactNode;
+}) {
+  return (
+    <div className="bg-ph-surface border border-ph-border rounded-lg overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between px-3 py-2 border-b border-ph-border">
+        <div className="flex items-center gap-2">
+          {icon}
+          <h2 className="text-sm font-bold text-ph-text">{title}</h2>
+          {posts.length > 0 && (
+            <span className="text-[10px] font-medium text-ph-gold bg-ph-gold-dim rounded-full px-1.5 py-0.5">
+              {posts.length}
+            </span>
+          )}
+        </div>
+        <Link
+          href={href}
+          className="flex items-center gap-0.5 text-xs text-ph-text-muted hover:text-ph-gold transition-colors"
+        >
+          더 보기
+          <ChevronRight className="w-3 h-3" />
+        </Link>
+      </div>
+
+      {/* Post rows */}
+      <div className="divide-y divide-ph-border-subtle">
+        {posts.length === 0 && (
+          <div className="px-3 py-6 text-center text-sm text-ph-text-muted">
+            아직 게시글이 없습니다
+          </div>
+        )}
+        {posts.map((post) => (
+          <Link
+            key={post.id}
+            href={`/board/${post.boardSlug}/${post.id}`}
+            className="flex items-center gap-2 px-3 py-1.5 hover:bg-ph-elevated transition-colors"
+          >
+            {/* Title + comment count */}
+            <span className="flex-1 text-sm text-ph-text truncate">
+              {post.title}
+              {post.commentCount > 0 && (
+                <span className="ml-1 text-xs text-ph-gold font-medium">
+                  [{post.commentCount}]
+                </span>
+              )}
+            </span>
+
+            {/* Author */}
+            <span className="hidden sm:inline-block shrink-0 text-xs text-ph-text-muted w-16 text-right truncate">
+              {post.author}
+            </span>
+
+            {/* Date */}
+            <span className="shrink-0 text-xs text-ph-text-dim w-14 text-right">
+              {formatRelativeTime(post.createdAt)}
+            </span>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ──────────────────────────────────────────────
+ * Section Header (reusable)
+ * ────────────────────────────────────────────── */
+
+function SectionHeader({
+  title,
+  icon,
+  href,
+}: {
+  title: string;
+  icon?: React.ReactNode;
+  href?: string;
+}) {
+  return (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        {icon && <span className="text-ph-gold">{icon}</span>}
+        <h2 className="text-sm font-bold text-ph-text">{title}</h2>
+      </div>
+      {href && (
+        <Link
+          href={href}
+          className="flex items-center gap-0.5 text-xs text-ph-text-muted hover:text-ph-gold transition-colors"
+        >
+          더 보기
+          <ChevronRight className="w-3 h-3" />
+        </Link>
+      )}
+    </div>
+  );
+}
+
+/* ──────────────────────────────────────────────
+ * Main Component
+ * ────────────────────────────────────────────── */
+
+export function HomeClient({
+  newsItems,
+  noticePosts,
+  freePosts,
+  strategyPosts,
+  handPosts,
+  hotPosts,
+}: HomeClientProps) {
+  return (
+    <div className="space-y-4 pb-20 lg:pb-8">
       {/* Notice Banner */}
-      <section className="bg-[#1e1e1e] border border-[#333] rounded px-4 py-2">
-        <div className="flex items-center gap-3">
-          <span className="text-[#c9a227] font-semibold text-xs">공지</span>
-          <Link
-            href="/board/notice"
-            className="flex-1 text-[#e0e0e0] hover:text-[#c9a227] transition-colors truncate text-sm"
-          >
-            2024 PokerHub 토너먼트 시즌 오픈 안내
-          </Link>
-        </div>
-      </section>
+      <NoticeBanner notices={noticePosts} />
 
-      {/* Tab Bar */}
-      <section>
-        <div className="flex gap-1 overflow-x-auto scrollbar-hide border-b border-[#333] -mx-4 px-4">
-          <button
-            onClick={() => setActiveTab('recent')}
-            className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
-              activeTab === 'recent'
-                ? 'text-[#c9a227] border-[#c9a227]'
-                : 'text-[#a0a0a0] border-transparent'
-            }`}
-          >
-            자유게시판
-          </button>
-          <button
-            onClick={() => setActiveTab('strategy')}
-            className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
-              activeTab === 'strategy'
-                ? 'text-[#c9a227] border-[#c9a227]'
-                : 'text-[#a0a0a0] border-transparent'
-            }`}
-          >
-            전략게시판
-          </button>
-          <button
-            onClick={() => setActiveTab('hands')}
-            className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
-              activeTab === 'hands'
-                ? 'text-[#c9a227] border-[#c9a227]'
-                : 'text-[#a0a0a0] border-transparent'
-            }`}
-          >
-            핸드공유
-          </button>
-          <button
-            onClick={() => setActiveTab('hot')}
-            className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
-              activeTab === 'hot'
-                ? 'text-[#c9a227] border-[#c9a227]'
-                : 'text-[#a0a0a0] border-transparent'
-            }`}
-          >
-            HOT
-          </button>
-        </div>
+      {/* News Hero */}
+      <NewsHero items={newsItems} />
 
-        {/* Post Feed */}
-        <div className="bg-[#1e1e1e] border border-[#333] border-t-0 rounded-b">
-          {/* Desktop Table Header */}
-          <div className="hidden lg:grid grid-cols-12 gap-4 px-4 py-2.5 border-b border-[#333] text-xs font-medium text-[#a0a0a0]">
-            <div className="col-span-6">제목</div>
-            <div className="col-span-2">작성자</div>
-            <div className="col-span-1 text-center">조회</div>
-            <div className="col-span-1 text-center">좋아요</div>
-            <div className="col-span-2 text-center">작성일</div>
-          </div>
-
-          {/* Mobile Card Layout / Desktop Table Layout */}
-          <div className="divide-y divide-[#333]">
-            {currentPosts.map((post) => (
-              <Link
-                key={post.id}
-                href={`/board/${post.boardSlug}/${post.id}`}
-                className="block lg:grid lg:grid-cols-12 lg:gap-4 px-4 py-3 hover:bg-[#2a2a2a] transition-colors"
-              >
-                {/* Mobile: Card Layout */}
-                <div className="lg:hidden space-y-2">
-                  {/* Title */}
-                  <h3 className="text-sm font-medium text-[#e0e0e0] line-clamp-2 leading-relaxed">
-                    {post.title}
-                  </h3>
-
-                  {/* Meta Row */}
-                  <div className="flex items-center justify-between text-xs text-[#888]">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[#a0a0a0]">{post.author}</span>
-                      <span className="text-[10px]">Lv.{post.level}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-1">
-                        <Eye className="w-3 h-3" />
-                        <span>{post.views}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <ThumbsUp className="w-3 h-3" />
-                        <span>{post.likes}</span>
-                      </div>
-                      <span>{formatRelativeTime(post.createdAt)}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Desktop: Table Layout */}
-                <div className="hidden lg:contents">
-                  {/* Title */}
-                  <div className="col-span-6 flex items-center">
-                    <h3 className="text-sm text-[#e0e0e0] hover:text-[#c9a227] transition-colors truncate">
-                      {post.title}
-                    </h3>
-                  </div>
-
-                  {/* Author */}
-                  <div className="col-span-2 flex items-center gap-1.5">
-                    <span className="text-xs text-[#a0a0a0]">{post.author}</span>
-                    <span className="text-[10px] text-[#888]">Lv.{post.level}</span>
-                  </div>
-
-                  {/* Views */}
-                  <div className="col-span-1 flex items-center justify-center">
-                    <span className="text-xs text-[#888]">{post.views}</span>
-                  </div>
-
-                  {/* Likes */}
-                  <div className="col-span-1 flex items-center justify-center">
-                    <span className="text-xs text-[#888]">{post.likes}</span>
-                  </div>
-
-                  {/* Time */}
-                  <div className="col-span-2 flex items-center justify-center">
-                    <span className="text-xs text-[#888]">{formatRelativeTime(post.createdAt)}</span>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Board Previews - 2 col grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <BoardPreview
+          title="자유게시판"
+          posts={freePosts}
+          href="/board/free"
+        />
+        <BoardPreview
+          title="전략게시판"
+          posts={strategyPosts}
+          href="/board/strategy"
+        />
+        <BoardPreview
+          title="핸드공유"
+          posts={handPosts}
+          href="/board/hands"
+        />
+        <BoardPreview
+          title="HOT 인기글"
+          posts={hotPosts}
+          href="/board/free"
+          icon={<Flame className="w-4 h-4 text-ph-error" />}
+        />
+      </div>
     </div>
   );
 }

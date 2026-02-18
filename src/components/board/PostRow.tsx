@@ -45,28 +45,26 @@ export function PostRow({
         href={`/board/${boardSlug}/${postId}`}
         className={cn(
           'hidden lg:grid lg:grid-cols-[auto_1fr_150px_100px_80px_80px] gap-4 items-center',
-          'px-4 py-3 border-b border-[#333] hover:bg-[#2a2a2a] transition-colors',
+          'px-4 py-2 border-b border-ph-border hover:bg-ph-elevated transition-colors',
           className
         )}
       >
         {/* Pinned icon */}
         <div className="w-6 flex items-center justify-center">
-          {isPinned && <Pin className="w-4 h-4 text-[#c9a227]" />}
+          {isPinned && <Pin className="w-4 h-4 text-ph-gold" />}
         </div>
 
         {/* Title + comment count */}
-        <div className="flex items-center gap-2 min-w-0">
+        <div className="min-w-0">
           <h3 className={cn(
-            'font-medium truncate',
-            isVisited ? 'text-[#888]' : 'text-[#e0e0e0]'
+            'text-[13px] font-medium truncate',
+            isVisited ? 'text-ph-text-muted' : 'text-ph-text'
           )}>
             {title}
+            {commentCount > 0 && (
+              <span className="text-ph-gold text-xs ml-1 font-medium">[{commentCount}]</span>
+            )}
           </h3>
-          {commentCount > 0 && (
-            <span className="flex-shrink-0 text-xs font-bold text-[#3b82f6]">
-              [{commentCount}]
-            </span>
-          )}
         </div>
 
         {/* Author */}
@@ -80,17 +78,17 @@ export function PostRow({
         </div>
 
         {/* Date */}
-        <div className="text-sm text-[#a0a0a0]">{timeAgo}</div>
+        <div className="text-xs text-ph-text-muted">{timeAgo}</div>
 
         {/* Views */}
-        <div className="flex items-center gap-1 text-sm text-[#a0a0a0]">
-          <Eye className="w-4 h-4" />
+        <div className="flex items-center gap-1 text-xs text-ph-text-muted">
+          <Eye className="w-3.5 h-3.5" />
           <span>{formatNumber(views)}</span>
         </div>
 
         {/* Likes */}
-        <div className="flex items-center gap-1 text-sm text-[#a0a0a0]">
-          <Heart className="w-4 h-4" />
+        <div className="flex items-center gap-1 text-xs text-ph-text-muted">
+          <Heart className="w-3.5 h-3.5" />
           <span>{formatNumber(likes)}</span>
         </div>
       </Link>
@@ -99,22 +97,22 @@ export function PostRow({
       <Link
         href={`/board/${boardSlug}/${postId}`}
         className={cn(
-          'block lg:hidden bg-[#1e1e1e] rounded-lg p-4 hover:bg-[#2a2a2a] transition-colors',
+          'block lg:hidden bg-ph-surface rounded-lg p-4 hover:bg-ph-elevated transition-colors',
           className
         )}
       >
         {/* Title */}
         <div className="flex items-start gap-2 mb-2">
           {isPinned && (
-            <Pin className="w-4 h-4 text-[#c9a227] flex-shrink-0 mt-0.5" />
+            <Pin className="w-4 h-4 text-ph-gold flex-shrink-0 mt-0.5" />
           )}
           <h3 className={cn(
             'font-semibold text-base line-clamp-2',
-            isVisited ? 'text-[#888]' : 'text-[#e0e0e0]'
+            isVisited ? 'text-ph-text-muted' : 'text-ph-text'
           )}>
             {title}
             {commentCount > 0 && (
-              <span className="ml-1.5 text-xs font-bold text-[#3b82f6]">
+              <span className="ml-1.5 text-xs font-bold text-ph-gold">
                 [{commentCount}]
               </span>
             )}
@@ -130,12 +128,12 @@ export function PostRow({
             compact
             asSpan
           />
-          <span className="text-[#888]">·</span>
-          <span className="text-[#888]">{timeAgo}</span>
+          <span className="text-ph-text-muted">·</span>
+          <span className="text-ph-text-muted">{timeAgo}</span>
         </div>
 
         {/* Stats */}
-        <div className="flex items-center gap-4 text-sm text-[#a0a0a0]">
+        <div className="flex items-center gap-4 text-sm text-ph-text-muted">
           <div className="flex items-center gap-1">
             <Eye className="w-4 h-4" />
             <span>{formatNumber(views)}</span>

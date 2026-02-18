@@ -9,6 +9,7 @@ import { Toaster } from "sonner";
 import { ChatProvider } from "@/components/chat/ChatProvider";
 import { MobileChatDrawer } from "@/components/chat/MobileChatDrawer";
 import { SessionProvider } from "@/components/providers/SessionProvider";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { getSession } from "@/lib/auth/session";
 
 const inter = Inter({
@@ -29,31 +30,45 @@ export default async function RootLayout({
   const session = await getSession();
 
   return (
-    <html lang="ko" className="dark">
-      <body className={`${inter.variable} antialiased bg-[#121212] text-[#e0e0e0] min-h-screen flex flex-col`}>
+    <html lang="ko" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            (function() {
+              var t = localStorage.getItem('pokerhub-theme');
+              if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+              }
+            })();
+          `,
+        }} />
+      </head>
+      <body className={`${inter.variable} antialiased bg-ph-bg text-ph-text min-h-screen flex flex-col`}>
         <SessionProvider session={session}>
-          <ChatProvider>
-            <Header />
+          <ThemeProvider>
+            <ChatProvider>
+              <Header />
 
-            <div className="flex-1 mx-auto w-full max-w-[1560px] px-4 py-6">
-              <div className="flex gap-6">
-                {/* Main Content */}
-                <main className="flex-1 min-w-0">
-                  {children}
-                </main>
+              <div className="flex-1 mx-auto w-full max-w-[1560px] px-4 py-6">
+                <div className="flex gap-6">
+                  {/* Main Content */}
+                  <main className="flex-1 min-w-0">
+                    {children}
+                  </main>
 
-                {/* Sidebar - Hidden on mobile */}
-                <div className="hidden lg:block w-[300px] flex-shrink-0">
-                  <SidebarServer />
+                  {/* Sidebar - Hidden on mobile */}
+                  <div className="hidden lg:block w-[300px] flex-shrink-0">
+                    <SidebarServer />
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <Footer />
-            <MobileBottomNav />
-            <MobileChatDrawer />
-            <Toaster position="top-center" theme="dark" />
-          </ChatProvider>
+              <Footer />
+              <MobileBottomNav />
+              <MobileChatDrawer />
+              <Toaster position="top-center" theme="system" />
+            </ChatProvider>
+          </ThemeProvider>
         </SessionProvider>
       </body>
     </html>

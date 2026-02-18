@@ -68,7 +68,7 @@ export function HomeClient({ recentPosts, strategyPosts, handPosts, hotPosts }: 
         <div className="flex items-center gap-3">
           <span className="text-[#c9a227] font-semibold text-xs">공지</span>
           <Link
-            href="/notices/1"
+            href="/board/notice"
             className="flex-1 text-[#e0e0e0] hover:text-[#c9a227] transition-colors truncate text-sm"
           >
             2024 PokerHub 토너먼트 시즌 오픈 안내

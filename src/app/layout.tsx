@@ -94,9 +94,11 @@ export default async function RootLayout({
                     {children}
                   </main>
 
-                  {/* Sidebar - Hidden on mobile */}
+                  {/* Sidebar - Hidden on mobile, sticky */}
                   <div className="hidden lg:block w-[300px] flex-shrink-0">
-                    <SidebarServer />
+                    <div className="sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto scrollbar-thin">
+                      <SidebarServer />
+                    </div>
                   </div>
                 </div>
               </div>

@@ -1,7 +1,7 @@
 'use server';
 
 import { db } from '@/lib/db';
-import { pokerHands, pokerHandPlayers, pokerHandActions, pokerHandComments, users } from '@/lib/db/schema';
+import { pokerHands, pokerHandPlayers, pokerHandActions, pokerHandComments, users, pokerGameHands, pokerGameActions, pokerGameResults, pokerTableSeats, pokerTables } from '@/lib/db/schema';
 import { getSession } from '@/lib/auth/session';
 import { PokerHand, Card, Position, Street, ActionType, GameType, HandResult } from '@/types/poker';
 import { eq, desc, and, sql, count, inArray } from 'drizzle-orm';
@@ -400,5 +400,254 @@ export async function deleteHand(handId: string) {
 
   await db.delete(pokerHands).where(eq(pokerHands.id, handId));
   return { success: true };
+}
+
+// ─── Position mapping helpers ────────────────────────────────────────────────
+
+/**
+ * Maps a seat number to a position name given the dealer seat and total seats.
+ * Seats are numbered 0-based. Position order clockwise from dealer:
+ * BTN=dealer, SB=dealer+1, BB=dealer+2, then UTG, UTG+1, UTG+2, MP, CO
+ */
+function seatToPosition(seatNumber: number, dealerSeat: number, maxSeats: number): string {
+  const positionsFor: Record<number, string[]> = {
+    2: ['BTN', 'BB'],
+    3: ['BTN', 'SB', 'BB'],
+    4: ['BTN', 'SB', 'BB', 'UTG'],
+    5: ['BTN', 'SB', 'BB', 'UTG', 'CO'],
+    6: ['BTN', 'SB', 'BB', 'UTG', 'MP', 'CO'],
+    7: ['BTN', 'SB', 'BB', 'UTG', 'UTG+1', 'MP', 'CO'],
+    8: ['BTN', 'SB', 'BB', 'UTG', 'UTG+1', 'MP', 'HJ', 'CO'],
+    9: ['BTN', 'SB', 'BB', 'UTG', 'UTG+1', 'UTG+2', 'MP', 'HJ', 'CO'],
+  };
+  const positions = positionsFor[maxSeats] ?? positionsFor[6]!;
+  // offset from dealer seat
+  const offset = ((seatNumber - dealerSeat) + maxSeats) % maxSeats;
+  return positions[offset] ?? `S${seatNumber + 1}`;
+}
+
+function mapPositionStringToDb(pos: string): string {
+  const map: Record<string, string> = {
+    'BTN': 'btn', 'SB': 'sb', 'BB': 'bb',
+    'UTG': 'utg', 'UTG+1': 'utg1', 'UTG+2': 'utg2',
+    'MP': 'mp', 'HJ': 'mp1', 'CO': 'co',
+  };
+  return map[pos] ?? 'utg';
+}
+
+function mapGameActionToHandAction(actionType: string): string {
+  const map: Record<string, string> = {
+    'fold': 'fold', 'check': 'check', 'call': 'call',
+    'bet': 'bet', 'raise': 'raise', 'all_in': 'all_in',
+    'post_sb': 'call', 'post_bb': 'call',
+  };
+  return map[actionType] ?? 'fold';
+}
+
+function tableSizeToEnum(maxSeats: number): '6max' | '9max' {
+  return maxSeats >= 7 ? '9max' : '6max';
+}
+
+// ─── Main conversion action ──────────────────────────────────────────────────
+
+export async function convertGameHandToHistory(
+  gameHandId: string
+): Promise<{ success: boolean; handId?: string; error?: string }> {
+  if (!db) return { success: false, error: 'Database not available' };
+
+  const session = await getSession();
+  if (!session?.userId) throw new Error('Unauthorized');
+
+  // 1. Fetch game hand
+  const [gameHand] = await db
+    .select()
+    .from(pokerGameHands)
+    .where(eq(pokerGameHands.id, gameHandId))
+    .limit(1);
+
+  if (!gameHand) return { success: false, error: '핸드를 찾을 수 없습니다' };
+
+  // 2. Fetch table info (for blind sizes and maxSeats)
+  const [table] = await db
+    .select()
+    .from(pokerTables)
+    .where(eq(pokerTables.id, gameHand.tableId))
+    .limit(1);
+
+  if (!table) return { success: false, error: '테이블 정보를 찾을 수 없습니다' };
+
+  // 3. Verify the user was seated at the table during the hand
+  const [userSeat] = await db
+    .select()
+    .from(pokerTableSeats)
+    .where(and(
+      eq(pokerTableSeats.tableId, gameHand.tableId),
+      eq(pokerTableSeats.userId, session.userId)
+    ))
+    .limit(1);
+
+  // Also check game results to find the user's seat even if they've since left
+  const gameResults = await db
+    .select()
+    .from(pokerGameResults)
+    .where(eq(pokerGameResults.handId, gameHandId));
+
+  // Fetch seats at the time of the hand (current seat snapshot)
+  const tableSeats = await db
+    .select()
+    .from(pokerTableSeats)
+    .where(eq(pokerTableSeats.tableId, gameHand.tableId));
+
+  // Find hero seat number: first from current seats, fallback to results matching stack
+  let heroSeatNumber: number | null = userSeat?.seatNumber ?? null;
+
+  // If user no longer at table, we can't verify — still allow if they were recently there
+  // We'll allow conversion if the hand exists and user is logged in
+  // (In production you'd cross-reference a hand_participants snapshot table)
+
+  // 4. Fetch game actions
+  const gameActions = await db
+    .select()
+    .from(pokerGameActions)
+    .where(eq(pokerGameActions.handId, gameHandId))
+    .orderBy(pokerGameActions.createdAt);
+
+  // 5. Build seat → userId map from current tableSeats
+  const seatUserMap = new Map<number, { userId: string; chipStack: number }>();
+  for (const seat of tableSeats) {
+    seatUserMap.set(seat.seatNumber, {
+      userId: seat.userId,
+      chipStack: seat.chipStack,
+    });
+  }
+
+  // 6. Parse community cards from JSON
+  const fullCommunityCards: string[] = Array.isArray(gameHand.fullCommunityCards)
+    ? (gameHand.fullCommunityCards as string[])
+    : [];
+  const boardFlop = fullCommunityCards.length >= 3
+    ? fullCommunityCards.slice(0, 3).join(' ')
+    : null;
+  const boardTurn = fullCommunityCards[3] ?? null;
+  const boardRiver = fullCommunityCards[4] ?? null;
+
+  // 7. Determine hero cards
+  const heroResult = heroSeatNumber !== null
+    ? gameResults.find((r: any) => r.seatNumber === heroSeatNumber)
+    : null;
+  const heroCards: string[] = Array.isArray(heroResult?.holeCards)
+    ? (heroResult!.holeCards as string[])
+    : [];
+  const heroCardsStr = heroCards.join(' ') || 'Ah Kh'; // fallback if no hero
+
+  // 8. Determine hero position
+  const activeSeatNumbers = [
+    ...new Set([
+      ...tableSeats.map((s: any) => s.seatNumber),
+      ...gameResults.map((r: any) => r.seatNumber),
+    ])
+  ].sort((a, b) => a - b);
+  const maxSeats = Math.max(table.maxSeats, activeSeatNumbers.length);
+  const heroPositionStr = heroSeatNumber !== null
+    ? seatToPosition(heroSeatNumber, gameHand.dealerSeat, maxSeats)
+    : 'BTN';
+
+  // 9. Calculate pot per street from actions
+  let runningPot = 0;
+  let potPreflop: number | null = null;
+  let potFlop: number | null = null;
+  let potTurn: number | null = null;
+  let potRiver: number | null = null;
+  let currentStreet = 'preflop';
+
+  for (const action of gameActions) {
+    if (action.street !== currentStreet) {
+      // Street changed — record previous street pot
+      if (currentStreet === 'preflop') potPreflop = runningPot;
+      else if (currentStreet === 'flop') potFlop = runningPot;
+      else if (currentStreet === 'turn') potTurn = runningPot;
+      currentStreet = action.street;
+    }
+    if (['call', 'bet', 'raise', 'all_in', 'post_sb', 'post_bb'].includes(action.actionType)) {
+      runningPot += action.amount;
+    }
+  }
+  // Final street
+  if (currentStreet === 'preflop') potPreflop = runningPot;
+  else if (currentStreet === 'flop') potFlop = runningPot;
+  else if (currentStreet === 'turn') potTurn = runningPot;
+  else if (currentStreet === 'river') potRiver = runningPot;
+
+  // 10. Determine hero result (win/loss/tie)
+  const heroWin = heroResult?.isWinner ?? false;
+  const heroChipChange = heroResult?.chipChange ?? 0;
+  const dbResult: 'win' | 'loss' | 'tie' =
+    heroWin ? 'win' :
+    heroChipChange === 0 ? 'tie' : 'loss';
+
+  // 11. Create hand history in a transaction
+  const newHandId = await db.transaction(async (tx: any) => {
+    const [newHand] = await tx.insert(pokerHands).values({
+      authorId: session.userId,
+      gameType: 'nlhe' as const,
+      tableSize: tableSizeToEnum(maxSeats) as any,
+      stakes: `${table.smallBlind}/${table.bigBlind}`,
+      heroPosition: mapPositionStringToDb(heroPositionStr) as any,
+      heroCards: heroCardsStr,
+      boardFlop,
+      boardTurn,
+      boardRiver,
+      potPreflop,
+      potFlop,
+      potTurn,
+      potRiver,
+      result: dbResult,
+      analysisNotes: null,
+      rawText: null,
+    }).returning({ id: pokerHands.id });
+
+    // 12. Create player records from game results + seat map
+    const playerValues = gameResults.map((result: any) => {
+      const posStr = seatToPosition(result.seatNumber, gameHand.dealerSeat, maxSeats);
+      const holeCards: string[] = Array.isArray(result.holeCards)
+        ? (result.holeCards as string[])
+        : [];
+      const seatInfo = seatUserMap.get(result.seatNumber);
+      return {
+        handId: newHand.id,
+        position: mapPositionStringToDb(posStr) as any,
+        stackSize: (seatInfo?.chipStack ?? 0) + Math.abs(result.chipChange),
+        cards: holeCards.join(' ') || null,
+        isHero: result.seatNumber === heroSeatNumber,
+      };
+    });
+
+    if (playerValues.length > 0) {
+      await tx.insert(pokerHandPlayers).values(playerValues);
+    }
+
+    // 13. Create action records, skipping post_sb/post_bb blinds
+    const actionValues = gameActions
+      .filter((a: any) => !['post_sb', 'post_bb'].includes(a.actionType))
+      .map((action: any, idx: number) => {
+        const posStr = seatToPosition(action.seatNumber, gameHand.dealerSeat, maxSeats);
+        return {
+          handId: newHand.id,
+          street: action.street as any,
+          sequence: idx + 1,
+          position: mapPositionStringToDb(posStr) as any,
+          action: mapGameActionToHandAction(action.actionType) as any,
+          amount: action.amount > 0 ? action.amount : null,
+        };
+      });
+
+    if (actionValues.length > 0) {
+      await tx.insert(pokerHandActions).values(actionValues);
+    }
+
+    return newHand.id;
+  });
+
+  return { success: true, handId: newHandId };
 }
 

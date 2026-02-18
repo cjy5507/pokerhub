@@ -626,3 +626,63 @@ export const pokerGameResults = pgTable('poker_game_results', {
 }, (table) => ({
   handIdIdx: index('poker_game_results_hand_id_idx').on(table.handId),
 }));
+
+// ==================== NEWS DOMAIN ====================
+
+// User bookmarks for external news articles (RSS items)
+export const newsBookmarks = pgTable('news_bookmarks', {
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  newsId: varchar('news_id', { length: 500 }).notNull(), // RSS item ID or link used as stable identifier
+  title: varchar('title', { length: 500 }).notNull(),
+  link: varchar('link', { length: 1000 }).notNull(),
+  source: varchar('source', { length: 100 }).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  pk: primaryKey({ columns: [table.userId, table.newsId] }),
+  userIdIdx: index('news_bookmarks_user_id_idx').on(table.userId),
+}));
+
+// ==================== MARKET / GROUP BUY DOMAIN ====================
+
+export const marketStatusEnum = pgEnum('market_status', ['open', 'funded', 'closed', 'cancelled']);
+export const marketCategoryEnum = pgEnum('market_category', ['poker_goods', 'digital', 'group_buy', 'event']);
+
+export const marketItems = pgTable('market_items', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  sellerId: uuid('seller_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  title: varchar('title', { length: 200 }).notNull(),
+  description: text('description').notNull(),
+  descriptionHtml: text('description_html'),
+  category: marketCategoryEnum('category').notNull(),
+  price: integer('price').notNull(), // in points
+  originalPrice: integer('original_price'), // for showing discount
+  imageUrl: varchar('image_url', { length: 500 }),
+  status: marketStatusEnum('status').default('open').notNull(),
+  // Group buy fields
+  isGroupBuy: boolean('is_group_buy').default(false).notNull(),
+  targetCount: integer('target_count'), // min participants for group buy
+  currentCount: integer('current_count').default(0).notNull(),
+  deadline: timestamp('deadline', { withTimezone: true }),
+  // Stats
+  viewCount: integer('view_count').default(0).notNull(),
+  likeCount: integer('like_count').default(0).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  sellerIdIdx: index('market_items_seller_id_idx').on(table.sellerId),
+  statusIdx: index('market_items_status_idx').on(table.status),
+  categoryIdx: index('market_items_category_idx').on(table.category),
+}));
+
+export const marketOrders = pgTable('market_orders', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  itemId: uuid('item_id').notNull().references(() => marketItems.id, { onDelete: 'cascade' }),
+  buyerId: uuid('buyer_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  quantity: integer('quantity').default(1).notNull(),
+  totalPrice: integer('total_price').notNull(),
+  status: varchar('status', { length: 20 }).default('pending').notNull(), // pending, completed, cancelled, refunded
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  itemIdIdx: index('market_orders_item_id_idx').on(table.itemId),
+  buyerIdIdx: index('market_orders_buyer_id_idx').on(table.buyerId),
+}));

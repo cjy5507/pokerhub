@@ -5,9 +5,11 @@ import { cn } from '@/lib/utils';
 import { CardRenderer, parseCard } from '@/components/poker/CardRenderer';
 import type { GameState, SeatState, Card, PlayerAction } from '@/lib/poker/types';
 import { joinTable, leaveTable, performAction } from '../actions';
-import { LogOut, MessageSquare, ChevronDown, Volume2, VolumeX, ArrowLeft, Users, Minus, Plus, Check } from 'lucide-react';
+import { convertGameHandToHistory } from '@/app/(poker)/actions';
+import { LogOut, MessageSquare, ChevronDown, Volume2, VolumeX, ArrowLeft, Users, Minus, Plus, Check, BookmarkPlus, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { usePokerSounds } from '@/lib/poker/sounds';
+import { useRouter } from 'next/navigation';
 
 // ─── Types ────────────────────────────────────────────────────────
 
@@ -481,11 +483,43 @@ function HandHistorySheet({
   isOpen,
   onClose,
   actionLog,
+  lastCompletedHandId,
+  isSeated,
 }: {
   isOpen: boolean;
   onClose: () => void;
   actionLog: ActionLogEntry[];
+  lastCompletedHandId: string | null;
+  isSeated: boolean;
 }) {
+  const router = useRouter();
+  const [isSaving, setIsSaving] = useState(false);
+  const [savedHandId, setSavedHandId] = useState<string | null>(null);
+
+  // Reset saved state when a new hand completes
+  useEffect(() => {
+    setSavedHandId(null);
+  }, [lastCompletedHandId]);
+
+  async function handleSaveHand() {
+    if (!lastCompletedHandId || isSaving) return;
+    setIsSaving(true);
+    try {
+      const result = await convertGameHandToHistory(lastCompletedHandId);
+      if (result.success && result.handId) {
+        setSavedHandId(result.handId);
+        onClose();
+        router.push(`/hands/${result.handId}`);
+      } else {
+        alert(result.error ?? '저장에 실패했습니다');
+      }
+    } catch (err: any) {
+      alert(err.message ?? '저장에 실패했습니다');
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
   return (
     <div
       className={cn(
@@ -527,6 +561,30 @@ function HandHistorySheet({
           </button>
         </div>
 
+        {/* Save hand button — shown when a hand has just completed and user was seated */}
+        {isSeated && lastCompletedHandId && !savedHandId && (
+          <div className="px-4 py-3 border-b border-white/8">
+            <button
+              onClick={handleSaveHand}
+              disabled={isSaving}
+              className={cn(
+                'w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all active:scale-[0.97]',
+                'bg-ph-gold hover:opacity-90 text-ph-text-inverse',
+                isSaving && 'opacity-60 cursor-not-allowed'
+              )}
+            >
+              {isSaving ? (
+                <><Loader2 className="w-4 h-4 animate-spin" />저장 중...</>
+              ) : (
+                <><BookmarkPlus className="w-4 h-4" />핸드 저장하기</>
+              )}
+            </button>
+            <p className="text-[10px] text-white/30 text-center mt-1.5">
+              마지막 핸드를 핸드 히스토리로 저장합니다
+            </p>
+          </div>
+        )}
+
         <div className="flex-1 overflow-y-auto p-4 space-y-1 scrollbar-hide">
           {actionLog.length === 0 ? (
             <p className="text-xs text-white/25 text-center mt-8">아직 액션이 없습니다</p>
@@ -554,6 +612,7 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
   const [buyInModal, setBuyInModal] = useState<number | null>(null);
   const [isLeaving, setIsLeaving] = useState(false);
   const [actionPending, setActionPending] = useState(false);
+  const [lastCompletedHandId, setLastCompletedHandId] = useState<string | null>(null);
   const [raiseAmount, setRaiseAmount] = useState(0);
   const [showRaiseSlider, setShowRaiseSlider] = useState(false);
   const [betInputEditing, setBetInputEditing] = useState(false);
@@ -716,7 +775,16 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
               prevCommunityCountRef.current = 0;
               prevCCLengthForAnimRef.current = 0;
               newCardStartIndex.current = 0;
+              // If we had a previous hand, it just completed
+              if (prevHandIdRef.current) {
+                setLastCompletedHandId(prevHandIdRef.current);
+              }
               prevHandIdRef.current = hand.id;
+            }
+            // Also catch hand completion when hand goes to null
+            if (!hand?.id && prevHandIdRef.current) {
+              setLastCompletedHandId(prevHandIdRef.current);
+              prevHandIdRef.current = null;
             }
 
             // Detect new community cards
@@ -1538,6 +1606,8 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
         isOpen={showHistory}
         onClose={() => setShowHistory(false)}
         actionLog={actionLog}
+        lastCompletedHandId={lastCompletedHandId}
+        isSeated={isSeated}
       />
     </div>
   );

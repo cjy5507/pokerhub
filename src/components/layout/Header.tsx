@@ -32,6 +32,7 @@ const navGroups: NavGroup[] = [
     items: [
       { label: '자유게시판', href: '/board/free' },
       { label: '전략게시판', href: '/board/strategy' },
+      { label: '전략 허브', href: '/strategy' },
     ],
   },
   {
@@ -48,6 +49,7 @@ const navGroups: NavGroup[] = [
     items: [
       { label: '쓰레드', href: '/threads' },
       { label: '채팅', href: '/chat' },
+      { label: '마켓', href: '/market' },
       { label: '랭킹', href: '/rankings' },
     ],
   },
@@ -57,6 +59,7 @@ const navGroups: NavGroup[] = [
     items: [
       { label: '복권', href: '/lottery' },
       { label: '룰렛', href: '/roulette' },
+      { label: '포인트샵', href: '/shop' },
     ],
   },
 ];

@@ -76,6 +76,11 @@ export function PostEditor({
         isFeatured: false,
       });
 
+      if (!result) {
+        toast.error('게시글 작성에 실패했습니다. 다시 시도해주세요.');
+        return;
+      }
+
       if (result.success && result.postId) {
         toast.success('게시글이 작성되었습니다');
         const selectedBoard = boards.find((b) => b.id === boardId);

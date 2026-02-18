@@ -182,9 +182,9 @@ export function MobileChatDrawer() {
                 placeholder="메시지를 입력하세요..."
                 className={cn(
                   'flex-1 bg-op-elevated text-op-text placeholder:text-op-text-muted',
-                  'rounded-xl px-4 py-3 resize-none',
+                  'rounded-xl px-4 py-3 resize-none overflow-hidden',
                   'border border-op-border focus:outline-none focus:border-op-gold focus:ring-1 focus:ring-op-gold',
-                  'min-h-[44px] max-h-[120px] text-sm'
+                  'h-[44px] text-sm leading-tight'
                 )}
                 rows={1}
                 maxLength={500}

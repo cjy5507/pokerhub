@@ -8,6 +8,11 @@ const protectedRoutes = [
   '/hands/share',
   '/attendance',
   '/admin',
+  '/settings',
+  '/points',
+  '/notifications',
+  '/shop',
+  '/poker',
 ];
 
 // Define admin-only routes

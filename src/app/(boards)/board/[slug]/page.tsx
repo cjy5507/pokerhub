@@ -96,8 +96,8 @@ export default async function BoardPage({ params, searchParams }: BoardPageProps
           currentTarget={searchTarget}
         />
 
-        {/* Write button */}
-        {session && (
+        {/* Write button: hide for non-admins on notice board */}
+        {session && (board.slug !== 'notice' || session.role === 'admin') && (
           <Link
             href={`/board/${slug}/write`}
             className="flex items-center justify-center gap-2 px-4 py-2 bg-op-info hover:bg-op-info text-white rounded-lg transition-colors font-medium min-h-[44px]"

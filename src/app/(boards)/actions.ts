@@ -125,6 +125,11 @@ export async function createPost(input: CreatePostInput) {
       return { success: false, error: '게시판을 찾을 수 없습니다' };
     }
 
+    // Check notice board: admin only
+    if (board.slug === 'notice' && session.role !== 'admin') {
+      return { success: false, error: '공지사항은 관리자만 작성할 수 있습니다' };
+    }
+
     // Check user level requirement
     const user = await db.query.users.findFirst({
       where: eq(users.id, session.userId),

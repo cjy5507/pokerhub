@@ -126,25 +126,31 @@ export default function ChatSidebarPanel() {
       {/* Input Area */}
       <div className="flex items-center gap-2 px-2 py-2 border-t border-op-border bg-op-surface">
         {session ? (
-          <>
-            <input
-              type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="메시지 입력..."
-              disabled={isSending || !activeRoomId}
-              className="flex-1 px-3 py-1.5 text-sm bg-op-elevated text-op-text placeholder:text-op-text-muted border border-op-border rounded focus:outline-none focus:border-op-gold disabled:opacity-50"
-            />
-            <button
-              onClick={handleSend}
-              disabled={!inputValue.trim() || isSending || !activeRoomId}
-              className="flex-shrink-0 p-1.5 bg-op-gold text-op-surface rounded hover:bg-op-gold-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              aria-label="전송"
-            >
-              <Send className="w-4 h-4" />
-            </button>
-          </>
+          rooms.length === 0 && !isLoading ? (
+            <div className="flex-1 text-center py-2">
+              <span className="text-xs text-op-text-muted">채팅방이 없습니다</span>
+            </div>
+          ) : (
+            <>
+              <input
+                type="text"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="메시지 입력..."
+                disabled={isSending}
+                className="flex-1 px-3 py-1.5 text-sm bg-op-elevated text-op-text placeholder:text-op-text-muted border border-op-border rounded focus:outline-none focus:border-op-gold disabled:opacity-50"
+              />
+              <button
+                onClick={handleSend}
+                disabled={!inputValue.trim() || isSending || !activeRoomId}
+                className="flex-shrink-0 p-1.5 bg-op-gold text-op-surface rounded hover:bg-op-gold-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                aria-label="전송"
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            </>
+          )
         ) : (
           <div className="flex-1 text-center py-2">
             <a href="/login" className="text-xs text-op-gold hover:underline">

@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
       userId: newUser.id,
       amount: 1000,
       balanceAfter: 1000,
-      type: 'earn_post',
+      type: 'admin_adjust', // No 'earn_signup' type exists; admin_adjust is the closest for one-time welcome bonus
       description: '회원가입 축하 포인트',
     });
 

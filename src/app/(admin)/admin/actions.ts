@@ -26,38 +26,32 @@ export async function getAdminDashboard() {
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-  const [totalUsersResult] = await db
-    .select({ count: sql<number>`count(*)::int` })
-    .from(users);
-
-  const [todaySignupsResult] = await db
-    .select({ count: sql<number>`count(*)::int` })
-    .from(users)
-    .where(gte(users.createdAt, today));
-
-  const [totalPostsResult] = await db
-    .select({ count: sql<number>`count(*)::int` })
-    .from(posts);
-
-  const [activeUsersResult] = await db
-    .select({ count: sql<number>`count(*)::int` })
-    .from(users)
-    .where(gte(users.updatedAt, sevenDaysAgo));
-
-  const recentUsers = await db
-    .select({
-      id: users.id,
-      nickname: users.nickname,
-      email: users.email,
-      role: users.role,
-      status: users.status,
-      level: users.level,
-      points: users.points,
-      createdAt: users.createdAt,
-    })
-    .from(users)
-    .orderBy(desc(users.createdAt))
-    .limit(5);
+  const [
+    [totalUsersResult],
+    [todaySignupsResult],
+    [totalPostsResult],
+    [activeUsersResult],
+    recentUsers,
+  ] = await Promise.all([
+    db.select({ count: sql<number>`count(*)::int` }).from(users),
+    db.select({ count: sql<number>`count(*)::int` }).from(users).where(gte(users.createdAt, today)),
+    db.select({ count: sql<number>`count(*)::int` }).from(posts),
+    db.select({ count: sql<number>`count(*)::int` }).from(users).where(gte(users.updatedAt, sevenDaysAgo)),
+    db
+      .select({
+        id: users.id,
+        nickname: users.nickname,
+        email: users.email,
+        role: users.role,
+        status: users.status,
+        level: users.level,
+        points: users.points,
+        createdAt: users.createdAt,
+      })
+      .from(users)
+      .orderBy(desc(users.createdAt))
+      .limit(5),
+  ]);
 
   return {
     totalUsers: totalUsersResult?.count || 0,

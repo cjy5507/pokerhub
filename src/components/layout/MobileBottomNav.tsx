@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { Home, Newspaper, Spade, MessageSquareMore, User } from 'lucide-react';
+import { Home, LayoutList, Spade, MessageSquareMore, User } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useChat } from '@/components/chat/ChatProvider';
@@ -17,9 +17,9 @@ const navItems = [
     icon: Home,
   },
   {
-    label: '뉴스',
-    href: '/news',
-    icon: Newspaper,
+    label: '게시판',
+    href: '/board/free',
+    icon: LayoutList,
   },
   {
     label: '포커',

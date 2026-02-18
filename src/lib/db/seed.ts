@@ -1,6 +1,7 @@
 import { db } from './index';
-import { boards, levelConfigs } from './schema';
+import { boards, levelConfigs, users, pointTransactions } from './schema';
 import * as dotenv from 'dotenv';
+import bcrypt from 'bcryptjs';
 
 dotenv.config({ path: '.env.local' });
 
@@ -8,6 +9,37 @@ async function seed() {
   console.log('🌱 Seeding database...');
 
   try {
+    // Seed admin user (bootstrap)
+    console.log('👤 Seeding admin user...');
+    const adminEmail = 'admin@openpoker.kr';
+    const adminPassword = 'admin1234!';
+    const adminPasswordHash = await bcrypt.hash(adminPassword, 10);
+
+    const [adminUser] = await db
+      .insert(users)
+      .values({
+        email: adminEmail,
+        nickname: '관리자',
+        passwordHash: adminPasswordHash,
+        role: 'admin',
+        points: 10000,
+      })
+      .onConflictDoNothing()
+      .returning();
+
+    if (adminUser) {
+      await db.insert(pointTransactions).values({
+        userId: adminUser.id,
+        amount: 10000,
+        balanceAfter: 10000,
+        type: 'admin_adjust',
+        description: '관리자 초기 포인트',
+      });
+      console.log('✅ Admin user created: admin@openpoker.kr / admin1234!');
+    } else {
+      console.log('ℹ️  Admin user already exists, skipping.');
+    }
+
     // Seed boards
     console.log('📋 Seeding boards...');
     await db.insert(boards).values([

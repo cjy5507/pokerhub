@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import { chatMessages, users } from '@/lib/db/schema';
 import { eq, and, gt, desc } from 'drizzle-orm';
+import { getSession } from '@/lib/auth/session';
 
 /**
  * Server-Sent Events endpoint for real-time chat messages.
@@ -11,6 +12,15 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ roomId: string }> }
 ) {
+  // Require authentication
+  const session = await getSession();
+  if (!session) {
+    return new Response(JSON.stringify({ error: '로그인이 필요합니다' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
   const { roomId } = await params;
 
   const encoder = new TextEncoder();

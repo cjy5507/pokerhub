@@ -16,8 +16,13 @@ export default async function WritePage({ params }: WritePageProps) {
     redirect(`/login?redirect=/board/${slug}/write`);
   }
 
-  // Get all boards for selector
+  const isAdmin = session.role === 'admin';
+
+  // Get all boards for selector, filter notice board for non-admins
   const allBoards = await getBoards();
+  const visibleBoards = isAdmin
+    ? allBoards
+    : allBoards.filter((b: { slug: string }) => b.slug !== 'notice');
 
   // Get board
   const board = await getBoard(slug);
@@ -39,13 +44,18 @@ export default async function WritePage({ params }: WritePageProps) {
     notFound();
   }
 
+  // Non-admin trying to access notice board write page directly — redirect
+  if (board.slug === 'notice' && !isAdmin) {
+    redirect(`/board/notice`);
+  }
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
       <h1 className="text-2xl font-bold text-op-text mb-6">글쓰기</h1>
       <PostEditor
         currentBoardId={board.id}
         currentBoardSlug={slug}
-        boards={allBoards}
+        boards={visibleBoards}
         userId={session.userId}
       />
     </div>

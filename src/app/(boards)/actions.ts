@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import DOMPurify from 'isomorphic-dompurify';
 import { db } from '@/lib/db';
 import {
   posts,
@@ -137,6 +138,14 @@ export async function createPost(input: CreatePostInput) {
       };
     }
 
+    // Sanitize HTML content before storing
+    const sanitizedHtml = validated.contentHtml
+      ? DOMPurify.sanitize(validated.contentHtml, {
+          ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 's', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'blockquote', 'code', 'pre', 'a', 'img'],
+          ALLOWED_ATTR: ['href', 'src', 'alt', 'class', 'target', 'rel'],
+        })
+      : null;
+
     // Create post
     const [newPost] = await db
       .insert(posts)
@@ -145,7 +154,7 @@ export async function createPost(input: CreatePostInput) {
         authorId: session.userId,
         title: validated.title,
         content: validated.content,
-        contentHtml: validated.contentHtml,
+        contentHtml: sanitizedHtml,
         status: 'published',
         isPinned: validated.isPinned || false,
         isFeatured: validated.isFeatured || false,
@@ -193,13 +202,21 @@ export async function updatePost(input: UpdatePostInput) {
       return { success: false, error: '게시글을 수정할 권한이 없습니다' };
     }
 
+    // Sanitize HTML content before storing
+    const sanitizedHtml = validated.contentHtml
+      ? DOMPurify.sanitize(validated.contentHtml, {
+          ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 's', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'blockquote', 'code', 'pre', 'a', 'img'],
+          ALLOWED_ATTR: ['href', 'src', 'alt', 'class', 'target', 'rel'],
+        })
+      : undefined;
+
     // Update post
     await db
       .update(posts)
       .set({
         ...(validated.title && { title: validated.title }),
         ...(validated.content && { content: validated.content }),
-        ...(validated.contentHtml && { contentHtml: validated.contentHtml }),
+        ...(sanitizedHtml && { contentHtml: sanitizedHtml }),
         ...(validated.status && { status: validated.status }),
         updatedAt: new Date(),
       })

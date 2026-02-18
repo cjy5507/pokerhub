@@ -1,9 +1,16 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'your-secret-key-change-in-production'
-);
+const JWT_SECRET_RAW = process.env.JWT_SECRET;
+// Note: JWT_SECRET must be set in production environment variables
+const JWT_SECRET = new TextEncoder().encode(JWT_SECRET_RAW || 'dev-secret-not-for-production');
+
+function getJWTSecret() {
+  if (!JWT_SECRET_RAW && process.env.NODE_ENV === 'production') {
+    throw new Error('JWT_SECRET environment variable is required in production');
+  }
+  return JWT_SECRET;
+}
 
 const COOKIE_NAME = 'session';
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
@@ -23,7 +30,7 @@ export async function createToken(payload: SessionPayload): Promise<string> {
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('7d')
-    .sign(JWT_SECRET);
+    .sign(getJWTSecret());
 }
 
 /**
@@ -31,7 +38,7 @@ export async function createToken(payload: SessionPayload): Promise<string> {
  */
 export async function verifyToken(token: string): Promise<SessionPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, JWT_SECRET);
+    const { payload } = await jwtVerify(token, getJWTSecret());
     return payload as SessionPayload;
   } catch (error) {
     return null;

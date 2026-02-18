@@ -1,8 +1,9 @@
 import { db } from '@/lib/db';
-import { attendance, userStreaks, users } from '@/lib/db/schema';
+import { attendance, userStreaks, users, badges, userBadges } from '@/lib/db/schema';
 import { eq, and, gte, lte, desc, sql } from 'drizzle-orm';
 import { awardPoints } from './points';
 import { awardXp } from './xp';
+import { createNotification } from '@/app/notifications/actions';
 
 interface CheckAttendanceResult {
   success: boolean;
@@ -169,14 +170,49 @@ function getNextMilestone(currentStreak: number): { days: number; points: number
  * Check and award attendance badges
  */
 async function checkAttendanceBadges(userId: string, streakCount: number) {
-  // Badge logic will be implemented when badge system is ready
-  // For now, this is a placeholder
+  if (!db) return;
+
   const badgeMilestones = [3, 7, 30, 100, 365];
 
-  // TODO: Award badges at milestones
-  if (badgeMilestones.includes(streakCount)) {
-    // Award badge
-  }
+  if (!badgeMilestones.includes(streakCount)) return;
+
+  const slug = `attendance-${streakCount}`;
+
+  // Find the badge by slug
+  const [badge] = await db
+    .select()
+    .from(badges)
+    .where(eq(badges.slug, slug));
+
+  if (!badge) return;
+
+  // Check if user already has this badge
+  const [existing] = await db
+    .select()
+    .from(userBadges)
+    .where(
+      and(
+        eq(userBadges.userId, userId),
+        eq(userBadges.badgeId, badge.id)
+      )
+    );
+
+  if (existing) return;
+
+  // Award the badge
+  await db.insert(userBadges).values({
+    userId,
+    badgeId: badge.id,
+  });
+
+  // Create notification
+  await createNotification({
+    userId,
+    type: 'badge',
+    title: `배지 획득: ${badge.nameKo}`,
+    body: badge.descriptionKo || `${streakCount}일 연속 출석 배지를 획득했습니다!`,
+    link: '/profile',
+  });
 }
 
 /**

@@ -22,7 +22,7 @@ export const badgeCategoryEnum = pgEnum('badge_category', ['achievement', 'parti
 export const badgeRarityEnum = pgEnum('badge_rarity', ['common', 'rare', 'epic', 'legendary']);
 export const missionTypeEnum = pgEnum('mission_type', ['daily', 'weekly', 'monthly', 'one_time']);
 export const missionConditionTypeEnum = pgEnum('mission_condition_type', ['post_count', 'comment_count', 'hand_share', 'attendance', 'like_received']);
-export const pointTransactionTypeEnum = pgEnum('point_transaction_type', ['earn_post', 'earn_comment', 'earn_like', 'earn_attendance', 'earn_mission', 'spend_badge', 'spend_custom_title', 'admin_adjust']);
+export const pointTransactionTypeEnum = pgEnum('point_transaction_type', ['earn_post', 'earn_comment', 'earn_like', 'earn_attendance', 'earn_mission', 'earn_game', 'earn_harvest', 'spend_badge', 'spend_custom_title', 'spend_game', 'admin_adjust']);
 export const xpTransactionTypeEnum = pgEnum('xp_transaction_type', ['post', 'comment', 'like', 'hand_share', 'attendance', 'mission', 'admin_adjust']);
 export const notificationTypeEnum = pgEnum('notification_type', ['comment', 'like', 'follow', 'mention', 'badge', 'level_up', 'system']);
 export const chatRoomTypeEnum = pgEnum('chat_room_type', ['general', 'game', 'tournament', 'private']);
@@ -268,6 +268,14 @@ export const pokerHandComments = pgTable('poker_hand_comments', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({
   handIdIdx: index('poker_hand_comments_hand_id_idx').on(table.handId),
+}));
+
+export const pokerHandLikes = pgTable('poker_hand_likes', {
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  handId: uuid('hand_id').notNull().references(() => pokerHands.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  pk: primaryKey({ columns: [table.userId, table.handId] }),
 }));
 
 // ==================== GAMIFICATION DOMAIN ====================
@@ -589,6 +597,7 @@ export const pokerGameHands = pgTable('poker_game_hands', {
 }, (table) => ({
   tableIdIdx: index('poker_game_hands_table_id_idx').on(table.tableId),
   statusIdx: index('poker_game_hands_status_idx').on(table.status),
+  tableHandNumIdx: index('poker_game_hands_table_hand_num_idx').on(table.tableId, table.handNumber),
 }));
 
 // Actions taken during hands
@@ -602,6 +611,7 @@ export const pokerGameActions = pgTable('poker_game_actions', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({
   handIdIdx: index('poker_game_actions_hand_id_idx').on(table.handId),
+  handCreatedIdx: index('poker_game_actions_hand_created_idx').on(table.handId, table.createdAt),
 }));
 
 // Results for each player per hand

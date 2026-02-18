@@ -270,6 +270,15 @@ export class PokerEngine {
         if (canCheck) {
           return { valid: false, error: 'No bet to raise, use bet' };
         }
+        // PokerStars rule: after a short all-in, players who already acted
+        // at the previous bet level can only call or fold (no re-raise).
+        if (state.callOnlySeats?.includes(seatNumber)) {
+          return {
+            valid: false,
+            error: 'Cannot raise after a short all-in (call or fold only)',
+            callAmount,
+          };
+        }
         const raiseAmount = action.amount ?? 0;
         const totalNeeded = raiseAmount - seat.betInRound;
         const minRaiseTotal = state.currentBet + state.minRaise;
@@ -333,6 +342,7 @@ export class PokerEngine {
     let isAggressive = false;
     let actionClosedBySeat = state.actionClosedBySeat;
     let closerHasActed = state.closerHasActed ?? true;
+    let callOnlySeats = state.callOnlySeats ? [...state.callOnlySeats] : [];
 
     // If the closer is acting now (passive action), mark them as having acted
     if (seatNumber === actionClosedBySeat) {
@@ -410,6 +420,8 @@ export class PokerEngine {
         currentBet = seat.betInRound;
         minRaise = betAmount;
         isAggressive = true;
+        // A new bet reopens action; clear any short all-in restrictions
+        callOnlySeats = [];
         if (seat.chipStack === 0) {
           seat.isAllIn = true;
         }
@@ -441,6 +453,8 @@ export class PokerEngine {
         }
         currentBet = raiseTotal;
         isAggressive = true;
+        // A full raise reopens action; clear any short all-in restrictions
+        callOnlySeats = [];
 
         if (seat.chipStack === 0) {
           seat.isAllIn = true;
@@ -468,11 +482,33 @@ export class PokerEngine {
         if (newBetTotal > currentBet) {
           const raiseSize = newBetTotal - currentBet;
           if (raiseSize >= minRaise) {
+            // Full raise: reopens action for all players.
             minRaise = raiseSize;
             isAggressive = true;
-            // Full raise: action must go around again
             actionClosedBySeat = seatNumber;
             closerHasActed = true;
+            // Full raise clears any short all-in restrictions
+            callOnlySeats = [];
+          } else {
+            // Short all-in (PokerStars rule): the all-in raises the current bet
+            // but doesn't meet the minimum raise. Players who already acted at or
+            // above the previous bet level can only call or fold -- they cannot
+            // re-raise. Players who haven't acted yet are unaffected.
+            for (const s of seats) {
+              if (
+                s !== null &&
+                !s.isFolded &&
+                !s.isAllIn &&
+                s.isActive &&
+                !s.isSittingOut &&
+                s.seatNumber !== seatNumber &&
+                s.betInRound >= currentBet
+              ) {
+                if (!callOnlySeats.includes(s.seatNumber)) {
+                  callOnlySeats.push(s.seatNumber);
+                }
+              }
+            }
           }
           currentBet = newBetTotal;
         }
@@ -521,6 +557,7 @@ export class PokerEngine {
           currentSeat: null,
           lastAction: { seat: seatNumber, action: action.action, amount: action.amount ?? 0 },
           actionClosedBySeat: null,
+          callOnlySeats: [],
           street: 'showdown',
           status: 'waiting',
         },
@@ -561,6 +598,7 @@ export class PokerEngine {
         lastAction: { seat: seatNumber, action: action.action, amount: action.amount ?? 0 },
         actionClosedBySeat,
         closerHasActed,
+        callOnlySeats,
       },
       events,
       isHandComplete: false,
@@ -717,6 +755,7 @@ export class PokerEngine {
         lastAction: null,
         actionClosedBySeat: newCloser,
         closerHasActed: false,
+        callOnlySeats: [],
       },
       newCards,
       events,
@@ -855,8 +894,22 @@ export class PokerEngine {
       const share = Math.floor(pot.amount / winners.length);
       const remainder = pot.amount - share * winners.length;
 
+      // Odd chip goes to the winner closest to the left of the dealer (clockwise)
+      let oddChipWinnerIdx = 0;
+      if (remainder > 0 && winners.length > 1) {
+        const dealerSeat = state.dealerSeat;
+        let minDistance = Infinity;
+        for (let i = 0; i < winners.length; i++) {
+          const dist = (winners[i].seatNumber - dealerSeat + state.seats.length) % state.seats.length;
+          if (dist > 0 && dist < minDistance) {
+            minDistance = dist;
+            oddChipWinnerIdx = i;
+          }
+        }
+      }
+
       winners.forEach((w, idx) => {
-        const amount = share + (idx === 0 ? remainder : 0);
+        const amount = share + (idx === oddChipWinnerIdx ? remainder : 0);
         allWinners.push({
           seatNumber: w.seatNumber,
           amount,

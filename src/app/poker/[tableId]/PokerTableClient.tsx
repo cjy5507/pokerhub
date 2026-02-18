@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { CardRenderer, parseCard } from '@/components/poker/CardRenderer';
 import type { GameState, SeatState, Card, PlayerAction } from '@/lib/poker/types';
 import { joinTable, leaveTable, performAction } from '../actions';
-import { LogOut, MessageSquare, ChevronDown, Volume2, VolumeX, ArrowLeft, Users, Minus, Plus } from 'lucide-react';
+import { LogOut, MessageSquare, ChevronDown, Volume2, VolumeX, ArrowLeft, Users, Minus, Plus, Check } from 'lucide-react';
 import Link from 'next/link';
 import { usePokerSounds } from '@/lib/poker/sounds';
 
@@ -39,120 +39,89 @@ const ACTION_LABELS_KR: Record<string, string> = {
 
 // ─── Seat Positioning ─────────────────────────────────────────────
 
-// Positions are defined as percentage-based [top, left] from center of the oval
+// Positions: [top%, left%] — PokerNow style, seats on table edge
 // Seat 0 is bottom-center (hero default), going clockwise
 const SEAT_POSITIONS_2: [number, number][] = [
-  [85, 50],  // Seat 0 - bottom center (hero)
+  [88, 50],  // Seat 0 - bottom center (hero)
   [8, 50],   // Seat 1 - top center (opponent)
 ];
 
 const SEAT_POSITIONS_6: [number, number][] = [
-  [88, 50],  // Seat 0 - bottom center (hero)
-  [68, 6],   // Seat 1 - lower left
-  [18, 6],   // Seat 2 - upper left
-  [2, 50],   // Seat 3 - top center
-  [18, 94],  // Seat 4 - upper right
-  [68, 94],  // Seat 5 - lower right
+  [92, 50],  // Seat 0 - bottom center (hero)
+  [60, 10],  // Seat 1 - lower left
+  [16, 14],  // Seat 2 - upper left
+  [4, 50],   // Seat 3 - top center
+  [16, 86],  // Seat 4 - upper right
+  [60, 90],  // Seat 5 - lower right
 ];
 
+// Mathematically balanced: 9 seats evenly spaced (40° apart) around an ellipse
+// center=(50,50), radiusY=42, radiusX=38
 const SEAT_POSITIONS_9: [number, number][] = [
-  [88, 50],  // Seat 0 - bottom center (hero)
-  [78, 14],  // Seat 1 - bottom left
-  [48, 2],   // Seat 2 - middle left
-  [18, 10],  // Seat 3 - upper left
-  [5, 32],   // Seat 4 - top left
-  [5, 68],   // Seat 5 - top right
-  [18, 90],  // Seat 6 - upper right
-  [48, 98],  // Seat 7 - middle right
-  [78, 86],  // Seat 8 - bottom right
+  [92, 50],  // Seat 0 - bottom center (hero)
+  [82, 26],  // Seat 1 - bottom left
+  [57, 13],  // Seat 2 - left
+  [29, 17],  // Seat 3 - upper left
+  [11, 37],  // Seat 4 - top left
+  [11, 63],  // Seat 5 - top right
+  [29, 83],  // Seat 6 - upper right
+  [57, 87],  // Seat 7 - right
+  [82, 74],  // Seat 8 - bottom right
 ];
 
-// Bet chip positions (offset from seat toward center)
+// Bet chip positions (offset from seat toward center of table)
 const BET_POSITIONS_2: [number, number][] = [
-  [62, 50],
-  [28, 50],
+  [65, 50],
+  [30, 50],
 ];
 
 const BET_POSITIONS_6: [number, number][] = [
-  [68, 50],  // from seat 0
+  [75, 50],  // from seat 0
   [55, 22],  // from seat 1
-  [30, 22],  // from seat 2
+  [28, 24],  // from seat 2
   [18, 50],  // from seat 3
-  [30, 78],  // from seat 4
+  [28, 76],  // from seat 4
   [55, 78],  // from seat 5
 ];
 
+// Bet chips: ~60% of the way from seat to center (50,50)
 const BET_POSITIONS_9: [number, number][] = [
-  [68, 50],
-  [62, 28],
-  [44, 18],
-  [28, 24],
-  [20, 38],
-  [20, 62],
-  [28, 76],
-  [44, 82],
-  [62, 72],
+  [75, 50],  // Seat 0
+  [69, 34],  // Seat 1
+  [54, 27],  // Seat 2
+  [37, 29],  // Seat 3
+  [26, 41],  // Seat 4
+  [26, 59],  // Seat 5
+  [37, 71],  // Seat 6
+  [54, 73],  // Seat 7
+  [69, 66],  // Seat 8
 ];
 
 // ─── Helper Components ────────────────────────────────────────────
 
-function CardBack({ size = 'sm' }: { size?: 'sm' | 'md' | 'lg' }) {
-  const sizeClasses = size === 'sm' ? 'w-7 h-10' : size === 'md' ? 'w-12 h-[66px]' : 'w-[60px] h-[84px]';
+function CardBack({ size = 'sm' }: { size?: 'sm' | 'md' | 'lg' | 'xs' }) {
+  const sizeClasses =
+    size === 'xs' ? 'w-4 h-5' :
+    size === 'sm' ? 'w-7 h-10' :
+    size === 'md' ? 'w-12 h-[66px]' :
+    'w-[60px] h-[84px]';
   return (
     <div
-      className={cn(
-        sizeClasses,
-        'rounded relative overflow-hidden',
-        'shadow-[0_2px_8px_rgba(0,0,0,0.6)]'
-      )}
+      className={cn(sizeClasses, 'rounded-[2px]')}
       style={{
         background: 'linear-gradient(135deg, #1e3a5f 0%, #0f2744 50%, #1a2f4f 100%)',
+        border: '1px solid rgba(255,255,255,0.12)',
       }}
-    >
-      <div
-        className="absolute inset-0 opacity-30"
-        style={{
-          backgroundImage: `radial-gradient(circle at 30% 30%, rgba(255,255,255,0.15) 0%, transparent 50%),
-                           radial-gradient(circle at 70% 70%, rgba(255,255,255,0.1) 0%, transparent 50%)`,
-        }}
-      />
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="w-1/2 h-1/2 rounded-full border-2 border-[#3a5a7f]/40 bg-gradient-to-br from-[#2a4a6f]/30 to-transparent" />
-      </div>
-      <div className="absolute inset-0 rounded border border-[#4a6a8f]/50" />
-    </div>
-  );
-}
-
-function TimerBar({ timeLeft, maxTime = 30 }: { timeLeft: number; maxTime?: number }) {
-  const pct = Math.max(0, (timeLeft / maxTime) * 100);
-  const color = pct > 50 ? 'bg-[#22c55e]' : pct > 25 ? 'bg-[#eab308]' : 'bg-[#ef4444]';
-  const isUrgent = timeLeft <= 5 && timeLeft > 0;
-
-  return (
-    <div className={cn(
-      'w-full h-1 bg-[#333] rounded-full overflow-hidden',
-      isUrgent && 'animate-timer-shake'
-    )}>
-      <div
-        className={cn('h-full rounded-full transition-all duration-1000 ease-linear', color)}
-        style={{ width: `${pct}%` }}
-      />
-    </div>
+    />
   );
 }
 
 function DealerButton() {
   return (
     <div
-      className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full flex items-center justify-center z-10"
-      style={{
-        background: 'linear-gradient(135deg, #f4e5b8 0%, #d4af37 50%, #c9a227 100%)',
-        boxShadow: '0 0 12px rgba(212, 175, 55, 0.7), inset 0 1px 2px rgba(255, 255, 255, 0.5), 0 2px 6px rgba(0, 0, 0, 0.4)',
-        border: '1.5px solid rgba(255, 255, 255, 0.3)',
-      }}
+      className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full flex items-center justify-center z-10 bg-white"
     >
-      <span className="text-[8px] font-bold text-black drop-shadow-[0_1px_1px_rgba(255,255,255,0.3)]">D</span>
+      <span className="text-[8px] font-bold text-black">D</span>
     </div>
   );
 }
@@ -162,22 +131,14 @@ function ChipAmount({ amount, animate }: { amount: number; animate?: boolean }) 
   return (
     <div
       className={cn(
-        'backdrop-blur-sm px-2 py-0.5 rounded-full relative overflow-hidden',
+        'px-2 py-0.5 rounded-full',
         animate && 'animate-chip-to-pot'
       )}
       style={{
-        background: 'linear-gradient(135deg, rgba(30, 30, 30, 0.95) 0%, rgba(15, 15, 15, 0.95) 100%)',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 12px rgba(201, 162, 39, 0.3)',
-        border: '1px solid rgba(201, 162, 39, 0.5)',
+        background: 'rgba(0,0,0,0.7)',
       }}
     >
-      <div
-        className="absolute inset-0"
-        style={{
-          background: 'radial-gradient(circle at 50% 50%, rgba(201, 162, 39, 0.2) 0%, transparent 70%)',
-        }}
-      />
-      <span className="text-[9px] md:text-[11px] font-bold text-[#c9a227] relative z-10 drop-shadow-[0_0_6px_rgba(201,162,39,0.6)]">
+      <span className="text-[9px] md:text-[11px] font-bold text-white tabular-nums">
         {amount.toLocaleString()}
       </span>
     </div>
@@ -202,20 +163,17 @@ function BuyInModal({
   const [buyIn, setBuyIn] = useState(Math.floor((minBuyIn + maxBuyIn) / 2));
 
   return (
-    <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[200]" onClick={onCancel}>
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-[200]" onClick={onCancel}>
       <div
-        className="bg-[#1a1a1a] border border-[#333] rounded-xl p-6 max-w-sm w-full"
-        style={{
-          boxShadow: '0 24px 80px rgba(0,0,0,0.8), 0 0 40px rgba(201,162,39,0.1)',
-        }}
+        className="bg-[#222] border border-white/10 rounded-xl p-5 max-w-sm w-full"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="text-lg font-bold text-[#c9a227] mb-4">{seatNumber + 1}</h3>
+        <h3 className="text-base font-bold text-white mb-4">좌석 {seatNumber + 1} 착석</h3>
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm text-[#a0a0a0] mb-2">
-              바이인: <span className="text-[#c9a227] font-semibold">{buyIn.toLocaleString()}P</span>
+            <label className="block text-sm text-white/60 mb-2">
+              바이인: <span className="text-white font-bold">{buyIn.toLocaleString()}P</span>
             </label>
             <input
               type="range"
@@ -224,9 +182,9 @@ function BuyInModal({
               step={Math.max(1, Math.floor(minBuyIn / 10))}
               value={buyIn}
               onChange={(e) => setBuyIn(Number(e.target.value))}
-              className="w-full accent-[#c9a227]"
+              className="w-full accent-[#4a8c5c]"
             />
-            <div className="flex justify-between text-xs text-[#666] mt-1">
+            <div className="flex justify-between text-xs text-white/30 mt-1">
               <span>{minBuyIn.toLocaleString()}</span>
               <span>{maxBuyIn.toLocaleString()}</span>
             </div>
@@ -240,8 +198,8 @@ function BuyInModal({
                 className={cn(
                   'flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors',
                   buyIn === preset
-                    ? 'bg-[#c9a227] text-black'
-                    : 'bg-[#2a2a2a] text-[#a0a0a0] hover:bg-[#333]'
+                    ? 'bg-[#4a8c5c] text-white'
+                    : 'bg-white/8 text-white/50 hover:bg-white/12'
                 )}
               >
                 {preset.toLocaleString()}
@@ -252,13 +210,13 @@ function BuyInModal({
           <div className="flex gap-3 mt-4">
             <button
               onClick={onCancel}
-              className="flex-1 bg-[#2a2a2a] hover:bg-[#333] text-[#e0e0e0] font-semibold py-3 rounded-xl transition-colors"
+              className="flex-1 bg-[#333] hover:bg-[#444] text-white font-semibold py-3 rounded-lg transition-colors"
             >
               취소
             </button>
             <button
               onClick={() => onConfirm(buyIn)}
-              className="flex-1 bg-[#c9a227] hover:bg-[#b89320] text-black font-semibold py-3 rounded-xl transition-colors"
+              className="flex-1 bg-[#4a8c5c] hover:bg-[#3d7a4e] text-white font-semibold py-3 rounded-lg transition-colors"
             >
               착석
             </button>
@@ -282,6 +240,7 @@ function SeatDisplay({
   onSitDown,
   lastAction,
   hasNewCards,
+  isHandActive,
 }: {
   seat: SeatState | null;
   seatIndex: number;
@@ -293,148 +252,181 @@ function SeatDisplay({
   onSitDown: (seatIndex: number) => void;
   lastAction?: string | null;
   hasNewCards?: boolean;
+  isHandActive?: boolean;
 }) {
-  // Empty seat
+  // Empty seat -- PokerNow: dashed rectangle, transparent bg, seat number only
   if (!seat) {
     return (
       <button
         onClick={() => onSitDown(seatIndex)}
-        className={cn(
-          'w-11 h-11 md:w-14 md:h-14 rounded-full flex flex-col items-center justify-center',
-          'relative overflow-hidden cursor-pointer group',
-          'transition-all duration-300'
-        )}
-        style={{
-          background: 'radial-gradient(circle at center, rgba(26, 26, 26, 0.6) 0%, rgba(10, 10, 10, 0.4) 100%)',
-          boxShadow: 'inset 0 2px 6px rgba(0, 0, 0, 0.5)',
-        }}
+        className="group relative flex flex-col items-center cursor-pointer"
       >
-        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#c9a227]/0 to-[#c9a227]/0 group-hover:from-[#c9a227]/20 group-hover:to-[#d4af37]/10 transition-all duration-300" />
-        <div className="absolute inset-0 rounded-full border-2 border-dashed border-[#333] group-hover:border-[#c9a227]/60 transition-colors duration-300" />
-        <span className="text-[10px] md:text-xs text-[#555] group-hover:text-[#c9a227] font-medium relative z-10 transition-colors">+</span>
+        <div
+          className="w-[72px] h-[52px] md:w-[84px] md:h-[60px] rounded-lg flex items-center justify-center relative transition-all duration-200 active:scale-[0.95]"
+          style={{
+            border: '2px dashed rgba(255,255,255,0.15)',
+          }}
+        >
+          <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200" style={{ background: 'rgba(74,140,92,0.2)' }} />
+          <span className="text-lg text-white/20 group-hover:text-white/40 transition-colors duration-200 relative z-10 font-light">
+            {seatIndex + 1}
+          </span>
+        </div>
       </button>
     );
   }
 
   const hasCards = seat.holeCards && seat.holeCards.length > 0;
 
+  // Hero seat on table -- show cards + name + chips (like opponents but highlighted)
+  if (isHero) {
+    return (
+      <div className={cn('flex flex-col items-center relative', seat.isFolded && 'opacity-40')}>
+        {isDealer && (
+          <div className="absolute -top-1 -right-1 z-30">
+            <DealerButton />
+          </div>
+        )}
+        {lastAction && !seat.isFolded && (
+          <div
+            className="absolute -top-6 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded whitespace-nowrap z-20 animate-action-badge"
+            style={{
+              background: 'rgba(0,0,0,0.85)',
+              border: '1px solid rgba(255,255,255,0.15)',
+            }}
+          >
+            <span className="text-[9px] md:text-[10px] font-bold text-white">{lastAction}</span>
+          </div>
+        )}
+        {/* Hero cards on table — bigger than opponents */}
+        {hasCards && (
+          <div className="flex -space-x-1.5 mb-0.5">
+            {seat.holeCards!.map((card, i) => {
+              const parsed = parseCard(card);
+              return parsed ? (
+                <div key={i} className={cn('animate-card-deal', seat.isFolded && 'opacity-35')} style={{ animationDelay: `${i * 100}ms` }}>
+                  <CardRenderer rank={parsed.rank} suit={parsed.suit} size="md" />
+                </div>
+              ) : null;
+            })}
+          </div>
+        )}
+        {!hasCards && isHandActive && !seat.isFolded && (
+          <div className="flex -space-x-1.5 mb-0.5">
+            <CardBack size="sm" />
+            <CardBack size="sm" />
+          </div>
+        )}
+        {/* Name + chips */}
+        <div
+          className={cn(
+            'rounded-lg px-2 py-1 text-center min-w-[72px] md:min-w-[84px] relative transition-all duration-200',
+            isCurrent && !seat.isFolded && 'ring-2 ring-[#22c55e]/60',
+          )}
+          style={{
+            background: 'rgba(74,140,92,0.25)',
+            border: '1px solid rgba(74,140,92,0.45)',
+          }}
+        >
+          {isCurrent && !seat.isFolded && (
+            <div className="absolute top-0 left-0 right-0 h-[2px] rounded-t-lg overflow-hidden bg-white/10">
+              <div
+                className="h-full transition-all duration-1000 linear"
+                style={{
+                  width: `${Math.max(0, Math.min(100, (timeLeft / 30) * 100))}%`,
+                  background: timeLeft > 10 ? '#22c55e' : timeLeft > 5 ? '#eab308' : '#ef4444',
+                }}
+              />
+            </div>
+          )}
+          <div className="text-[10px] text-white/80 font-medium truncate max-w-[72px]" title={seat.nickname}>{seat.nickname}</div>
+          <div className="text-[12px] text-white font-bold tabular-nums">{seat.chipStack.toLocaleString()}</div>
+        </div>
+        {seat.isFolded && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-[9px] font-bold text-white/40 uppercase">FOLD</span>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Opponent seat -- PokerNow: compact dark rectangle with name + chips
   return (
-    <div className={cn('flex flex-col items-center gap-0.5 relative', seat.isFolded && 'opacity-40')}>
+    <div className={cn('flex flex-col items-center relative', seat.isFolded && 'opacity-40')}>
       {/* Dealer button */}
-      {isDealer && <DealerButton />}
+      {isDealer && (
+        <div className="absolute -top-1 -right-1 z-30">
+          <DealerButton />
+        </div>
+      )}
 
       {/* Last action badge */}
       {lastAction && !seat.isFolded && (
         <div
-          className="absolute -top-6 left-1/2 -translate-x-1/2 backdrop-blur-md px-2 py-0.5 rounded-md whitespace-nowrap z-10 animate-action-badge"
+          className="absolute -top-6 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded whitespace-nowrap z-20 animate-action-badge"
           style={{
-            background: 'linear-gradient(135deg, rgba(30, 30, 30, 0.95) 0%, rgba(20, 20, 20, 0.95) 100%)',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5), 0 0 12px rgba(201, 162, 39, 0.3)',
-            border: '1px solid rgba(201, 162, 39, 0.4)',
+            background: 'rgba(0,0,0,0.85)',
+            border: '1px solid rgba(255,255,255,0.15)',
           }}
         >
-          <span className="text-[8px] md:text-[10px] font-bold text-[#c9a227] drop-shadow-[0_0_6px_rgba(201,162,39,0.5)]">{lastAction}</span>
+          <span className="text-[9px] md:text-[10px] font-bold text-white">{lastAction}</span>
         </div>
       )}
 
-      {/* Avatar */}
+      {/* Seat card */}
       <div
         className={cn(
-          'w-11 h-11 md:w-14 md:h-14 rounded-full flex items-center justify-center relative overflow-hidden',
-          'transition-all duration-300',
-          seat.isAllIn && 'ring-2 ring-[#ef4444]/60'
+          'rounded-lg px-2 py-1.5 md:px-2.5 md:py-2 text-center min-w-[72px] md:min-w-[84px] relative transition-all duration-200',
+          isCurrent && !seat.isFolded && 'ring-2 ring-white/40',
+          seat.isAllIn && !seat.isFolded && 'ring-2 ring-[#ef4444]/60',
         )}
-        style={
-          isCurrent && !seat.isFolded
-            ? {
-                background: 'linear-gradient(135deg, #2a2a2a 0%, #1e1e1e 50%, #151515 100%)',
-                boxShadow: '0 0 24px rgba(201, 162, 39, 0.7), 0 0 48px rgba(201, 162, 39, 0.3), inset 0 2px 4px rgba(255, 255, 255, 0.05), 0 4px 8px rgba(0, 0, 0, 0.5)',
-              }
-            : isHero
-              ? {
-                  background: 'linear-gradient(135deg, #d4af37 0%, #c9a227 50%, #a68523 100%)',
-                  boxShadow: '0 0 16px rgba(212, 175, 55, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.3), 0 4px 12px rgba(0, 0, 0, 0.4)',
-                }
-              : {
-                  background: 'linear-gradient(135deg, #2a2a2a 0%, #1e1e1e 50%, #151515 100%)',
-                  boxShadow: 'inset 0 2px 4px rgba(255, 255, 255, 0.05), 0 4px 8px rgba(0, 0, 0, 0.5)',
-                }
-        }
+        style={{
+          background: 'rgba(0,0,0,0.50)',
+          border: '1px solid rgba(255,255,255,0.10)',
+        }}
       >
-        {/* Active player animated ring */}
+        {/* Timer bar */}
         {isCurrent && !seat.isFolded && (
-          <div
-            className="absolute -inset-[3px] rounded-full animate-seat-glow"
-            style={{
-              border: '2.5px solid #c9a227',
-            }}
-          />
+          <div className="absolute top-0 left-0 right-0 h-[2px] rounded-t-lg overflow-hidden bg-white/10">
+            <div
+              className="h-full transition-all duration-1000 linear"
+              style={{
+                width: `${Math.max(0, Math.min(100, (timeLeft / 30) * 100))}%`,
+                background: timeLeft > 10 ? '#22c55e' : timeLeft > 5 ? '#eab308' : '#ef4444',
+              }}
+            />
+          </div>
         )}
 
-        {/* Border */}
-        <div
-          className={cn(
-            'absolute inset-0 rounded-full border-2 transition-all duration-300',
-            isHero ? 'border-[#f4e5b8]/60' : 'border-[#3a3a3a]',
-            isCurrent && !seat.isFolded && 'border-[#c9a227]'
-          )}
-        />
+        {/* Nickname */}
+        <div className="text-[10px] md:text-[11px] text-white/70 font-medium truncate max-w-[72px] md:max-w-[76px] leading-tight" title={seat.nickname}>
+          {seat.nickname}
+        </div>
 
-        <span
-          className={cn(
-            'text-sm md:text-base font-bold relative z-10',
-            isHero ? 'text-black drop-shadow-[0_1px_2px_rgba(255,255,255,0.3)]' : 'text-[#e0e0e0]'
-          )}
-        >
-          {seat.nickname.charAt(0).toUpperCase()}
-        </span>
+        {/* Chip stack */}
+        <div className="text-[12px] md:text-[13px] font-bold text-white tabular-nums leading-tight">
+          {seat.chipStack.toLocaleString()}
+        </div>
+
+        {/* All-in badge */}
+        {seat.isAllIn && !seat.isFolded && (
+          <div className="text-[8px] font-bold text-[#ef4444] uppercase tracking-wider">
+            ALL IN
+          </div>
+        )}
 
         {/* Fold overlay */}
         {seat.isFolded && (
-          <div className="absolute inset-0 rounded-full bg-black/70 backdrop-blur-sm flex items-center justify-center z-10">
-            <span className="text-[7px] md:text-[8px] font-bold text-red-400 tracking-wider">폴드</span>
-          </div>
-        )}
-
-        {/* All-in badge */}
-        {seat.isAllIn && (
-          <div
-            className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-white text-[7px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap z-20 animate-all-in-pulse"
-            style={{
-              background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-              boxShadow: '0 0 12px rgba(239, 68, 68, 0.6), 0 2px 4px rgba(0, 0, 0, 0.4)',
-            }}
-          >
-            올인
+          <div className="absolute inset-0 rounded-lg bg-black/60 flex items-center justify-center">
+            <span className="text-[9px] font-bold text-white/40 uppercase tracking-wide">FOLD</span>
           </div>
         )}
       </div>
 
-      {/* Nickname */}
-      <span className={cn(
-        'text-[9px] md:text-[11px] font-semibold max-w-[60px] md:max-w-[80px] truncate text-center leading-tight',
-        isHero ? 'text-[#c9a227]' : 'text-[#e0e0e0]'
-      )}>
-        {seat.nickname}
-      </span>
-
-      {/* Chip stack */}
-      <div
-        className="px-2 py-0.5 rounded-full relative overflow-hidden"
-        style={{
-          background: 'linear-gradient(135deg, rgba(17, 17, 17, 0.9) 0%, rgba(10, 10, 10, 0.95) 100%)',
-          boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.4)',
-          border: '1px solid rgba(51, 51, 51, 0.8)',
-        }}
-      >
-        <span className="text-[9px] md:text-[11px] text-[#c9a227] font-bold relative z-10">
-          {seat.chipStack.toLocaleString()}
-        </span>
-      </div>
-
-      {/* Hole cards (shown on seat for non-hero; small) */}
-      {!isHero && hasCards && showCards && (
-        <div className="flex -space-x-1 mt-0.5">
+      {/* Opponent cards -- only during showdown or when dealt (card backs) */}
+      {hasCards && showCards && (
+        <div className="flex -space-x-0.5 mt-0.5">
           {seat.holeCards!.map((card, i) => {
             const parsed = parseCard(card);
             return parsed ? (
@@ -446,8 +438,8 @@ function SeatDisplay({
         </div>
       )}
 
-      {/* Card backs for opponents who haven't folded and have cards */}
-      {!isHero && !seat.isFolded && !showCards && !seat.isSittingOut && seat.holeCards === null && (
+      {/* Card backs -- only when hand is active and player is in hand (not folded) */}
+      {!seat.isFolded && !showCards && !seat.isSittingOut && isHandActive && seat.holeCards === null && (
         <div className="flex -space-x-1.5 mt-0.5">
           <div className={cn(hasNewCards && 'animate-card-deal')} style={hasNewCards ? { animationDelay: '0ms' } : undefined}>
             <CardBack size="sm" />
@@ -457,16 +449,11 @@ function SeatDisplay({
           </div>
         </div>
       )}
-
-      {/* Timer bar for active player */}
-      {isCurrent && !seat.isFolded && (
-        <div className="w-11 md:w-14 mt-0.5">
-          <TimerBar timeLeft={timeLeft} />
-        </div>
-      )}
     </div>
   );
 }
+
+const MemoizedSeatDisplay = React.memo(SeatDisplay);
 
 // ─── Win Overlay ──────────────────────────────────────────────────
 
@@ -474,17 +461,13 @@ function WinOverlay({ winnerName, amount }: { winnerName: string; amount: number
   return (
     <div className="absolute inset-0 z-[100] pointer-events-none flex items-center justify-center">
       <div
-        className="animate-pot-win backdrop-blur-sm px-6 py-3 rounded-2xl text-center"
-        style={{
-          background: 'linear-gradient(135deg, rgba(201, 162, 39, 0.25) 0%, rgba(212, 175, 55, 0.15) 100%)',
-          boxShadow: '0 0 40px rgba(201, 162, 39, 0.4), 0 0 80px rgba(201, 162, 39, 0.2)',
-          border: '1px solid rgba(201, 162, 39, 0.5)',
-        }}
+        className="animate-pot-win px-6 py-3 rounded-xl text-center"
+        style={{ background: 'rgba(0,0,0,0.75)' }}
       >
-        <p className="text-lg md:text-xl font-bold text-[#f4e5b8] drop-shadow-[0_0_12px_rgba(201,162,39,0.8)]">
+        <p className="text-lg md:text-xl font-bold text-white">
           {winnerName}
         </p>
-        <p className="text-sm md:text-base font-semibold text-[#c9a227]">
+        <p className="text-sm md:text-base font-bold text-[#4a8c5c]">
           +{amount.toLocaleString()}
         </p>
       </div>
@@ -522,24 +505,23 @@ function HandHistorySheet({
       {/* Sheet */}
       <div
         className={cn(
-          'absolute bottom-0 left-0 right-0 bg-[#1a1a1a] rounded-t-2xl transition-transform duration-300 max-h-[60vh] flex flex-col',
+          'absolute bottom-0 left-0 right-0 bg-[#222] rounded-t-2xl transition-transform duration-300 max-h-[60vh] flex flex-col',
           isOpen ? 'translate-y-0' : 'translate-y-full'
         )}
         style={{
-          boxShadow: '0 -8px 40px rgba(0,0,0,0.6)',
           paddingBottom: 'env(safe-area-inset-bottom)',
         }}
       >
         {/* Handle */}
         <div className="flex justify-center pt-3 pb-2">
-          <div className="w-10 h-1 bg-[#444] rounded-full" />
+          <div className="w-10 h-1 bg-white/15 rounded-full" />
         </div>
 
-        <div className="flex items-center justify-between px-4 pb-2 border-b border-[#2a2a2a]">
-          <h3 className="text-sm font-semibold text-[#e0e0e0]">핸드 히스토리</h3>
+        <div className="flex items-center justify-between px-4 pb-2 border-b border-white/8">
+          <h3 className="text-sm font-semibold text-white/80">핸드 히스토리</h3>
           <button
             onClick={onClose}
-            className="text-[#666] hover:text-[#e0e0e0] transition-colors p-1"
+            className="text-white/30 hover:text-white/60 transition-colors p-1"
           >
             <ChevronDown className="w-5 h-5" />
           </button>
@@ -547,10 +529,10 @@ function HandHistorySheet({
 
         <div className="flex-1 overflow-y-auto p-4 space-y-1 scrollbar-hide">
           {actionLog.length === 0 ? (
-            <p className="text-xs text-[#555] text-center mt-8">아직 액션이 없습니다</p>
+            <p className="text-xs text-white/25 text-center mt-8">아직 액션이 없습니다</p>
           ) : (
             actionLog.map((entry) => (
-              <div key={entry.id} className="text-[11px] text-[#a0a0a0] py-1 border-b border-[#222]">
+              <div key={entry.id} className="text-[11px] text-white/50 py-1 border-b border-white/5">
                 {entry.text}
               </div>
             ))
@@ -574,10 +556,13 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
   const [actionPending, setActionPending] = useState(false);
   const [raiseAmount, setRaiseAmount] = useState(0);
   const [showRaiseSlider, setShowRaiseSlider] = useState(false);
+  const [betInputEditing, setBetInputEditing] = useState(false);
+  const [betInputText, setBetInputText] = useState('');
   const [preAction, setPreAction] = useState<'fold' | 'check_fold' | 'call' | null>(null);
   const [potBounce, setPotBounce] = useState(false);
   const [winOverlay, setWinOverlay] = useState<{ name: string; amount: number } | null>(null);
   const [newCardsDealt, setNewCardsDealt] = useState(false);
+  const [turnTimeLeft, setTurnTimeLeft] = useState(30);
   const logIdRef = useRef(0);
 
   // Refs for detecting state changes (animations & sounds)
@@ -650,23 +635,28 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
   // ─── Timer sound effects ────────────────────────────────────────
   useEffect(() => {
     if (!isHeroTurn) return;
-    const tl = gameState.turnTimeLeft;
-    if (tl <= 3 && tl > 0 && tl !== prevTimeLeftRef.current) {
+    if (turnTimeLeft <= 3 && turnTimeLeft > 0 && turnTimeLeft !== prevTimeLeftRef.current) {
       sounds.timerUrgent();
-    } else if (tl <= 5 && tl > 3 && tl !== prevTimeLeftRef.current) {
+    } else if (turnTimeLeft <= 5 && turnTimeLeft > 3 && turnTimeLeft !== prevTimeLeftRef.current) {
       sounds.timerWarning();
     }
-    prevTimeLeftRef.current = tl;
-  }, [gameState.turnTimeLeft, isHeroTurn, sounds]);
+    prevTimeLeftRef.current = turnTimeLeft;
+  }, [turnTimeLeft, isHeroTurn, sounds]);
 
   // ─── SSE Connection ───────────────────────────────────────────
 
   useEffect(() => {
     let eventSource: EventSource | null = null;
     let reconnectTimeout: NodeJS.Timeout | null = null;
+    let reconnectDelay = 1000;
+    const MAX_RECONNECT_DELAY = 10000;
 
     function connect() {
       eventSource = new EventSource(`/api/poker/${tableId}`);
+
+      eventSource.onopen = () => {
+        reconnectDelay = 1000;
+      };
 
       eventSource.onmessage = (event) => {
         try {
@@ -724,6 +714,8 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
               setNewCardsDealt(true);
               setTimeout(() => setNewCardsDealt(false), 1500);
               prevCommunityCountRef.current = 0;
+              prevCCLengthForAnimRef.current = 0;
+              newCardStartIndex.current = 0;
               prevHandIdRef.current = hand.id;
             }
 
@@ -764,6 +756,7 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
             }
 
             setGameState(reconstructed);
+            setTurnTimeLeft(reconstructed.turnTimeLeft);
 
             // ── Last Action Sound + Display ──
             if (hand?.lastAction) {
@@ -798,10 +791,7 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
               }, 3000);
             }
           } else if (data.type === 'heartbeat' && data.turnTimeLeft !== undefined) {
-            setGameState(prev => ({
-              ...prev,
-              turnTimeLeft: data.turnTimeLeft,
-            }));
+            setTurnTimeLeft(data.turnTimeLeft);
           } else if (data.type === 'table_closed') {
             // Table was closed due to inactivity, redirect to lobby
             window.location.href = '/poker';
@@ -813,7 +803,10 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
 
       eventSource.onerror = () => {
         eventSource?.close();
-        reconnectTimeout = setTimeout(connect, 3000);
+        reconnectTimeout = setTimeout(() => {
+          reconnectDelay = Math.min(reconnectDelay * 2, MAX_RECONNECT_DELAY);
+          connect();
+        }, reconnectDelay);
       };
     }
 
@@ -918,9 +911,22 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
     }
   }, [actionPending, isHeroTurn, tableId, callAmount, nickname, addLogEntry]);
 
+  // Prevent duplicate pre-action in same hand+street
+  const lastPreActionRef = useRef<{ handId: string | null; street: string | null }>({ handId: null, street: null });
+
   // Auto-execute pre-action when it becomes hero's turn
   useEffect(() => {
     if (isHeroTurn && preAction && !actionPending) {
+      // Prevent duplicate pre-action in same hand+street
+      const currentHandId = gameState?.handId ?? null;
+      const currentStreet = gameState?.street ?? null;
+      if (lastPreActionRef.current.handId === currentHandId &&
+          lastPreActionRef.current.street === currentStreet) {
+        setPreAction(null);
+        return;
+      }
+      lastPreActionRef.current = { handId: currentHandId, street: currentStreet };
+
       if (preAction === 'fold') {
         handleAction('fold');
       } else if (preAction === 'check_fold') {
@@ -932,68 +938,93 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
       }
       setPreAction(null);
     }
-  }, [isHeroTurn, preAction, actionPending, canCheck, callAmount, handleAction]);
+  }, [isHeroTurn, preAction, actionPending, canCheck, callAmount, handleAction, gameState?.handId, gameState?.street]);
 
   // ─── Bet Sizing Presets ───────────────────────────────────────
 
   const pot = gameState.pot;
-  const betPresets = [
-    { label: '최소', value: minRaiseTotal },
-    { label: '1/2', value: Math.max(minRaiseTotal, Math.floor(pot / 2)) },
-    { label: '3/4', value: Math.max(minRaiseTotal, Math.floor((pot * 3) / 4)) },
-    { label: '팟', value: Math.max(minRaiseTotal, pot) },
-    { label: '올인', value: maxRaiseTotal },
-  ].map((p) => ({
-    ...p,
-    value: Math.min(p.value, maxRaiseTotal),
-  }));
+  const bigBlind = gameState.bigBlind;
+  const BET_PRESETS = [
+    { label: '1/3', getValue: (p: number) => Math.floor(p / 3) },
+    { label: '1/2', getValue: (p: number) => Math.floor(p / 2) },
+    { label: '2/3', getValue: (p: number) => Math.floor(p * 2 / 3) },
+    { label: 'Pot', getValue: (p: number) => p },
+    { label: 'All-in', getValue: (_p: number, stack: number) => stack },
+  ];
+  const betPresets = BET_PRESETS.map((preset) => {
+    const raw = preset.getValue(pot, maxRaiseTotal);
+    const clamped = Math.min(Math.max(raw, minRaiseTotal), maxRaiseTotal);
+    const disabled = clamped < bigBlind && preset.label !== 'All-in';
+    return { label: preset.label, value: clamped, disabled };
+  });
 
   // ─── Community Cards ────────────────────────────────────────
 
   const communityCardSlots = 5;
   const communityCards = gameState.communityCards;
 
+  // Track which cards are newly dealt for sequential animation
+  const prevCCLengthForAnimRef = useRef(0);
+  const newCardStartIndex = useRef(0);
+  useEffect(() => {
+    const prev = prevCCLengthForAnimRef.current;
+    const curr = communityCards.length;
+    if (curr > prev) {
+      newCardStartIndex.current = prev;
+    }
+    prevCCLengthForAnimRef.current = curr;
+  }, [communityCards.length]);
+
   // ─── Render ───────────────────────────────────────────────────
 
   return (
-    <div className="h-[100dvh] w-[100dvw] bg-[#0a0a0a] flex flex-col overflow-hidden select-none">
+    <div className="h-[100dvh] w-[100dvw] bg-[#2a2a2a] flex flex-col overflow-hidden select-none">
 
       {/* ═══════════════════════════════════════════════════════════
-          TOP BAR - Minimal, 40px height
+          TOP BAR - PokerNow style, compact
           ═══════════════════════════════════════════════════════════ */}
-      <header className="flex-shrink-0 h-10 md:h-12 flex items-center justify-between px-3 md:px-5 bg-[#0f0f0f]/90 backdrop-blur-sm border-b border-[#1a1a1a] z-30">
-        <div className="flex items-center gap-2 md:gap-3 min-w-0">
+      <header
+        className="flex-shrink-0 h-9 flex items-center justify-between px-2 z-30"
+        style={{
+          background: '#222',
+          borderBottom: '1px solid rgba(255,255,255,0.08)',
+        }}
+      >
+        {/* Left: back + table info */}
+        <div className="flex items-center gap-2 min-w-0">
           <Link
             href="/poker"
-            className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-[#1e1e1e] text-[#a0a0a0] hover:text-[#e0e0e0] transition-colors"
+            className="flex items-center justify-center w-7 h-7 rounded active:scale-[0.92] transition-transform"
+            style={{ color: 'rgba(255,255,255,0.5)' }}
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
-          <h1 className="text-xs md:text-sm font-semibold text-[#e0e0e0] truncate max-w-[120px] md:max-w-none">
-            {gameState.tableName}
-          </h1>
-          <div className="flex items-center gap-1.5">
-            <span className="text-[10px] md:text-xs text-[#c9a227] font-medium bg-[#c9a227]/10 px-2 py-0.5 rounded-full">
-              {gameState.smallBlind}/{gameState.bigBlind}
+
+          <div className="flex items-center gap-2 min-w-0">
+            <h1 className="text-[11px] font-semibold text-white/80 truncate max-w-[100px] leading-none">
+              {gameState.tableName}
+            </h1>
+            <span className="text-[10px] text-white/40 leading-none">
+              NLH {gameState.smallBlind}/{gameState.bigBlind}
             </span>
-            <span className="hidden md:inline text-[10px] text-[#666] bg-[#1e1e1e] px-2 py-0.5 rounded-full">
-              <Users className="w-3 h-3 inline mr-1" />
+            <span className="text-[9px] text-white/25 leading-none flex items-center gap-0.5">
+              <Users className="w-3 h-3" />
               {seats.filter((s) => s !== null).length}/{maxSeats}
             </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-1">
+        {/* Right: controls — PokerNow style compact icons */}
+        <div className="flex items-center gap-0.5">
           <button
             onClick={() => setShowHistory(true)}
-            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#1e1e1e] text-[#666] hover:text-[#a0a0a0] transition-colors"
-            title="핸드 히스토리"
+            className="w-7 h-7 flex items-center justify-center rounded active:scale-[0.92] transition-transform text-white/35 hover:text-white/60"
           >
             <MessageSquare className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => setIsMuted(!isMuted)}
-            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#1e1e1e] text-[#666] hover:text-[#a0a0a0] transition-colors"
+            className="w-7 h-7 flex items-center justify-center rounded active:scale-[0.92] transition-transform text-white/35 hover:text-white/60"
           >
             {isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
           </button>
@@ -1002,182 +1033,93 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
               onClick={handleLeave}
               disabled={isLeaving}
               className={cn(
-                'flex flex-col items-center justify-center gap-0.5 px-2 py-1 rounded-lg transition-colors',
-                'text-[#ef4444]/60 hover:text-[#ef4444] hover:bg-[#ef4444]/10',
-                isLeaving && 'opacity-50 cursor-not-allowed'
+                'flex items-center gap-1 px-2 py-1 rounded text-[9px] font-semibold transition-all active:scale-[0.92]',
+                'text-[#ef4444]/60 hover:text-[#ef4444]',
+                isLeaving && 'opacity-40 cursor-not-allowed'
               )}
-              title="일어나기"
             >
-              <LogOut className="w-3.5 h-3.5" />
-              <span className="text-[9px] font-medium">일어나기</span>
+              <LogOut className="w-3 h-3" />
+              나가기
             </button>
           )}
         </div>
       </header>
 
       {/* ═══════════════════════════════════════════════════════════
-          TABLE AREA - Fills remaining space between header and hero
+          TABLE AREA - Fixed height, no overflow, centered
           ═══════════════════════════════════════════════════════════ */}
-      <div className="flex-1 flex items-center justify-center relative overflow-hidden min-h-0">
+      <div className="flex-1 relative overflow-hidden min-h-0">
         {/* Win overlay */}
         {winOverlay && (
           <WinOverlay winnerName={winOverlay.name} amount={winOverlay.amount} />
         )}
 
-        {/* Table container -- fills as much space as possible */}
-        <div className="relative w-[96%] md:w-[88%] lg:w-[75%] max-w-[800px] aspect-[5/3]">
-          {/* Wooden outer rim */}
+        {/* Table container — fills entire available space, minimal padding */}
+        <div className="absolute inset-0 md:inset-1 lg:inset-2">
+          {/* Green felt -- PokerNow: radial gradient, brighter center */}
           <div
-            className="absolute inset-0 rounded-[50%/42%]"
+            className="absolute inset-0 rounded-[20px] md:rounded-[50%/42%]"
             style={{
-              background: 'linear-gradient(180deg, #2a1810 0%, #1a0f08 40%, #2a1810 100%)',
-              boxShadow: '0 12px 60px rgba(0, 0, 0, 0.9), inset 0 2px 4px rgba(255, 255, 255, 0.03)',
+              background: 'radial-gradient(ellipse at 50% 40%, #4a8c5c 0%, #3d7a4e 55%, #2d5a3a 100%)',
+              border: '3px solid #2a5a3a',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.5), inset 0 0 30px rgba(0,0,0,0.12)',
             }}
           >
-            {/* Inner wooden detail */}
-            <div
-              className="absolute inset-[6px] md:inset-2 rounded-[50%/42%]"
-              style={{
-                background: 'linear-gradient(90deg, #1a0f08 0%, #2a1810 50%, #1a0f08 100%)',
-                boxShadow: 'inset 0 0 20px rgba(0, 0, 0, 0.6)',
-              }}
-            />
 
-            {/* Gold inner rail */}
-            <div
-              className="absolute inset-3 md:inset-4 lg:inset-5 rounded-[50%/42%]"
-              style={{
-                background: 'linear-gradient(135deg, #c9a227 0%, #d4af37 50%, #c9a227 100%)',
-                boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.4), 0 0 8px rgba(201, 162, 39, 0.2)',
-                padding: '2px',
-              }}
-            >
-              {/* Felt surface */}
+          {/* ── Pot pill -- PokerNow: green pill, compact ── */}
+          <div className="absolute top-[26%] md:top-[22%] left-1/2 -translate-x-1/2 z-10">
+            {gameState.pot > 0 ? (
               <div
-                className="w-full h-full rounded-[50%/42%] relative overflow-hidden"
-                style={{
-                  background: 'radial-gradient(ellipse at 50% 40%, #0d6b3f 0%, #0a5535 40%, #083d2a 100%)',
-                  boxShadow:
-                    'inset 0 0 80px rgba(0, 0, 0, 0.5), inset 0 -20px 60px rgba(0, 0, 0, 0.3), inset 0 20px 40px rgba(255, 255, 255, 0.03)',
-                }}
+                className={cn(
+                  'px-3 py-0.5 rounded-full',
+                  potBounce && 'animate-pot-bounce'
+                )}
+                style={{ background: 'rgba(34,80,50,0.85)', border: '1px solid rgba(74,140,92,0.4)' }}
               >
-                {/* Spotlight effect */}
-                <div
-                  className="absolute inset-0"
-                  style={{
-                    background: 'radial-gradient(ellipse 60% 50% at 50% 30%, rgba(255, 255, 255, 0.08) 0%, transparent 60%)',
-                  }}
-                />
-
-                {/* Subtle felt texture */}
-                <div
-                  className="absolute inset-0 opacity-[0.03]"
-                  style={{
-                    backgroundImage: `
-                      repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.5) 2px, rgba(255,255,255,0.5) 4px),
-                      repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(255,255,255,0.5) 2px, rgba(255,255,255,0.5) 4px)
-                    `,
-                  }}
-                />
-
-                {/* Noise texture */}
-                <div
-                  className="absolute inset-0 opacity-[0.015]"
-                  style={{
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
-                  }}
-                />
-
-                {/* Decorative inner border */}
-                <div
-                  className="absolute inset-[8%] md:inset-[6%] rounded-[50%/42%] pointer-events-none"
-                  style={{
-                    border: '1px solid rgba(201, 162, 39, 0.12)',
-                    boxShadow: 'inset 0 0 20px rgba(201, 162, 39, 0.06)',
-                  }}
-                />
+                <span className="text-[11px] md:text-[13px] font-bold text-white tabular-nums">
+                  {gameState.pot.toLocaleString()}
+                </span>
               </div>
-            </div>
+            ) : (
+              <div className="px-3 py-0.5 rounded-full" style={{ background: 'rgba(34,80,50,0.5)' }}>
+                <span className="text-[11px] md:text-[13px] font-bold text-white/30 tabular-nums">0</span>
+              </div>
+            )}
           </div>
 
           {/* ── Community Cards ── */}
-          <div className="absolute top-[36%] left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-1 md:gap-2 z-10">
-            <div className="flex gap-0.5 md:gap-1">
+          <div className="absolute top-[40%] md:top-[38%] left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-1.5 z-10">
+            <div className="flex gap-1.5 md:gap-2">
               {Array.from({ length: communityCardSlots }).map((_, i) => {
                 const card = communityCards[i];
                 if (!card) {
                   return (
                     <div
                       key={i}
-                      className="w-8 h-11 md:w-12 md:h-[66px] rounded relative"
+                      className="w-10 h-[56px] md:w-12 md:h-[66px] rounded-[3px]"
                       style={{
-                        background: 'linear-gradient(135deg, rgba(10, 61, 42, 0.3) 0%, rgba(8, 45, 32, 0.4) 100%)',
-                        boxShadow: 'inset 0 2px 6px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(26, 85, 64, 0.2)',
+                        background: 'rgba(0,0,0,0.12)',
+                        border: '1px solid rgba(255,255,255,0.04)',
                       }}
-                    >
-                      <div
-                        className="absolute inset-[2px] rounded-sm"
-                        style={{ border: '1px dashed rgba(201, 162, 39, 0.1)' }}
-                      />
-                    </div>
+                    />
                   );
                 }
                 const parsed = parseCard(card);
                 if (!parsed) return null;
-
-                // Determine animation: flop (0-2) gets staggered reveal, turn (3) & river (4) get flip
-                const isFlop = i < 3;
-                const isRiver = i === 4;
-
+                const isNewCard = i >= newCardStartIndex.current;
+                const delayWithinStreet = isNewCard ? (i - newCardStartIndex.current) * 150 : 0;
                 return (
                   <div
                     key={i}
-                    className="animate-community-reveal"
-                    style={{ animationDelay: `${i * 150}ms` }}
+                    className={isNewCard ? 'animate-community-reveal' : undefined}
+                    style={isNewCard ? { animationDelay: `${delayWithinStreet}ms` } : undefined}
                   >
-                    <div className={cn(isRiver && 'drop-shadow-[0_0_8px_rgba(201,162,39,0.3)]')}>
-                      <CardRenderer
-                        rank={parsed.rank}
-                        suit={parsed.suit}
-                        size="sm"
-                        className="md:hidden"
-                      />
-                      <CardRenderer
-                        rank={parsed.rank}
-                        suit={parsed.suit}
-                        size="md"
-                        className="hidden md:flex"
-                      />
-                    </div>
+                    <CardRenderer rank={parsed.rank} suit={parsed.suit} size="md" className="md:hidden" />
+                    <CardRenderer rank={parsed.rank} suit={parsed.suit} size="lg" className="hidden md:flex" />
                   </div>
                 );
               })}
             </div>
-
-            {/* Pot display */}
-            {gameState.pot > 0 && (
-              <div
-                className={cn(
-                  'backdrop-blur-md px-3 py-1 md:px-4 md:py-1.5 rounded-full relative overflow-hidden',
-                  potBounce && 'animate-pot-bounce'
-                )}
-                style={{
-                  background: 'linear-gradient(135deg, rgba(20, 20, 20, 0.95) 0%, rgba(15, 15, 15, 0.9) 100%)',
-                  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.5), 0 0 16px rgba(201, 162, 39, 0.15)',
-                  border: '1px solid rgba(201, 162, 39, 0.35)',
-                }}
-              >
-                <div
-                  className="absolute inset-0"
-                  style={{
-                    background: 'radial-gradient(ellipse at center, rgba(201, 162, 39, 0.12) 0%, transparent 70%)',
-                  }}
-                />
-                <span className="text-[10px] md:text-xs font-bold text-[#c9a227] relative z-10 drop-shadow-[0_0_8px_rgba(201,162,39,0.5)]">
-                  팟 {gameState.pot.toLocaleString()}
-                </span>
-              </div>
-            )}
 
             {/* Side pots */}
             {gameState.sidePots.length > 0 && (
@@ -1185,41 +1127,31 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
                 {gameState.sidePots.map((sp, i) => (
                   <div
                     key={i}
-                    className="bg-[#1a1a1a]/70 px-2 py-0.5 rounded-full border border-[#444]/30 text-[8px] md:text-[9px] text-[#888]"
+                    className="px-2 py-0.5 rounded-full text-[8px] text-white/50"
+                    style={{ background: 'rgba(0,0,0,0.4)' }}
                   >
-                    사이드: {sp.amount.toLocaleString()}
+                    사이드 {sp.amount.toLocaleString()}
                   </div>
                 ))}
               </div>
             )}
           </div>
 
-          {/* ── Status overlay (waiting) ── */}
+          {/* ── Status overlay (waiting) -- PokerNow style ── */}
           {gameState.status === 'waiting' && (
-            <div className="absolute top-[55%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
-              <div
-                className="backdrop-blur-md px-5 py-3 md:px-8 md:py-4 rounded-xl text-center relative overflow-hidden"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(30, 30, 30, 0.95) 0%, rgba(20, 20, 20, 0.95) 100%)',
-                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(201, 162, 39, 0.2)',
-                }}
-              >
-                <div
-                  className="absolute inset-0 opacity-50"
-                  style={{
-                    background: 'radial-gradient(circle at 50% 0%, rgba(201, 162, 39, 0.1) 0%, transparent 70%)',
-                  }}
-                />
-                <div className="relative z-10">
-                  <div className="flex items-center gap-2 justify-center mb-1">
-                    <div className="w-1.5 h-1.5 bg-[#c9a227] rounded-full animate-pulse" />
-                    <div className="w-1.5 h-1.5 bg-[#c9a227] rounded-full animate-pulse [animation-delay:0.3s]" />
-                    <div className="w-1.5 h-1.5 bg-[#c9a227] rounded-full animate-pulse [animation-delay:0.6s]" />
-                  </div>
-                  <p className="text-xs md:text-sm text-[#e0e0e0] font-medium">플레이어 대기 중...</p>
-                  <p className="text-[9px] md:text-[10px] text-[#666] mt-0.5">최소 2명 필요</p>
-                </div>
+            <div className="absolute top-[55%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center gap-2">
+              <div className="flex items-center gap-1.5">
+                {[0, 0.25, 0.5].map((delay, k) => (
+                  <div
+                    key={k}
+                    className="w-1.5 h-1.5 bg-white/40 rounded-full animate-pulse"
+                    style={{ animationDelay: `${delay}s` }}
+                  />
+                ))}
+              </div>
+              <p className="text-[11px] font-medium text-white/60">Waiting for others...</p>
+              <div className="text-[10px] text-white/30 text-center leading-relaxed">
+                <p>NLH ~ {gameState.smallBlind}/{gameState.bigBlind}</p>
               </div>
             </div>
           )}
@@ -1234,17 +1166,18 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
                 className="absolute -translate-x-1/2 -translate-y-1/2 z-20"
                 style={{ top: `${pos[0]}%`, left: `${pos[1]}%` }}
               >
-                <SeatDisplay
+                <MemoizedSeatDisplay
                   seat={seat}
                   seatIndex={i}
                   isHero={i === heroSeatIndex}
                   isDealer={gameState.dealerSeat === i && isPlaying}
                   isCurrent={gameState.currentSeat === i}
-                  timeLeft={gameState.currentSeat === i ? gameState.turnTimeLeft : 0}
+                  timeLeft={gameState.currentSeat === i ? turnTimeLeft : 0}
                   showCards={isShowdown}
                   onSitDown={handleSitDown}
                   lastAction={lastActions[i]}
                   hasNewCards={newCardsDealt}
+                  isHandActive={isPlaying}
                 />
               </div>
             );
@@ -1265,146 +1198,108 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
               </div>
             );
           })}
-        </div>
-      </div>
+          </div>{/* close felt */}
+        </div>{/* close table container */}
+      </div>{/* close flex-1 area */}
 
       {/* ═══════════════════════════════════════════════════════════
-          HERO ZONE - Cards + Status + Actions (PokerStars Style)
+          HERO ZONE — PokerNow style, compact single-strip
           ═══════════════════════════════════════════════════════════ */}
       <div
-        className="flex-shrink-0 bg-gradient-to-t from-[#080808] via-[#0c0c0c] to-transparent"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        className="flex-shrink-0"
+        style={{
+          background: '#1a1a1a',
+          borderTop: '1px solid rgba(255,255,255,0.08)',
+          paddingBottom: 'env(safe-area-inset-bottom)',
+        }}
       >
         {isSeated && heroSeat ? (
           <div>
-            {/* Hero cards row */}
-            <div className="px-3 md:px-6 pt-1 pb-1 flex items-end gap-3 md:gap-5">
-              {/* Hero hole cards -- LARGE with hover lift */}
-              <div className="flex gap-1 md:gap-1.5 flex-shrink-0">
-                {heroSeat.holeCards && heroSeat.holeCards.length > 0 ? (
-                  heroSeat.holeCards.map((card, i) => {
-                    const parsed = parseCard(card);
-                    if (!parsed) return null;
-                    return (
-                      <div
-                        key={i}
-                        className="animate-card-deal hero-card-hover"
-                        style={{ animationDelay: `${i * 120}ms` }}
-                      >
-                        <CardRenderer
-                          rank={parsed.rank}
-                          suit={parsed.suit}
-                          size="lg"
-                          className={cn(
-                            'md:hidden shadow-[0_4px_20px_rgba(0,0,0,0.6)]',
-                            heroSeat.isFolded && 'opacity-40'
-                          )}
-                        />
-                        <CardRenderer
-                          rank={parsed.rank}
-                          suit={parsed.suit}
-                          size="xl"
-                          className={cn(
-                            'hidden md:flex shadow-[0_6px_24px_rgba(0,0,0,0.6)]',
-                            heroSeat.isFolded && 'opacity-40'
-                          )}
-                        />
-                      </div>
-                    );
-                  })
-                ) : isPlaying && !heroSeat.isFolded ? (
-                  <div className="flex gap-1">
-                    <CardBack size="md" />
-                    <CardBack size="md" />
-                  </div>
-                ) : null}
-              </div>
-
-              {/* Center status area */}
-              <div className="flex-1 flex flex-col items-center justify-center min-h-[48px] gap-1.5">
-                {/* Status text when not hero's turn and no pre-actions showing */}
-                {!isHeroTurn && (
-                  <>
-                    {isPlaying && !heroSeat.isFolded && (
-                      <p className="text-[11px] md:text-xs text-[#555] font-medium">
-                        {gameState?.currentSeat !== null
-                          ? `${seats[gameState?.currentSeat ?? 0]?.nickname ?? 'Player'}님 차례...`
-                          : '대기 중...'}
-                      </p>
-                    )}
-                    {heroSeat.isFolded && (
-                      <p className="text-[11px] md:text-xs text-[#555] font-medium">폴드됨</p>
-                    )}
-                    {!isPlaying && (
-                      <p className="text-[11px] md:text-xs text-[#555] font-medium">
-                        {gameState.status === 'waiting' ? '플레이어 대기 중...' : '다음 핸드 시작 중...'}
-                      </p>
-                    )}
-                  </>
-                )}
-
-                {/* Timer badge when it's hero's turn */}
-                {isHeroTurn && !heroSeat.isFolded && (
-                  <div className="flex items-center gap-1.5">
-                    <div
+            {/* ── Hero card -- PokerNow style: avatar/cards + info card ── */}
+            <div className="px-3 pt-2 pb-1.5 flex items-center gap-3">
+              {/* Status + chip stack (cards are on the table now) */}
+              <div className="flex-1 flex flex-col justify-center gap-0.5 min-w-0">
+                {/* Status line */}
+                <div className="text-[10px] leading-tight">
+                  {isHeroTurn && !heroSeat.isFolded ? (
+                    <span
                       className={cn(
-                        'px-2 py-0.5 rounded-full text-[10px] font-bold tabular-nums',
-                        gameState.turnTimeLeft > 10
-                          ? 'bg-[#22c55e]/15 text-[#22c55e] border border-[#22c55e]/30'
-                          : gameState.turnTimeLeft > 5
-                            ? 'bg-[#eab308]/15 text-[#eab308] border border-[#eab308]/30'
-                            : 'bg-[#ef4444]/15 text-[#ef4444] border border-[#ef4444]/30 animate-pulse'
+                        'font-bold tabular-nums',
+                        turnTimeLeft > 10
+                          ? 'text-[#22c55e]'
+                          : turnTimeLeft > 5
+                            ? 'text-[#eab308]'
+                            : 'text-[#ef4444] animate-pulse'
                       )}
                     >
-                      {gameState.turnTimeLeft}초
-                    </div>
-                  </div>
-                )}
-
-                {/* Leave seat button - shown when folded or not in active hand */}
-                {(heroSeat.isFolded || !isPlaying) && (
-                  <button
-                    onClick={handleLeave}
-                    disabled={isLeaving}
-                    className={cn(
-                      'px-3 py-1.5 rounded-lg text-[10px] font-medium transition-all',
-                      'bg-[#1a1a1a] border border-[#333] text-[#ef4444]/70 hover:text-[#ef4444] hover:border-[#ef4444]/40',
-                      isLeaving && 'opacity-50 cursor-not-allowed'
-                    )}
-                  >
-                    <span className="flex items-center gap-1">
-                      <LogOut className="w-3 h-3" />
-                      {isLeaving ? '나가는 중...' : '일어나기'}
+                      내 차례 {turnTimeLeft}초
                     </span>
-                  </button>
-                )}
+                  ) : heroSeat.isFolded ? (
+                    <span className="text-[#ef4444]/60 font-semibold uppercase tracking-wide">FOLD</span>
+                  ) : isPlaying && !heroSeat.isFolded ? (
+                    <span className="text-white/30 truncate">
+                      {gameState.currentSeat !== null
+                        ? `${seats[gameState.currentSeat]?.nickname ?? '...'}님 차례`
+                        : '대기 중'}
+                    </span>
+                  ) : (
+                    <span className="text-white/25">
+                      {gameState.status === 'waiting' ? 'WAITING' : '다음 핸드 준비 중'}
+                    </span>
+                  )}
+                </div>
+
+                {/* Nickname + chips */}
+                <div className="flex items-baseline gap-2">
+                  <span className="text-[11px] text-white/50 font-medium truncate max-w-[80px]">
+                    {heroSeat.nickname}
+                  </span>
+                  <span className="text-[14px] md:text-[16px] font-bold text-white tabular-nums leading-none">
+                    {heroSeat.chipStack.toLocaleString()}
+                  </span>
+                </div>
               </div>
+
+              {/* Leave button -- compact, right side */}
+              {(heroSeat.isFolded || !isPlaying) && (
+                <button
+                  onClick={handleLeave}
+                  disabled={isLeaving}
+                  className={cn(
+                    'flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold transition-all active:scale-[0.92] flex-shrink-0',
+                    'bg-white/5 text-white/40 hover:text-white/60 hover:bg-white/8',
+                    isLeaving && 'opacity-40 cursor-not-allowed'
+                  )}
+                >
+                  <LogOut className="w-3 h-3" />
+                  {isLeaving ? '...' : '나가기'}
+                </button>
+              )}
             </div>
 
-            {/* ── Action Bar: PokerStars Style ── */}
+            {/* ── Action Bar — PokerNow style ── */}
             {isHeroTurn && !heroSeat.isFolded && (
-              <div className="px-2 pb-2 pt-1">
-                {/* Raise panel (expanded) */}
+              <div className="px-2 pb-2 pt-0.5">
+                {/* Raise / Bet sizing panel — PokerNow flat */}
                 {showRaiseSlider && (
                   <div
                     className="mb-2 rounded-xl p-3"
-                    style={{
-                      background: 'linear-gradient(180deg, rgba(17,17,17,0.97) 0%, rgba(11,11,11,0.97) 100%)',
-                      border: '1px solid rgba(42,42,42,0.8)',
-                      boxShadow: '0 -4px 20px rgba(0,0,0,0.4)',
-                    }}
+                    style={{ background: '#222', border: '1px solid rgba(255,255,255,0.08)' }}
                   >
-                    {/* Preset pills */}
-                    <div className="flex gap-1.5 mb-2.5 justify-center">
+                    {/* Preset chips */}
+                    <div className="flex gap-1.5 mb-2.5 overflow-x-auto scrollbar-hide">
                       {betPresets.map((p) => (
                         <button
                           key={p.label}
-                          onClick={() => setRaiseAmount(p.value)}
+                          onClick={() => !p.disabled && setRaiseAmount(p.value)}
+                          disabled={p.disabled}
                           className={cn(
-                            'px-3 py-1 rounded-full text-[10px] font-bold transition-all',
-                            raiseAmount === p.value
-                              ? 'bg-[#c9a227] text-black shadow-[0_0_10px_rgba(201,162,39,0.4)]'
-                              : 'bg-[#1e1e1e] text-[#777] hover:text-[#aaa] border border-[#333] hover:border-[#555]'
+                            'flex-shrink-0 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all active:scale-[0.92]',
+                            p.disabled
+                              ? 'bg-white/4 text-white/20 cursor-not-allowed'
+                              : raiseAmount === p.value
+                                ? 'bg-white text-black'
+                                : 'bg-white/8 text-white/50 hover:bg-white/12'
                           )}
                         >
                           {p.label}
@@ -1412,11 +1307,11 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
                       ))}
                     </div>
 
-                    {/* Slider with -/+ controls */}
+                    {/* Slider row */}
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => setRaiseAmount(Math.max(minRaiseTotal, raiseAmount - gameState.bigBlind))}
-                        className="w-8 h-8 rounded-full bg-[#1e1e1e] border border-[#333] text-[#aaa] hover:text-white hover:border-[#555] flex items-center justify-center transition-all active:scale-90"
+                        onClick={() => setRaiseAmount(Math.max(minRaiseTotal, raiseAmount - bigBlind))}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center bg-white/8 text-white/50 active:scale-[0.88]"
                       >
                         <Minus className="w-3.5 h-3.5" />
                       </button>
@@ -1424,44 +1319,87 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
                         type="range"
                         min={minRaiseTotal}
                         max={maxRaiseTotal}
-                        step={Math.max(1, gameState.bigBlind)}
+                        step={Math.max(1, bigBlind)}
                         value={raiseAmount}
                         onChange={(e) => setRaiseAmount(Number(e.target.value))}
-                        className="flex-1 poker-slider"
+                        onTouchStart={(e) => e.stopPropagation()}
+                        className="flex-1 poker-slider touch-none"
                       />
                       <button
-                        onClick={() => setRaiseAmount(Math.min(maxRaiseTotal, raiseAmount + gameState.bigBlind))}
-                        className="w-8 h-8 rounded-full bg-[#1e1e1e] border border-[#333] text-[#aaa] hover:text-white hover:border-[#555] flex items-center justify-center transition-all active:scale-90"
+                        onClick={() => setRaiseAmount(Math.min(maxRaiseTotal, raiseAmount + bigBlind))}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center bg-white/8 text-white/50 active:scale-[0.88]"
                       >
                         <Plus className="w-3.5 h-3.5" />
                       </button>
                     </div>
 
-                    {/* Amount display + pot odds */}
-                    <div className="text-center mt-2 flex items-center justify-center gap-3">
-                      <span className="text-lg font-bold text-[#c9a227] tabular-nums drop-shadow-[0_0_8px_rgba(201,162,39,0.5)]">
-                        {raiseAmount.toLocaleString()}
-                      </span>
-                      {pot > 0 && (
-                        <span className="text-[10px] text-[#666] font-medium">
-                          ({Math.round((raiseAmount / (pot + raiseAmount)) * 100)}% 팟)
-                        </span>
+                    {/* Amount display — tap to edit directly */}
+                    <div className="flex items-center justify-center gap-2 mt-2">
+                      {betInputEditing ? (
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="number"
+                            inputMode="numeric"
+                            autoFocus
+                            value={betInputText}
+                            onChange={(e) => setBetInputText(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                const parsed = parseInt(betInputText, 10);
+                                if (!isNaN(parsed)) {
+                                  setRaiseAmount(Math.min(maxRaiseTotal, Math.max(minRaiseTotal, parsed)));
+                                }
+                                setBetInputEditing(false);
+                              } else if (e.key === 'Escape') {
+                                setBetInputEditing(false);
+                              }
+                            }}
+                            className="w-24 bg-white/10 border border-white/20 rounded-lg px-2 py-1 text-center text-base font-bold text-white tabular-nums outline-none focus:border-[#4a8c5c]"
+                          />
+                          <button
+                            onClick={() => {
+                              const parsed = parseInt(betInputText, 10);
+                              if (!isNaN(parsed)) {
+                                setRaiseAmount(Math.min(maxRaiseTotal, Math.max(minRaiseTotal, parsed)));
+                              }
+                              setBetInputEditing(false);
+                            }}
+                            className="w-7 h-7 rounded-lg flex items-center justify-center bg-[#4a8c5c] text-white active:scale-[0.88]"
+                          >
+                            <Check className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setBetInputText(String(raiseAmount));
+                            setBetInputEditing(true);
+                          }}
+                          className="flex items-baseline gap-2 active:opacity-70 transition-opacity"
+                        >
+                          <span className="text-lg font-bold text-white tabular-nums underline decoration-white/20 underline-offset-2">
+                            {raiseAmount.toLocaleString()}
+                          </span>
+                          {pot > 0 && (
+                            <span className="text-[10px] text-white/30 font-medium">
+                              ({Math.round((raiseAmount / (pot + raiseAmount)) * 100)}% pot)
+                            </span>
+                          )}
+                        </button>
                       )}
                     </div>
                   </div>
                 )}
 
-                {/* Main action buttons row */}
+                {/* Main 3-button row — PokerNow flat buttons */}
                 <div className="flex gap-2 items-stretch">
-                  {/* Only show fold when there's a bet to face (PokerStars style) */}
+                  {/* FOLD */}
                   {!canCheck && (
                     <button
                       onClick={() => handleAction('fold')}
                       disabled={actionPending}
                       className={cn(
-                        'w-16 md:w-20 py-2.5 rounded-xl font-bold text-xs transition-all active:scale-[0.95]',
-                        'bg-[#1a1a1a] border border-[#333] text-red-400/80',
-                        'hover:bg-[#222] hover:text-red-400 hover:border-red-500/30',
+                        'flex-1 min-h-[48px] rounded-lg font-bold text-[13px] transition-all active:scale-[0.96] bg-[#555] text-white',
                         actionPending && 'opacity-50 cursor-not-allowed'
                       )}
                     >
@@ -1469,35 +1407,27 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
                     </button>
                   )}
 
-                  {/* Check/Call - large, prominent */}
+                  {/* CHECK / CALL */}
                   <button
-                    onClick={() =>
-                      canCheck
-                        ? handleAction('check')
-                        : handleAction('call', callAmount)
-                    }
+                    onClick={() => canCheck ? handleAction('check') : handleAction('call', callAmount)}
                     disabled={actionPending}
                     className={cn(
-                      'flex-[2] py-3 md:py-3.5 rounded-xl font-bold text-base md:text-lg transition-all active:scale-[0.97]',
-                      'bg-gradient-to-b from-[#22c55e] to-[#16a34a] text-white',
-                      'shadow-[0_4px_16px_rgba(34,197,94,0.25),inset_0_1px_0_rgba(255,255,255,0.15)]',
-                      'hover:from-[#2dd36f] hover:to-[#1cb850]',
+                      'flex-1 min-h-[48px] rounded-lg font-bold transition-all active:scale-[0.96]',
+                      canCheck ? 'bg-[#4a8c5c] text-white' : 'bg-[#2d8a4e] text-white',
                       actionPending && 'opacity-50 cursor-not-allowed'
                     )}
                   >
-                    {canCheck ? '체크' : (
+                    {canCheck ? (
+                      <span className="text-[13px]">체크</span>
+                    ) : (
                       <span className="flex flex-col items-center leading-tight">
-                        <span>콜 {callAmount.toLocaleString()}</span>
-                        {gameState.pot > 0 && (
-                          <span className="text-[9px] opacity-70">
-                            ({Math.round(callAmount / (gameState.pot + callAmount) * 100)}%)
-                          </span>
-                        )}
+                        <span className="text-[13px]">콜</span>
+                        <span className="text-[11px] opacity-80 font-semibold tabular-nums">{callAmount.toLocaleString()}</span>
                       </span>
                     )}
                   </button>
 
-                  {/* Raise/Bet - toggles slider or confirms */}
+                  {/* RAISE / BET / ALL-IN */}
                   {maxRaiseTotal > 0 && (
                     <button
                       onClick={() => {
@@ -1514,78 +1444,80 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
                       }}
                       disabled={actionPending}
                       className={cn(
-                        'flex-[1.5] py-3 md:py-3.5 rounded-xl font-bold text-sm md:text-base transition-all active:scale-[0.97]',
-                        showRaiseSlider
-                          ? raiseAmount >= maxRaiseTotal
-                            ? 'bg-gradient-to-b from-[#ef4444] to-[#dc2626] text-white shadow-[0_4px_16px_rgba(239,68,68,0.3),inset_0_1px_0_rgba(255,255,255,0.15)]'
-                            : 'bg-gradient-to-b from-[#d4af37] to-[#b89320] text-black shadow-[0_4px_16px_rgba(201,162,39,0.3),inset_0_1px_0_rgba(255,255,255,0.25)]'
-                          : 'bg-gradient-to-b from-[#d4af37] to-[#c9a227] text-black shadow-[0_4px_16px_rgba(201,162,39,0.2),inset_0_1px_0_rgba(255,255,255,0.25)]',
-                        'hover:brightness-110',
+                        'flex-1 min-h-[48px] rounded-lg font-bold transition-all active:scale-[0.96]',
+                        showRaiseSlider && raiseAmount >= maxRaiseTotal
+                          ? 'bg-[#c0392b] text-white animate-all-in-pulse'
+                          : 'bg-[#e67e22] text-white',
                         actionPending && 'opacity-50 cursor-not-allowed'
                       )}
                     >
-                      {showRaiseSlider
-                        ? raiseAmount >= maxRaiseTotal
-                          ? '올인'
-                          : `${gameState.currentBet > 0 ? '레이즈' : '벳'} ${raiseAmount.toLocaleString()}`
-                        : gameState.currentBet > 0
-                          ? `레이즈 ${minRaiseTotal.toLocaleString()}`
-                          : `벳 ${gameState.bigBlind.toLocaleString()}`}
+                      {showRaiseSlider ? (
+                        raiseAmount >= maxRaiseTotal ? (
+                          <span className="text-[13px]">올인</span>
+                        ) : (
+                          <span className="flex flex-col items-center leading-tight">
+                            <span className="text-[12px]">{gameState.currentBet > 0 ? '레이즈' : '벳'}</span>
+                            <span className="text-[11px] opacity-85 font-semibold tabular-nums">{raiseAmount.toLocaleString()}</span>
+                          </span>
+                        )
+                      ) : (
+                        <span className="flex flex-col items-center leading-tight">
+                          <span className="text-[12px]">{gameState.currentBet > 0 ? '레이즈' : '벳'}</span>
+                          <span className="text-[11px] opacity-75 font-semibold tabular-nums">{minRaiseTotal.toLocaleString()}</span>
+                        </span>
+                      )}
                     </button>
                   )}
                 </div>
               </div>
             )}
 
-            {/* ── Pre-Action Buttons (when NOT hero's turn but in hand) ── */}
+            {/* ── Pre-action buttons (not hero's turn) ── */}
             {!isHeroTurn && isPlaying && !heroSeat.isFolded && (
               <div className="px-3 py-2">
-                <div className="flex gap-2 justify-center">
-                  <button
-                    onClick={() => setPreAction(preAction === 'fold' ? null : 'fold')}
-                    className={cn(
-                      'px-4 py-2 rounded-full text-xs font-medium border transition-all',
-                      preAction === 'fold'
-                        ? 'bg-red-500/20 border-red-500/50 text-red-400 shadow-[0_0_8px_rgba(239,68,68,0.15)]'
-                        : 'bg-[#1a1a1a] border-[#333] text-[#666] hover:text-[#888] hover:border-[#444]'
-                    )}
-                  >
-                    폴드
-                  </button>
-                  <button
-                    onClick={() => setPreAction(preAction === 'check_fold' ? null : 'check_fold')}
-                    className={cn(
-                      'px-4 py-2 rounded-full text-xs font-medium border transition-all',
-                      preAction === 'check_fold'
-                        ? 'bg-[#22c55e]/15 border-[#22c55e]/40 text-[#22c55e] shadow-[0_0_8px_rgba(34,197,94,0.15)]'
-                        : 'bg-[#1a1a1a] border-[#333] text-[#666] hover:text-[#888] hover:border-[#444]'
-                    )}
-                  >
-                    체크/폴드
-                  </button>
-                  <button
-                    onClick={() => setPreAction(preAction === 'call' ? null : 'call')}
-                    className={cn(
-                      'px-4 py-2 rounded-full text-xs font-medium border transition-all',
-                      preAction === 'call'
-                        ? 'bg-[#22c55e]/15 border-[#22c55e]/40 text-[#22c55e] shadow-[0_0_8px_rgba(34,197,94,0.15)]'
-                        : 'bg-[#1a1a1a] border-[#333] text-[#666] hover:text-[#888] hover:border-[#444]'
-                    )}
-                  >
-                    콜
-                  </button>
+                <div className="flex gap-2">
+                  {[
+                    { key: 'fold' as const, label: '폴드', activeClass: 'bg-[#555] text-white' },
+                    { key: 'check_fold' as const, label: '체크/폴드', activeClass: 'bg-[#3d7a4e] text-white' },
+                    { key: 'call' as const, label: '콜', activeClass: 'bg-[#3d7a4e] text-white' },
+                  ].map(({ key, label, activeClass }) => (
+                    <button
+                      key={key}
+                      onClick={() => setPreAction(preAction === key ? null : key)}
+                      className={cn(
+                        'flex-1 py-2 rounded-lg text-[11px] font-semibold transition-all active:scale-[0.93]',
+                        preAction === key ? activeClass : 'bg-white/5 text-white/30'
+                      )}
+                    >
+                      {label}
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
           </div>
         ) : (
-          /* Spectator mode */
-          <div className="px-4 py-4 text-center">
-            <p className="text-xs md:text-sm text-[#555]">
-              {userId
-                ? '빈 좌석을 터치하여 참가'
-                : '관전 중 -- 로그인하여 플레이'}
-            </p>
+          /* Spectator -- PokerNow: CHAT LOG | JOIN button | info */
+          <div className="px-3 py-2.5 flex items-center gap-3">
+            <button
+              onClick={() => setShowHistory(true)}
+              className="px-3 py-1.5 rounded-lg text-[10px] font-semibold text-white/40 bg-white/5 hover:bg-white/8 transition-colors active:scale-[0.95]"
+            >
+              CHAT LOG
+            </button>
+            <div className="flex-1 text-center">
+              <p className="text-[11px] text-white/30">
+                {userId ? '빈 좌석을 터치하여 참가' : '관전 중'}
+              </p>
+            </div>
+            {!userId && (
+              <Link
+                href="/login"
+                className="px-4 py-1.5 rounded-lg text-[11px] font-bold bg-[#4a8c5c] text-white hover:bg-[#3d7a4e] transition-colors active:scale-[0.95]"
+              >
+                로그인
+              </Link>
+            )}
           </div>
         )}
       </div>

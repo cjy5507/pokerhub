@@ -4,7 +4,7 @@ export type Card = `${Rank}${Suit}`;
 export type Position = 'UTG' | 'UTG+1' | 'UTG+2' | 'MP' | 'HJ' | 'CO' | 'BTN' | 'SB' | 'BB';
 export type Street = 'preflop' | 'flop' | 'turn' | 'river';
 export type ActionType = 'fold' | 'check' | 'call' | 'bet' | 'raise' | 'all-in';
-export type GameType = 'cash' | 'tournament';
+export type GameType = 'cash' | 'tournament' | 'nlhe' | 'plo' | 'plo5' | 'mixed';
 export type TableSize = '6max' | '9max';
 export type HandResult = 'won' | 'lost' | 'split';
 

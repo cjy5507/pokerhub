@@ -1,17 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Ticket, Star, Crown, Zap, Trophy, X, TrendingUp, Gift } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { buyLotteryTicket, getUserPoints } from '../actions';
 
-// Prize tiers configuration with improved probability distribution
+// Prize tiers configuration matching server-side tiers
 const PRIZE_TIERS = [
-  { id: 'first', name: '1등', prize: 10000, probability: 0.05, color: 'from-red-500 to-yellow-500', glow: 'shadow-red-500/50', icon: Crown },
-  { id: 'second', name: '2등', prize: 3000, probability: 0.3, color: 'from-purple-500 to-pink-500', glow: 'shadow-purple-500/50', icon: Star },
-  { id: 'third', name: '3등', prize: 500, probability: 3, color: 'from-blue-500 to-cyan-500', glow: 'shadow-blue-500/50', icon: Zap },
-  { id: 'fourth', name: '4등', prize: 200, probability: 12, color: 'from-green-500 to-emerald-500', glow: 'shadow-green-500/50', icon: Trophy },
-  { id: 'fifth', name: '5등', prize: 100, probability: 30, color: 'from-amber-500 to-orange-500', glow: 'shadow-amber-500/50', icon: Gift },
-  { id: 'none', name: '꽝', prize: 0, probability: 54.65, color: 'from-gray-600 to-gray-700', glow: 'shadow-gray-500/30', icon: X },
+  { id: 'first', name: '1등', prize: 10000, probability: 1, color: 'from-red-500 to-yellow-500', glow: 'shadow-red-500/50', icon: Crown },
+  { id: 'second', name: '2등', prize: 1000, probability: 5, color: 'from-purple-500 to-pink-500', glow: 'shadow-purple-500/50', icon: Star },
+  { id: 'third', name: '3등', prize: 500, probability: 15, color: 'from-blue-500 to-cyan-500', glow: 'shadow-blue-500/50', icon: Zap },
+  { id: 'fourth', name: '4등', prize: 200, probability: 30, color: 'from-green-500 to-emerald-500', glow: 'shadow-green-500/50', icon: Trophy },
+  { id: 'none', name: '꽝', prize: 0, probability: 49, color: 'from-gray-600 to-gray-700', glow: 'shadow-gray-500/30', icon: X },
 ] as const;
 
 type TierType = typeof PRIZE_TIERS[number]['id'];
@@ -20,54 +20,23 @@ interface LotteryTicket {
   id: string;
   tier: TierType;
   prizeAmount: number;
-  timestamp?: Date;
-}
-
-// Mock function - will be replaced with server action
-async function buyLotteryTicket(): Promise<{
-  success: boolean;
-  ticket?: LotteryTicket;
-  error?: string;
-}> {
-  // Simulate network delay
-  await new Promise(resolve => setTimeout(resolve, 300));
-
-  const roll = Math.random() * 100;
-  let tier: TierType;
-  let prizeAmount: number;
-
-  if (roll < 0.05) { tier = 'first'; prizeAmount = 10000; }
-  else if (roll < 0.35) { tier = 'second'; prizeAmount = 3000; }
-  else if (roll < 3.35) { tier = 'third'; prizeAmount = 500; }
-  else if (roll < 15.35) { tier = 'fourth'; prizeAmount = 200; }
-  else if (roll < 45.35) { tier = 'fifth'; prizeAmount = 100; }
-  else { tier = 'none'; prizeAmount = 0; }
-
-  return {
-    success: true,
-    ticket: {
-      id: crypto.randomUUID(),
-      tier,
-      prizeAmount,
-      timestamp: new Date()
-    }
-  };
 }
 
 // Mock data with Korean names
 const MOCK_WINNERS = [
   { nickname: '김민수', tier: 'first' as const, prize: 10000, time: '2분 전' },
   { nickname: '박지영', tier: 'third' as const, prize: 500, time: '5분 전' },
-  { nickname: '이준호', tier: 'second' as const, prize: 3000, time: '12분 전' },
-  { nickname: '최수진', tier: 'fifth' as const, prize: 100, time: '23분 전' },
+  { nickname: '이준호', tier: 'second' as const, prize: 1000, time: '12분 전' },
+  { nickname: '최수진', tier: 'fourth' as const, prize: 200, time: '23분 전' },
   { nickname: '정태웅', tier: 'fourth' as const, prize: 200, time: '34분 전' },
   { nickname: '강서연', tier: 'first' as const, prize: 10000, time: '1시간 전' },
   { nickname: '윤재현', tier: 'third' as const, prize: 500, time: '1시간 전' },
-  { nickname: '한유진', tier: 'second' as const, prize: 3000, time: '2시간 전' },
+  { nickname: '한유진', tier: 'second' as const, prize: 1000, time: '2시간 전' },
 ];
 
 export default function LotteryPage() {
-  const [userPoints, setUserPoints] = useState(1250);
+  const [userPoints, setUserPoints] = useState(0);
+  const [isLoadingPoints, setIsLoadingPoints] = useState(true);
   const [currentTicket, setCurrentTicket] = useState<LotteryTicket | null>(null);
   const [isFlipping, setIsFlipping] = useState(false);
   const [isRevealed, setIsRevealed] = useState(false);
@@ -75,8 +44,20 @@ export default function LotteryPage() {
   const [history, setHistory] = useState<LotteryTicket[]>([]);
   const [isPurchasing, setIsPurchasing] = useState(false);
 
+  const refreshBalance = useCallback(async () => {
+    const result = await getUserPoints();
+    if (result.success && result.points !== undefined) {
+      setUserPoints(result.points);
+    }
+    setIsLoadingPoints(false);
+  }, []);
+
+  useEffect(() => {
+    refreshBalance();
+  }, [refreshBalance]);
+
   const TICKET_COST = 100;
-  const DAILY_LIMIT = 10;
+  const DAILY_LIMIT = 5;
 
   const handleBuyTicket = async () => {
     if (userPoints < TICKET_COST) {
@@ -89,16 +70,26 @@ export default function LotteryPage() {
     }
 
     setIsPurchasing(true);
-    const result = await buyLotteryTicket();
-    setIsPurchasing(false);
+    try {
+      const result = await buyLotteryTicket();
 
-    if (result.success && result.ticket) {
-      setUserPoints(prev => prev - TICKET_COST);
-      setCurrentTicket(result.ticket);
-      setIsRevealed(false);
-      setTodayCount(prev => prev + 1);
-    } else {
-      alert(result.error || '복권 구매에 실패했습니다');
+      if (result.success && result.ticket) {
+        // Refresh real balance from server
+        await refreshBalance();
+        setCurrentTicket({
+          id: String(result.ticket.id),
+          tier: result.ticket.tier as TierType,
+          prizeAmount: result.ticket.prizeAmount,
+        });
+        setIsRevealed(false);
+        setTodayCount(prev => prev + 1);
+      } else {
+        alert(result.error || '복권 구매에 실패했습니다');
+      }
+    } catch {
+      alert('복권 구매에 실패했습니다. 다시 시도해주세요.');
+    } finally {
+      setIsPurchasing(false);
     }
   };
 
@@ -114,11 +105,6 @@ export default function LotteryPage() {
 
       // Add to history
       setHistory(prev => [currentTicket, ...prev].slice(0, 10));
-
-      // Update points if won
-      if (currentTicket.prizeAmount > 0) {
-        setUserPoints(prev => prev + currentTicket.prizeAmount);
-      }
     }, 800);
   };
 
@@ -153,7 +139,7 @@ export default function LotteryPage() {
               <Star className="text-[#c9a227]" size={20} />
               <span className="text-[#a0a0a0]">보유 포인트</span>
             </div>
-            <span className="text-2xl font-bold text-[#c9a227]">{userPoints.toLocaleString()}P</span>
+            <span className="text-2xl font-bold text-[#c9a227]">{isLoadingPoints ? '...' : `${userPoints.toLocaleString()}P`}</span>
           </div>
 
           {/* Daily Limit */}
@@ -333,7 +319,7 @@ export default function LotteryPage() {
             })}
           </div>
           <div className="mt-4 pt-4 border-t border-[#333]">
-            <p className="text-sm text-[#a0a0a0]">기댓값: 약 83P (승률: ~45%)</p>
+            <p className="text-sm text-[#a0a0a0]">1장당 {TICKET_COST}P / 일 {DAILY_LIMIT}장 한도</p>
           </div>
         </div>
 
@@ -355,8 +341,7 @@ export default function LotteryPage() {
                     winner.tier === 'first' && "bg-red-500",
                     winner.tier === 'second' && "bg-purple-500",
                     winner.tier === 'third' && "bg-blue-500",
-                    winner.tier === 'fourth' && "bg-green-500",
-                    winner.tier === 'fifth' && "bg-amber-500"
+                    winner.tier === 'fourth' && "bg-green-500"
                   )} />
                   <span className="font-medium text-[#e0e0e0]">{winner.nickname}</span>
                   <span className="text-sm text-[#a0a0a0]">{getTierInfo(winner.tier).name}</span>

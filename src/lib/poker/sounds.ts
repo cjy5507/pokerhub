@@ -516,17 +516,21 @@ export class PokerSoundManager {
  */
 export const pokerSounds = PokerSoundManager.getInstance();
 
+// Module-level flag to prevent listener leaks across re-renders
+let _soundListenersAttached = false;
+
 /**
  * React hook for poker sounds with automatic AudioContext initialization
  */
 export function usePokerSounds(): PokerSoundManager {
   const soundManager = PokerSoundManager.getInstance();
 
-  // Auto-initialize on first user interaction
-  if (typeof window !== 'undefined') {
+  // Auto-initialize on first user interaction (once per app lifecycle)
+  if (typeof window !== 'undefined' && !_soundListenersAttached) {
+    _soundListenersAttached = true;
+
     const initializeOnInteraction = () => {
       soundManager.initialize().catch(console.warn);
-      // Remove listeners after first interaction
       window.removeEventListener('click', initializeOnInteraction);
       window.removeEventListener('touchstart', initializeOnInteraction);
       window.removeEventListener('keydown', initializeOnInteraction);

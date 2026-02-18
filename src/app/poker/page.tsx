@@ -4,6 +4,6 @@ import { PokerLobbyClient } from './PokerLobbyClient';
 export const dynamic = 'force-dynamic';
 
 export default async function PokerLobbyPage() {
-  const tables = await getPokerTables();
-  return <PokerLobbyClient tables={tables} />;
+  const { tables, myTableId } = await getPokerTables();
+  return <PokerLobbyClient tables={tables} myTableId={myTableId} />;
 }

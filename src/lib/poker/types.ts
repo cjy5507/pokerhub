@@ -63,6 +63,8 @@ export interface GameState {
   actionClosedBySeat: number | null;
   /** Whether the closer has already taken a voluntary action this round */
   closerHasActed?: boolean;
+  /** Seats restricted to call/fold only due to a short all-in (PokerStars rule) */
+  callOnlySeats?: number[];
   turnTimeLeft: number; // seconds remaining
   status: 'waiting' | 'playing' | 'paused';
 }

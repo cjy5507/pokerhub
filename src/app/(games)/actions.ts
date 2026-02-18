@@ -1,5 +1,6 @@
 'use server';
 
+import { randomInt } from 'crypto';
 import { db } from '@/lib/db';
 import {
   cooldownRewards,
@@ -18,7 +19,7 @@ const LOTTERY_COST = 100;
 const DAILY_LOTTERY_LIMIT = 5;
 
 function getRandomReward(): number {
-  return Math.floor(Math.random() * (MAX_REWARD - MIN_REWARD + 1)) + MIN_REWARD;
+  return randomInt(MIN_REWARD, MAX_REWARD + 1);
 }
 
 // Lottery tier probabilities (matching frontend)
@@ -31,7 +32,7 @@ const LOTTERY_TIERS = [
 ];
 
 function determineLotteryTier(): { tier: 'first' | 'second' | 'third' | 'fourth' | 'none'; prize: number } {
-  const roll = Math.random();
+  const roll = randomInt(0, 1000000) / 1000000;
   let cumulative = 0;
 
   for (const { tier, probability, prize } of LOTTERY_TIERS) {
@@ -56,7 +57,7 @@ const ROULETTE_MULTIPLIERS = [
 
 function determineRouletteMultiplier(): string {
   const totalWeight = ROULETTE_MULTIPLIERS.reduce((sum, m) => sum + m.weight, 0);
-  const roll = Math.random() * totalWeight;
+  const roll = randomInt(0, totalWeight);
   let cumulative = 0;
 
   for (const { multiplier, weight } of ROULETTE_MULTIPLIERS) {
@@ -71,6 +72,31 @@ function determineRouletteMultiplier(): string {
 
 function parseMultiplier(multiplier: string): number {
   return parseFloat(multiplier.replace('x', ''));
+}
+
+export async function getUserPoints(): Promise<{ success: boolean; points?: number; error?: string }> {
+  if (!db) return { success: false, error: 'Database not available' };
+  try {
+    const session = await getSession();
+    if (!session) {
+      return { success: false, error: '로그인이 필요합니다' };
+    }
+
+    const [user] = await db
+      .select({ points: users.points })
+      .from(users)
+      .where(eq(users.id, session.userId))
+      .limit(1);
+
+    if (!user) {
+      return { success: false, error: '사용자를 찾을 수 없습니다' };
+    }
+
+    return { success: true, points: user.points };
+  } catch (error) {
+    console.error('Error getting user points:', error);
+    return { success: false, error: '포인트 조회에 실패했습니다' };
+  }
 }
 
 export async function claimCooldownReward() {
@@ -123,16 +149,18 @@ export async function claimCooldownReward() {
       });
 
       // Update user points
-      await tx
+      const [updatedUser] = await tx
         .update(users)
         .set({ points: sql`${users.points} + ${pointsEarned}` })
-        .where(eq(users.id, userId));
+        .where(eq(users.id, userId))
+        .returning({ points: users.points });
 
       // Log point transaction
       await tx.insert(pointTransactions).values({
         userId,
         amount: pointsEarned,
-        type: 'earn',
+        balanceAfter: updatedUser.points,
+        type: 'earn_harvest',
         description: '쿨다운 보상',
       });
     });
@@ -201,30 +229,38 @@ export async function buyLotteryTicket() {
         .returning();
 
       // Deduct cost from user
-      await tx
+      const [afterSpend] = await tx
         .update(users)
         .set({ points: sql`${users.points} - ${LOTTERY_COST}` })
-        .where(eq(users.id, userId));
+        .where(and(eq(users.id, userId), gte(users.points, LOTTERY_COST)))
+        .returning({ points: users.points });
+
+      if (!afterSpend) {
+        throw new Error('INSUFFICIENT_POINTS');
+      }
 
       // Log purchase transaction
       await tx.insert(pointTransactions).values({
         userId,
         amount: LOTTERY_COST,
-        type: 'spend',
+        balanceAfter: afterSpend.points,
+        type: 'spend_game',
         description: '복권 구매',
       });
 
       // If won, add prize
       if (prize > 0) {
-        await tx
+        const [afterWin] = await tx
           .update(users)
           .set({ points: sql`${users.points} + ${prize}` })
-          .where(eq(users.id, userId));
+          .where(eq(users.id, userId))
+          .returning({ points: users.points });
 
         await tx.insert(pointTransactions).values({
           userId,
           amount: prize,
-          type: 'earn',
+          balanceAfter: afterWin.points,
+          type: 'earn_game',
           description: `복권 당첨 (${tier})`,
         });
       }
@@ -240,7 +276,10 @@ export async function buyLotteryTicket() {
         prizeAmount: ticket.prizeAmount,
       },
     };
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.message === 'INSUFFICIENT_POINTS') {
+      return { success: false, error: '포인트가 부족합니다' };
+    }
     console.error('Error buying lottery ticket:', error);
     return { success: false, error: '복권 구매에 실패했습니다' };
   }
@@ -290,30 +329,38 @@ export async function spinRoulette(betAmount: number) {
       });
 
       // Deduct bet
-      await tx
+      const [afterBet] = await tx
         .update(users)
         .set({ points: sql`${users.points} - ${betAmount}` })
-        .where(eq(users.id, userId));
+        .where(and(eq(users.id, userId), gte(users.points, betAmount)))
+        .returning({ points: users.points });
+
+      if (!afterBet) {
+        throw new Error('INSUFFICIENT_POINTS');
+      }
 
       // Log bet transaction
       await tx.insert(pointTransactions).values({
         userId,
         amount: betAmount,
-        type: 'spend',
+        balanceAfter: afterBet.points,
+        type: 'spend_game',
         description: '룰렛 베팅',
       });
 
       // If won, add winnings
       if (winAmount > 0) {
-        await tx
+        const [afterWin] = await tx
           .update(users)
           .set({ points: sql`${users.points} + ${winAmount}` })
-          .where(eq(users.id, userId));
+          .where(eq(users.id, userId))
+          .returning({ points: users.points });
 
         await tx.insert(pointTransactions).values({
           userId,
           amount: winAmount,
-          type: 'earn',
+          balanceAfter: afterWin.points,
+          type: 'earn_game',
           description: `룰렛 당첨 (${multiplier})`,
         });
       }
@@ -324,7 +371,10 @@ export async function spinRoulette(betAmount: number) {
       multiplier,
       winAmount,
     };
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.message === 'INSUFFICIENT_POINTS') {
+      return { success: false, error: '포인트가 부족합니다' };
+    }
     console.error('Error spinning roulette:', error);
     return { success: false, error: '룰렛 실행에 실패했습니다' };
   }

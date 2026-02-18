@@ -2,10 +2,34 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Save, Loader2 } from 'lucide-react';
+import { Save, Loader2, ShoppingBag, Award, Type } from 'lucide-react';
 import { getUserSettings, updateUserSettings, updateProfile, changePassword } from '../actions';
+import { getBadgeShop, purchaseBadge, purchaseCustomTitle } from './actions';
+import type { BadgeShopItem } from './actions';
 
-type Tab = 'profile' | 'notifications' | 'account';
+type Tab = 'profile' | 'notifications' | 'account' | 'shop';
+
+const RARITY_COLORS: Record<string, string> = {
+  common: 'border-gray-500 text-gray-400',
+  rare: 'border-blue-500 text-blue-400',
+  epic: 'border-purple-500 text-purple-400',
+  legendary: 'border-yellow-500 text-yellow-400',
+};
+
+const RARITY_LABELS: Record<string, string> = {
+  common: '일반',
+  rare: '레어',
+  epic: '에픽',
+  legendary: '전설',
+};
+
+const CATEGORY_LABELS: Record<string, string> = {
+  achievement: '업적',
+  participation: '참여',
+  skill: '실력',
+  social: '소셜',
+  special: '특별',
+};
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -30,9 +54,23 @@ export default function SettingsPage() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
+  // Shop state
+  const [shopBadges, setShopBadges] = useState<BadgeShopItem[]>([]);
+  const [shopPoints, setShopPoints] = useState(0);
+  const [shopLoading, setShopLoading] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<string>('all');
+  const [customTitle, setCustomTitle] = useState('');
+  const [currentTitle, setCurrentTitle] = useState<string | null>(null);
+
   useEffect(() => {
     loadSettings();
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'shop') {
+      loadShop();
+    }
+  }, [activeTab]);
 
   async function loadSettings() {
     const result = await getUserSettings();
@@ -43,6 +81,17 @@ export default function SettingsPage() {
       setNotifyMentions(result.settings.notifyMentions);
       setShowOnlineStatus(result.settings.showOnlineStatus);
     }
+  }
+
+  async function loadShop() {
+    setShopLoading(true);
+    const result = await getBadgeShop();
+    if (result.success && result.badges) {
+      setShopBadges(result.badges);
+      setShopPoints(result.points ?? 0);
+      setCurrentTitle(result.customTitle ?? null);
+    }
+    setShopLoading(false);
   }
 
   async function handleProfileSave() {
@@ -113,9 +162,56 @@ export default function SettingsPage() {
     }
   }
 
+  async function handleBadgePurchase(badgeId: string) {
+    setLoading(true);
+    setMessage(null);
+
+    const result = await purchaseBadge(badgeId);
+
+    setLoading(false);
+
+    if (result.success) {
+      setMessage({ type: 'success', text: '뱃지를 구매했습니다!' });
+      await loadShop();
+    } else {
+      setMessage({ type: 'error', text: result.error || '구매에 실패했습니다' });
+    }
+  }
+
+  async function handleTitlePurchase() {
+    const trimmed = customTitle.trim();
+    if (trimmed.length < 2 || trimmed.length > 20) {
+      setMessage({ type: 'error', text: '타이틀은 2~20자여야 합니다' });
+      return;
+    }
+
+    setLoading(true);
+    setMessage(null);
+
+    const result = await purchaseCustomTitle(trimmed);
+
+    setLoading(false);
+
+    if (result.success) {
+      setMessage({ type: 'success', text: '커스텀 타이틀이 변경되었습니다!' });
+      setCurrentTitle(trimmed);
+      setCustomTitle('');
+      await loadShop();
+    } else {
+      setMessage({ type: 'error', text: result.error || '변경에 실패했습니다' });
+    }
+  }
+
+  const filteredBadges = activeCategory === 'all'
+    ? shopBadges
+    : shopBadges.filter((b) => b.category === activeCategory);
+
+  const categories = ['all', 'achievement', 'participation', 'skill', 'social', 'special'];
+
   const tabs = [
     { id: 'profile' as const, label: '프로필' },
     { id: 'notifications' as const, label: '알림' },
+    { id: 'shop' as const, label: '상점' },
     { id: 'account' as const, label: '계정' },
   ];
 
@@ -125,12 +221,12 @@ export default function SettingsPage() {
         <h1 className="text-3xl font-bold mb-8">설정</h1>
 
         {/* Tabs */}
-        <div className="flex gap-2 mb-8 border-b border-[#333]">
+        <div className="flex gap-2 mb-8 border-b border-[#333] overflow-x-auto">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-6 py-3 font-medium transition-colors ${
+              className={`px-6 py-3 font-medium transition-colors whitespace-nowrap ${
                 activeTab === tab.id
                   ? 'text-[#c9a227] border-b-2 border-[#c9a227]'
                   : 'text-[#a0a0a0] hover:text-[#e0e0e0]'
@@ -311,6 +407,141 @@ export default function SettingsPage() {
                   </>
                 )}
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* Shop Tab */}
+        {activeTab === 'shop' && (
+          <div className="space-y-6">
+            {/* Points display */}
+            <div className="bg-[#1e1e1e] border border-[#c9a227]/30 rounded-lg p-4 flex items-center justify-between">
+              <span className="text-[#a0a0a0]">보유 포인트</span>
+              <span className="text-2xl font-bold text-[#c9a227]">{shopPoints.toLocaleString()}P</span>
+            </div>
+
+            {/* Custom Title Section */}
+            <div className="bg-[#1e1e1e] border border-[#333] rounded-lg p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Type className="w-5 h-5 text-[#c9a227]" />
+                <h2 className="text-xl font-bold">커스텀 타이틀</h2>
+              </div>
+
+              {currentTitle && (
+                <div className="mb-4 p-3 bg-[#121212] rounded border border-[#333]">
+                  <span className="text-sm text-[#a0a0a0]">현재 타이틀: </span>
+                  <span className="text-[#c9a227] font-medium">{currentTitle}</span>
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <input
+                  type="text"
+                  value={customTitle}
+                  onChange={(e) => setCustomTitle(e.target.value.slice(0, 20))}
+                  placeholder="새 타이틀 입력 (2~20자)"
+                  className="flex-1 bg-[#121212] border border-[#333] rounded px-4 py-2 text-[#e0e0e0] focus:border-[#c9a227] outline-none"
+                />
+                <button
+                  onClick={handleTitlePurchase}
+                  disabled={loading || customTitle.trim().length < 2}
+                  className="bg-[#c9a227] hover:bg-[#b89220] disabled:bg-[#333] disabled:text-[#888] text-[#121212] font-medium px-4 py-2 rounded whitespace-nowrap transition-colors"
+                >
+                  {loading ? '처리 중...' : '500P로 변경'}
+                </button>
+              </div>
+              <p className="text-xs text-[#a0a0a0] mt-2">
+                커스텀 타이틀은 프로필에 표시됩니다. 변경 시 500P가 차감됩니다.
+              </p>
+            </div>
+
+            {/* Badge Shop Section */}
+            <div className="bg-[#1e1e1e] border border-[#333] rounded-lg p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Award className="w-5 h-5 text-[#c9a227]" />
+                <h2 className="text-xl font-bold">뱃지 상점</h2>
+              </div>
+
+              {/* Category Tabs */}
+              <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+                {categories.map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setActiveCategory(cat)}
+                    className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                      activeCategory === cat
+                        ? 'bg-[#c9a227] text-[#121212]'
+                        : 'bg-[#2a2a2a] text-[#a0a0a0] hover:bg-[#333]'
+                    }`}
+                  >
+                    {cat === 'all' ? '전체' : CATEGORY_LABELS[cat] || cat}
+                  </button>
+                ))}
+              </div>
+
+              {shopLoading ? (
+                <div className="flex justify-center py-12">
+                  <Loader2 className="w-8 h-8 animate-spin text-[#c9a227]" />
+                </div>
+              ) : filteredBadges.length === 0 ? (
+                <div className="text-center py-12 text-[#a0a0a0]">
+                  이 카테고리에 뱃지가 없습니다
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {filteredBadges.map((badge) => (
+                    <div
+                      key={badge.id}
+                      className={`border rounded-lg p-4 ${RARITY_COLORS[badge.rarity] || 'border-[#333]'} bg-[#121212]`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="w-12 h-12 rounded-lg bg-[#2a2a2a] flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden">
+                          <img
+                            src={badge.iconUrl}
+                            alt={badge.nameKo}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                              e.currentTarget.parentElement!.textContent = '🏅';
+                            }}
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold truncate">{badge.nameKo}</span>
+                            <span className={`text-xs px-1.5 py-0.5 rounded ${RARITY_COLORS[badge.rarity] || ''} border`}>
+                              {RARITY_LABELS[badge.rarity] || badge.rarity}
+                            </span>
+                          </div>
+                          {badge.descriptionKo && (
+                            <p className="text-sm text-[#a0a0a0] mt-1 line-clamp-2">
+                              {badge.descriptionKo}
+                            </p>
+                          )}
+                          <div className="flex items-center justify-between mt-3">
+                            <span className="text-[#c9a227] font-medium text-sm">
+                              {badge.price.toLocaleString()}P
+                            </span>
+                            {badge.owned ? (
+                              <span className="text-green-400 text-sm font-medium px-3 py-1 bg-green-900/20 rounded">
+                                보유 중
+                              </span>
+                            ) : (
+                              <button
+                                onClick={() => handleBadgePurchase(badge.id)}
+                                disabled={loading || shopPoints < badge.price}
+                                className="bg-[#c9a227] hover:bg-[#b89220] disabled:bg-[#333] disabled:text-[#888] text-[#121212] text-sm font-medium px-3 py-1 rounded transition-colors"
+                              >
+                                구매
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}

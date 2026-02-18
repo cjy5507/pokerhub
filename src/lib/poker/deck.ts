@@ -1,3 +1,4 @@
+import { randomInt } from 'crypto';
 import { Card, Rank, Suit } from './types';
 
 const SUITS: Suit[] = ['h', 'd', 'c', 's'];
@@ -25,7 +26,7 @@ export class Deck {
   shuffle(): void {
     // Fisher-Yates shuffle
     for (let i = this.cards.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
+      const j = randomInt(0, i + 1);
       [this.cards[i], this.cards[j]] = [this.cards[j], this.cards[i]];
     }
     this.index = 0;

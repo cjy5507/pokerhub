@@ -16,7 +16,7 @@ type HandState = {
 
 /**
  * Server-Sent Events endpoint for real-time poker game updates
- * Polls DB every 1 second and sends updates when state changes
+ * Polls DB with dynamic interval and sends updates when state changes
  * Also enforces turn timeout: auto-folds players who exceed 30 seconds
  */
 export async function GET(
@@ -48,10 +48,14 @@ export async function GET(
         return;
       }
 
-      const pollInterval = setInterval(async () => {
+      let pollTimer: ReturnType<typeof setTimeout> | null = null;
+      let stopped = false;
+
+      async function poll() {
+        if (stopped) return;
         try {
           // Query current table state
-          const table = await db
+          const table = await db!
             .select()
             .from(pokerTables)
             .where(eq(pokerTables.id, tableId))
@@ -62,13 +66,13 @@ export async function GET(
             controller.enqueue(
               encoder.encode(`data: ${JSON.stringify({ type: 'error', message: 'Table not found' })}\n\n`)
             );
-            clearInterval(pollInterval);
+            stopped = true;
             controller.close();
             return;
           }
 
           // Auto-cleanup: delete empty tables after 10 minutes of inactivity
-          const seatCount = await db
+          const seatCount = await db!
             .select({ count: sql`count(*)::int` })
             .from(pokerTableSeats)
             .where(eq(pokerTableSeats.tableId, tableId))
@@ -78,14 +82,14 @@ export async function GET(
             const inactiveMs = Date.now() - new Date(table.lastActivityAt).getTime();
             const TEN_MINUTES = 10 * 60 * 1000;
             if (inactiveMs >= TEN_MINUTES) {
-              await db
+              await db!
                 .update(pokerTables)
                 .set({ status: 'closed' })
                 .where(eq(pokerTables.id, tableId));
               controller.enqueue(
                 encoder.encode(`data: ${JSON.stringify({ type: 'table_closed', reason: 'inactivity' })}\n\n`)
               );
-              clearInterval(pollInterval);
+              stopped = true;
               controller.close();
               return;
             }
@@ -96,10 +100,13 @@ export async function GET(
           if (table.status === 'waiting' && !table.currentHandId && !isStartingHand) {
             if (table.lastActivityAt) {
               const timeSinceActivity = Date.now() - new Date(table.lastActivityAt).getTime();
-              if (timeSinceActivity < 3000) return; // Skip this poll, wait for delay
+              if (timeSinceActivity < 3000) {
+                schedulePoll(table.currentHandId ? 1000 : 3000);
+                return;
+              }
             }
 
-            const activePlayerCount = await db
+            const activePlayerCount = await db!
               .select({ count: sql`count(*)::int` })
               .from(pokerTableSeats)
               .where(
@@ -120,69 +127,71 @@ export async function GET(
               } finally {
                 isStartingHand = false;
               }
-              return; // Skip this cycle, next poll picks up new state
+              schedulePoll(1000);
+              return;
+            }
+          }
+
+          // ── Load hand and actions ONCE per poll cycle ──
+          let hand: any = null;
+          let actions: any[] = [];
+
+          if (table.currentHandId) {
+            hand = await db!
+              .select()
+              .from(pokerGameHands)
+              .where(eq(pokerGameHands.id, table.currentHandId))
+              .limit(1)
+              .then((rows: any) => rows[0] ?? null);
+
+            if (hand) {
+              actions = await db!
+                .select()
+                .from(pokerGameActions)
+                .where(eq(pokerGameActions.handId, hand.id))
+                .orderBy(pokerGameActions.createdAt);
             }
           }
 
           let currentState: HandState = {
             handId: table.currentHandId,
             handNumber: table.handCount,
-            street: null,
-            actionCount: 0,
+            street: hand?.status ?? null,
+            actionCount: actions.length,
           };
 
           let turnTimeLeft = TURN_TIMEOUT_SECONDS;
 
-          // If there's an active hand, get its state and check timeout
-          if (table.currentHandId) {
-            const hand = await db
-              .select()
-              .from(pokerGameHands)
-              .where(eq(pokerGameHands.id, table.currentHandId))
-              .limit(1)
-              .then((rows: any) => rows[0]);
+          // Calculate turn time remaining and handle timeout
+          if (hand && hand.currentSeat !== null && hand.turnStartedAt) {
+            const elapsed = (Date.now() - new Date(hand.turnStartedAt).getTime()) / 1000;
+            turnTimeLeft = Math.max(0, Math.ceil(TURN_TIMEOUT_SECONDS - elapsed));
 
-            if (hand) {
-              const actions = await db
-                .select()
-                .from(pokerGameActions)
-                .where(eq(pokerGameActions.handId, hand.id));
+            // Auto-fold if timeout exceeded
+            if (elapsed >= TURN_TIMEOUT_SECONDS && !isProcessingTimeout) {
+              isProcessingTimeout = true;
+              try {
+                const [timedOutSeat] = await db!
+                  .select({ userId: pokerTableSeats.userId })
+                  .from(pokerTableSeats)
+                  .where(
+                    and(
+                      eq(pokerTableSeats.tableId, tableId),
+                      eq(pokerTableSeats.seatNumber, hand.currentSeat)
+                    )
+                  )
+                  .limit(1);
 
-              currentState.street = hand.status;
-              currentState.actionCount = actions.length;
-
-              // Calculate turn time remaining
-              if (hand.currentSeat !== null && hand.turnStartedAt) {
-                const elapsed = (Date.now() - new Date(hand.turnStartedAt).getTime()) / 1000;
-                turnTimeLeft = Math.max(0, Math.ceil(TURN_TIMEOUT_SECONDS - elapsed));
-
-                // Auto-fold if timeout exceeded
-                if (elapsed >= TURN_TIMEOUT_SECONDS && !isProcessingTimeout) {
-                  isProcessingTimeout = true;
-                  try {
-                    // Find the userId of the timed-out player
-                    const [timedOutSeat] = await db
-                      .select({ userId: pokerTableSeats.userId })
-                      .from(pokerTableSeats)
-                      .where(
-                        and(
-                          eq(pokerTableSeats.tableId, tableId),
-                          eq(pokerTableSeats.seatNumber, hand.currentSeat)
-                        )
-                      )
-                      .limit(1);
-
-                    if (timedOutSeat) {
-                      await processAction(tableId, timedOutSeat.userId, 'fold');
-                    }
-                  } catch (err) {
-                    console.error('Auto-fold timeout error:', err);
-                  } finally {
-                    isProcessingTimeout = false;
-                  }
-                  return; // Skip this poll cycle, next one will pick up new state
+                if (timedOutSeat) {
+                  await processAction(tableId, timedOutSeat.userId, 'fold');
                 }
+              } catch (err) {
+                console.error('Auto-fold timeout error:', err);
+              } finally {
+                isProcessingTimeout = false;
               }
+              schedulePoll(1000);
+              return;
             }
           }
 
@@ -194,8 +203,8 @@ export async function GET(
             lastState.actionCount !== currentState.actionCount;
 
           if (stateChanged) {
-            // Load full game state
-            const seats = await db
+            // Load seats
+            const seats = await db!
               .select({
                 seatNumber: pokerTableSeats.seatNumber,
                 userId: pokerTableSeats.userId,
@@ -208,65 +217,49 @@ export async function GET(
               .leftJoin(users, eq(pokerTableSeats.userId, users.id))
               .where(eq(pokerTableSeats.tableId, tableId));
 
-            // Reconstruct bet/fold/allIn state from actions
-            let seatBetState = new Map<number, { betInRound: number; totalBetInHand: number; isFolded: boolean; isAllIn: boolean }>();
+            // Reconstruct bet/fold/allIn state from cached actions
+            const seatBetState = new Map<number, { betInRound: number; totalBetInHand: number; isFolded: boolean; isAllIn: boolean }>();
 
-            if (table.currentHandId) {
-              const hand = await db
-                .select()
-                .from(pokerGameHands)
-                .where(eq(pokerGameHands.id, table.currentHandId))
-                .limit(1)
-                .then((rows: any) => rows[0]);
+            if (hand) {
+              // Initialize all seats
+              for (const seat of seats) {
+                seatBetState.set(seat.seatNumber, {
+                  betInRound: 0,
+                  totalBetInHand: 0,
+                  isFolded: false,
+                  isAllIn: false,
+                });
+              }
 
-              if (hand) {
-                // Initialize all seats
-                for (const seat of seats) {
-                  seatBetState.set(seat.seatNumber, {
-                    betInRound: 0,
-                    totalBetInHand: 0,
-                    isFolded: false,
-                    isAllIn: false,
-                  });
-                }
+              // Replay all actions to get totalBetInHand, isFolded, isAllIn
+              for (const act of actions) {
+                const state = seatBetState.get(act.seatNumber);
+                if (!state) continue;
 
-                // Load actions and replay to reconstruct state
-                const actions = await db
-                  .select()
-                  .from(pokerGameActions)
-                  .where(eq(pokerGameActions.handId, hand.id))
-                  .orderBy(pokerGameActions.createdAt);
-
-                // Replay all actions to get totalBetInHand, isFolded, isAllIn
-                for (const act of actions) {
-                  const state = seatBetState.get(act.seatNumber);
-                  if (!state) continue;
-
-                  if (act.actionType === 'fold') {
-                    state.isFolded = true;
-                  } else if (['call', 'bet', 'raise', 'all_in', 'post_sb', 'post_bb'].includes(act.actionType)) {
-                    state.totalBetInHand += act.amount;
-                    if (act.actionType === 'all_in') {
-                      state.isAllIn = true;
-                    }
+                if (act.actionType === 'fold') {
+                  state.isFolded = true;
+                } else if (['call', 'bet', 'raise', 'all_in', 'post_sb', 'post_bb'].includes(act.actionType)) {
+                  state.totalBetInHand += act.amount;
+                  if (act.actionType === 'all_in') {
+                    state.isAllIn = true;
                   }
                 }
+              }
 
-                // Compute betInRound for current street only
-                const currentStreetActions = actions.filter((a: any) => a.street === hand.status);
-                for (const act of currentStreetActions) {
-                  const state = seatBetState.get(act.seatNumber);
-                  if (state && ['call', 'bet', 'raise', 'all_in', 'post_sb', 'post_bb'].includes(act.actionType)) {
-                    state.betInRound += act.amount;
-                  }
+              // Compute betInRound for current street only
+              const currentStreetActions = actions.filter((a: any) => a.street === hand.status);
+              for (const act of currentStreetActions) {
+                const state = seatBetState.get(act.seatNumber);
+                if (state && ['call', 'bet', 'raise', 'all_in', 'post_sb', 'post_bb'].includes(act.actionType)) {
+                  state.betInRound += act.amount;
                 }
               }
             }
 
             // Load hole cards for current hand
-            let holeCardsMap = new Map<number, any>();
+            const holeCardsMap = new Map<number, any>();
             if (table.currentHandId) {
-              const results = await db
+              const results = await db!
                 .select({
                   seatNumber: pokerGameResults.seatNumber,
                   holeCards: pokerGameResults.holeCards,
@@ -279,18 +272,8 @@ export async function GET(
               }
             }
 
-            // Get current hand status for showdown visibility
-            let currentHandStatus: string | null = null;
-            if (table.currentHandId) {
-              const handCheck = await db
-                .select({ status: pokerGameHands.status })
-                .from(pokerGameHands)
-                .where(eq(pokerGameHands.id, table.currentHandId))
-                .limit(1)
-                .then((rows: any) => rows[0]);
-              currentHandStatus = handCheck?.status ?? null;
-            }
-
+            // Use cached hand status for showdown visibility
+            const currentHandStatus = hand?.status ?? null;
             const isShowdown = currentHandStatus === 'showdown' || currentHandStatus === 'complete';
 
             const seatsArray = new Array(table.maxSeats).fill(null);
@@ -311,7 +294,6 @@ export async function GET(
                 isActive: seat.isActive,
                 isSittingOut: seat.isSittingOut,
                 holeCards,
-                // Add game state fields
                 betInRound: seatBetState.get(seat.seatNumber)?.betInRound ?? 0,
                 totalBetInHand: seatBetState.get(seat.seatNumber)?.totalBetInHand ?? 0,
                 isFolded: seatBetState.get(seat.seatNumber)?.isFolded ?? false,
@@ -319,44 +301,30 @@ export async function GET(
               };
             }
 
+            // Build hand data from cached hand + actions
             let handData = null;
-            if (table.currentHandId) {
-              const hand = await db
-                .select()
-                .from(pokerGameHands)
-                .where(eq(pokerGameHands.id, table.currentHandId))
-                .limit(1)
-                .then((rows: any) => rows[0]);
+            if (hand) {
+              const lastAction = actions.length > 0 ? actions[actions.length - 1] : null;
 
-              if (hand) {
-                const actions = await db
-                  .select()
-                  .from(pokerGameActions)
-                  .where(eq(pokerGameActions.handId, hand.id))
-                  .orderBy(pokerGameActions.createdAt);
-
-                const lastAction = actions.length > 0 ? actions[actions.length - 1] : null;
-
-                handData = {
-                  id: hand.id,
-                  handNumber: hand.handNumber,
-                  dealerSeat: hand.dealerSeat,
-                  status: hand.status,
-                  communityCards: hand.communityCards || [],
-                  pot: hand.potTotal,
-                  currentSeat: hand.currentSeat,
-                  currentBet: hand.currentBet,
-                  minRaise: hand.minRaise,
-                  turnTimeLeft,
-                  lastAction: lastAction
-                    ? {
-                        seatNumber: lastAction.seatNumber,
-                        action: lastAction.actionType,
-                        amount: lastAction.amount,
-                      }
-                    : null,
-                };
-              }
+              handData = {
+                id: hand.id,
+                handNumber: hand.handNumber,
+                dealerSeat: hand.dealerSeat,
+                status: hand.status,
+                communityCards: hand.communityCards || [],
+                pot: hand.potTotal,
+                currentSeat: hand.currentSeat,
+                currentBet: hand.currentBet,
+                minRaise: hand.minRaise,
+                turnTimeLeft,
+                lastAction: lastAction
+                  ? {
+                      seatNumber: lastAction.seatNumber,
+                      action: lastAction.actionType,
+                      amount: lastAction.amount,
+                    }
+                  : null,
+              };
             }
 
             const updateData = JSON.stringify({
@@ -384,6 +352,10 @@ export async function GET(
             });
             controller.enqueue(encoder.encode(`data: ${heartbeat}\n\n`));
           }
+
+          // PERF 4: Dynamic poll interval — 1s during hand, 3s when waiting
+          const pollInterval = table.currentHandId ? 1000 : 3000;
+          schedulePoll(pollInterval);
         } catch (error) {
           console.error('SSE poll error:', error);
           const errorData = JSON.stringify({
@@ -391,12 +363,22 @@ export async function GET(
             message: error instanceof Error ? error.message : 'Unknown error',
           });
           controller.enqueue(encoder.encode(`data: ${errorData}\n\n`));
+          schedulePoll(1000);
         }
-      }, 1000);
+      }
+
+      function schedulePoll(ms: number) {
+        if (stopped) return;
+        pollTimer = setTimeout(poll, ms);
+      }
+
+      // Start first poll
+      schedulePoll(100);
 
       // Cleanup on disconnect
       request.signal.addEventListener('abort', () => {
-        clearInterval(pollInterval);
+        stopped = true;
+        if (pollTimer) clearTimeout(pollTimer);
         controller.close();
       });
     },

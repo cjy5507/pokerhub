@@ -3,10 +3,11 @@
 import { cn } from '@/lib/utils';
 import { Heart } from 'lucide-react';
 import { useState, useCallback } from 'react';
+import { toggleLike } from './like-actions';
 
 export interface LikeButtonProps {
   targetId: string;
-  targetType: 'post' | 'hand' | 'comment';
+  targetType: 'post' | 'hand' | 'comment' | 'thread';
   initialLikes: number;
   initialIsLiked?: boolean;
   onLikeChange?: (isLiked: boolean, newCount: number) => void;
@@ -48,17 +49,13 @@ export function LikeButton({
     }
 
     try {
-      // TODO: API call
-      // const response = await fetch('/api/likes', {
-      //   method: 'POST',
-      //   body: JSON.stringify({ targetId, targetType, isLiked: newIsLiked })
-      // });
-      // if (!response.ok) throw new Error();
+      const result = await toggleLike(targetId, targetType);
+      if (!result.success) throw new Error(result.error);
 
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 300));
-
-      onLikeChange?.(newIsLiked, newLikes);
+      // Sync with server state
+      setIsLiked(result.isLiked);
+      setLikes(result.likeCount);
+      onLikeChange?.(result.isLiked, result.likeCount);
     } catch (error) {
       // Rollback on error
       setIsLiked(!newIsLiked);

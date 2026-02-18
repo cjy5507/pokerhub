@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import { useState } from 'react';
 
 export type Street = 'preflop' | 'flop' | 'turn' | 'river';
-export type ActionType = 'fold' | 'check' | 'call' | 'bet' | 'raise' | 'allin';
+export type ActionType = 'fold' | 'check' | 'call' | 'bet' | 'raise' | 'all-in';
 
 export interface PokerAction {
   position: string;
@@ -36,7 +36,7 @@ const actionColors: Record<ActionType, string> = {
   call: 'text-[#3b82f6]',
   bet: 'text-[#f59e0b]',
   raise: 'text-[#f59e0b] font-semibold',
-  allin: 'text-[#ef4444] font-bold',
+  'all-in': 'text-[#ef4444] font-bold',
 };
 
 const positionColors: Record<string, string> = {

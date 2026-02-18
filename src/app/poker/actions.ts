@@ -1,7 +1,7 @@
 'use server';
 
 import { db } from '@/lib/db';
-import { pokerTables, pokerTableSeats, users, pokerGameHands, pokerGameActions, pokerGameResults } from '@/lib/db/schema';
+import { pokerTables, pokerTableSeats, users, pokerGameHands, pokerGameActions, pokerGameResults, pointTransactions } from '@/lib/db/schema';
 import { getSession } from '@/lib/auth/session';
 import { eq, sql, desc, ne, and } from 'drizzle-orm';
 import { redirect } from 'next/navigation';
@@ -20,13 +20,19 @@ export type PokerTableWithSeats = {
   handCount: number;
   createdAt: Date;
   seatCount: number;
+  activePlayers: number;
+};
+
+export type PokerLobbyData = {
+  tables: PokerTableWithSeats[];
+  myTableId: string | null;
 };
 
 /**
- * Get all poker tables that are not closed
+ * Get all poker tables that are not closed, plus the current user's table
  */
-export async function getPokerTables(): Promise<PokerTableWithSeats[]> {
-  if (!db) return [];
+export async function getPokerTables(): Promise<PokerLobbyData> {
+  if (!db) return { tables: [], myTableId: null };
 
   // Cleanup old empty tables (older than 10 minutes with no players)
   await db.execute(sql`
@@ -36,6 +42,17 @@ export async function getPokerTables(): Promise<PokerTableWithSeats[]> {
     AND id NOT IN (SELECT DISTINCT table_id FROM poker_table_seats)
     AND last_activity_at < NOW() - INTERVAL '10 minutes'
   `);
+
+  // Check which table the current user is seated at
+  let myTableId: string | null = null;
+  const session = await getSession();
+  if (session?.userId) {
+    const mySeat = await db.select({ tableId: pokerTableSeats.tableId })
+      .from(pokerTableSeats)
+      .where(eq(pokerTableSeats.userId, session.userId))
+      .limit(1);
+    myTableId = mySeat[0]?.tableId ?? null;
+  }
 
   const tables = await db
     .select({
@@ -50,6 +67,7 @@ export async function getPokerTables(): Promise<PokerTableWithSeats[]> {
       handCount: pokerTables.handCount,
       createdAt: pokerTables.createdAt,
       seatCount: sql<number>`count(${pokerTableSeats.seatNumber})::int`,
+      activePlayers: sql<number>`count(${pokerTableSeats.seatNumber}) filter (where ${pokerTableSeats.isActive} = true and ${pokerTableSeats.isSittingOut} = false)::int`,
     })
     .from(pokerTables)
     .leftJoin(pokerTableSeats, eq(pokerTables.id, pokerTableSeats.tableId))
@@ -57,7 +75,7 @@ export async function getPokerTables(): Promise<PokerTableWithSeats[]> {
     .groupBy(pokerTables.id)
     .orderBy(desc(pokerTables.createdAt));
 
-  return tables;
+  return { tables, myTableId };
 }
 
 type CreateTableData = {
@@ -310,18 +328,16 @@ export async function joinTable(tableId: string, seatNumber: number, buyIn: numb
       throw new Error('이미 이 테이블에 앉아있습니다');
     }
 
-    // Deduct points from user (atomic)
-    const [user] = await tx
-      .select({ points: users.points })
-      .from(users)
-      .where(eq(users.id, session.userId))
-      .limit(1);
+    // Deduct points from user (atomic single UPDATE)
+    const result = await tx
+      .update(users)
+      .set({ points: sql`points - ${buyIn}` })
+      .where(and(eq(users.id, session.userId), sql`points >= ${buyIn}`))
+      .returning({ points: users.points });
 
-    if (!user || user.points < buyIn) {
+    if (result.length === 0) {
       throw new Error('포인트가 부족합니다');
     }
-
-    await tx.update(users).set({ points: user.points - buyIn }).where(eq(users.id, session.userId));
 
     await tx.insert(pokerTableSeats).values({
       tableId,
@@ -369,6 +385,48 @@ export async function leaveTable(tableId: string) {
     throw new Error('로그인이 필요합니다');
   }
 
+  // Auto-fold if player is in an active hand (must run before transaction)
+  const table = await db
+    .select()
+    .from(pokerTables)
+    .where(eq(pokerTables.id, tableId))
+    .limit(1);
+
+  if (table.length > 0 && table[0].currentHandId) {
+    const hand = await db
+      .select()
+      .from(pokerGameHands)
+      .where(eq(pokerGameHands.id, table[0].currentHandId))
+      .limit(1);
+
+    if (hand.length > 0 && hand[0].status !== 'complete') {
+      const userSeat = await db
+        .select()
+        .from(pokerTableSeats)
+        .where(and(
+          eq(pokerTableSeats.tableId, tableId),
+          eq(pokerTableSeats.userId, session.userId)
+        ))
+        .limit(1);
+
+      if (userSeat.length > 0) {
+        if (hand[0].currentSeat === userSeat[0].seatNumber) {
+          // 자기 차례면 processGameAction으로 fold
+          await processGameAction(tableId, session.userId, 'fold');
+        } else {
+          // 차례가 아니면 DB에 직접 fold 액션 기록
+          await db.insert(pokerGameActions).values({
+            handId: hand[0].id,
+            seatNumber: userSeat[0].seatNumber,
+            street: hand[0].status,
+            actionType: 'fold',
+            amount: 0,
+          });
+        }
+      }
+    }
+  }
+
   return await db.transaction(async (tx: any) => {
     const [seat] = await tx
       .select()
@@ -388,10 +446,21 @@ export async function leaveTable(tableId: string) {
       .limit(1);
 
     if (user) {
+      const updatedPoints = user.points + seat.chipStack;
       await tx
         .update(users)
-        .set({ points: user.points + seat.chipStack })
+        .set({ points: updatedPoints })
         .where(eq(users.id, session.userId));
+
+      if (seat.chipStack > 0) {
+        await tx.insert(pointTransactions).values({
+          userId: session.userId,
+          amount: seat.chipStack,
+          balanceAfter: updatedPoints,
+          type: 'earn_game',
+          description: `포커 테이블 칩 반환 ${seat.chipStack}P`,
+        });
+      }
     }
 
     await tx
@@ -413,6 +482,13 @@ export async function leaveTable(tableId: string) {
       );
 
     if (remainingSeats.length < 2) {
+      // 현재 핸드가 있으면 완료 처리 (orphan 방지)
+      const [currentTable] = await tx.select().from(pokerTables).where(eq(pokerTables.id, tableId)).limit(1);
+      if (currentTable.currentHandId) {
+        await tx.update(pokerGameHands)
+          .set({ status: 'complete', completedAt: new Date(), currentSeat: null })
+          .where(eq(pokerGameHands.id, currentTable.currentHandId));
+      }
       await tx
         .update(pokerTables)
         .set({ status: 'waiting', currentHandId: null })

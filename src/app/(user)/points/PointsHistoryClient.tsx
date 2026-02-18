@@ -30,8 +30,11 @@ const TYPE_LABELS: Record<string, string> = {
   earn_like: '좋아요 받음',
   earn_attendance: '출석 체크',
   earn_mission: '미션 완료',
+  earn_game: '게임 보상',
+  earn_harvest: '포인트 수확',
   spend_badge: '뱃지 구매',
   spend_custom_title: '커스텀 타이틀',
+  spend_game: '게임 베팅',
   admin_adjust: '관리자 조정',
 };
 
@@ -40,6 +43,13 @@ export function PointsHistoryClient({
   transactions,
   pagination,
 }: PointsHistoryClientProps) {
+  const totalEarned = transactions
+    .filter((tx) => tx.amount > 0)
+    .reduce((sum, tx) => sum + tx.amount, 0);
+  const totalSpent = transactions
+    .filter((tx) => tx.amount < 0)
+    .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
+
   return (
     <div className="container max-w-4xl mx-auto px-4 py-6 lg:py-8">
       {/* Header */}
@@ -64,6 +74,28 @@ export function PointsHistoryClient({
               </span>
               <span className="text-xl text-[#a0a0a0]">P</span>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Summary Stats */}
+      <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="bg-[#1e1e1e] border border-[#333] rounded-lg p-4">
+          <div className="flex items-center gap-2 mb-1">
+            <ArrowUpRight className="w-4 h-4 text-[#22c55e]" />
+            <span className="text-xs text-[#a0a0a0]">이 페이지 총 획득</span>
+          </div>
+          <div className="text-lg font-bold text-[#22c55e]">
+            +{totalEarned.toLocaleString()} P
+          </div>
+        </div>
+        <div className="bg-[#1e1e1e] border border-[#333] rounded-lg p-4">
+          <div className="flex items-center gap-2 mb-1">
+            <ArrowDownRight className="w-4 h-4 text-[#ef4444]" />
+            <span className="text-xs text-[#a0a0a0]">이 페이지 총 사용</span>
+          </div>
+          <div className="text-lg font-bold text-[#ef4444]">
+            -{totalSpent.toLocaleString()} P
           </div>
         </div>
       </div>

@@ -62,7 +62,8 @@ export async function createThread(data: { content: string; imageUrl?: string })
       return { success: false, error: '내용은 500자를 초과할 수 없습니다' };
     }
 
-    const contentHtml = `<p>${data.content}</p>`;
+    const escapeHtml = (str: string) => str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    const contentHtml = `<p>${escapeHtml(data.content)}</p>`;
 
     const [newThread] = await db
       .insert(threads)

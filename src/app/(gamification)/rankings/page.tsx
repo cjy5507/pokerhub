@@ -2,6 +2,7 @@ import { db } from '@/lib/db';
 import { users, posts, pokerHands, postLikes } from '@/lib/db/schema';
 import { getSession } from '@/lib/auth/session';
 import { desc, eq, sql, and } from 'drizzle-orm';
+import Link from 'next/link';
 
 interface RankedUser {
   id: string;
@@ -15,6 +16,45 @@ interface RankedUser {
   likesReceived: number;
 }
 
+type TabKey = 'level' | 'points' | 'posts' | 'hands' | 'likes';
+
+const TABS: { key: TabKey; label: string }[] = [
+  { key: 'level', label: '레벨' },
+  { key: 'points', label: '포인트' },
+  { key: 'posts', label: '게시글' },
+  { key: 'hands', label: '핸드' },
+  { key: 'likes', label: '좋아요' },
+];
+
+function getRankBadge(rank: number): string | null {
+  if (rank === 1) return '🥇';
+  if (rank === 2) return '🥈';
+  if (rank === 3) return '🥉';
+  return null;
+}
+
+function getRankColor(rank: number): string {
+  if (rank === 1) return 'border-[#c9a227] bg-[#c9a227]/10';
+  if (rank === 2) return 'border-[#a0a0a0] bg-[#a0a0a0]/10';
+  if (rank === 3) return 'border-[#cd7f32] bg-[#cd7f32]/10';
+  return 'border-[#333] bg-[#1e1e1e]';
+}
+
+function getStatValue(user: RankedUser, tab: TabKey): string {
+  switch (tab) {
+    case 'level':
+      return `Lv.${user.level} (${user.xp.toLocaleString()} XP)`;
+    case 'points':
+      return `${user.points.toLocaleString()} P`;
+    case 'posts':
+      return `${user.postCount}개`;
+    case 'hands':
+      return `${user.handCount}개`;
+    case 'likes':
+      return `${user.likesReceived}개`;
+  }
+}
+
 export default async function RankingsPage({
   searchParams,
 }: {
@@ -22,22 +62,20 @@ export default async function RankingsPage({
 }) {
   const session = await getSession();
   const { tab } = await searchParams;
-  const activeTab = (tab || 'level') as 'level' | 'points' | 'posts' | 'hands' | 'likes';
-
-  // Query users with aggregated counts
-  let rankedUsers: RankedUser[] = [];
+  const activeTab = (tab && TABS.some((t) => t.key === tab) ? tab : 'level') as TabKey;
 
   if (!db) {
     return (
-      <div className="container mx-auto p-4">
-        <h1 className="text-2xl font-bold mb-4">Rankings - {activeTab}</h1>
-        <p>Database not available</p>
+      <div className="container max-w-4xl mx-auto px-4 py-6">
+        <h1 className="text-2xl font-bold text-[#e0e0e0] mb-4">랭킹</h1>
+        <p className="text-[#a0a0a0]">데이터베이스에 연결할 수 없습니다</p>
       </div>
     );
   }
 
+  let rankedUsers: RankedUser[] = [];
+
   if (activeTab === 'posts' || activeTab === 'hands' || activeTab === 'likes') {
-    // For posts, hands, and likes, we need to aggregate data
     const allUsers = await db
       .select({
         id: users.id,
@@ -51,7 +89,6 @@ export default async function RankingsPage({
       .where(eq(users.status, 'active'))
       .limit(1000);
 
-    // Get counts for each user
     const usersWithCounts = await Promise.all(
       allUsers.map(async (user: any) => {
         const [postCountResult] = await db
@@ -79,22 +116,25 @@ export default async function RankingsPage({
       })
     );
 
-    // Sort based on active tab
-    rankedUsers = usersWithCounts.sort((a, b) => {
-      switch (activeTab) {
-        case 'posts':
-          return b.postCount - a.postCount || b.xp - a.xp;
-        case 'hands':
-          return b.handCount - a.handCount || b.xp - a.xp;
-        case 'likes':
-          return b.likesReceived - a.likesReceived || b.xp - a.xp;
-        default:
-          return 0;
-      }
-    }).slice(0, 50);
+    rankedUsers = usersWithCounts
+      .sort((a, b) => {
+        switch (activeTab) {
+          case 'posts':
+            return b.postCount - a.postCount || b.xp - a.xp;
+          case 'hands':
+            return b.handCount - a.handCount || b.xp - a.xp;
+          case 'likes':
+            return b.likesReceived - a.likesReceived || b.xp - a.xp;
+          default:
+            return 0;
+        }
+      })
+      .slice(0, 50);
   } else {
-    // For level and points, we can query directly with ordering
-    const orderBy = activeTab === 'level' ? [desc(users.xp), desc(users.level)] : [desc(users.points)];
+    const orderBy =
+      activeTab === 'level'
+        ? [desc(users.level), desc(users.xp)]
+        : [desc(users.points)];
 
     const topUsers = await db
       .select({
@@ -110,7 +150,6 @@ export default async function RankingsPage({
       .orderBy(...orderBy)
       .limit(50);
 
-    // Get counts for each user
     rankedUsers = await Promise.all(
       topUsers.map(async (user: any) => {
         const [postCountResult] = await db
@@ -142,16 +181,104 @@ export default async function RankingsPage({
   const currentUserId = session?.userId || null;
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Rankings - {activeTab}</h1>
-      <div className="space-y-2">
-        {rankedUsers.map((user, index) => (
-          <div key={user.id} className="flex items-center gap-4 p-4 bg-gray-800 rounded">
-            <span className="text-xl font-bold">{index + 1}</span>
-            <span>{user.nickname}</span>
-            <span className="ml-auto">Level {user.level} | {user.xp} XP</span>
-          </div>
+    <div className="container max-w-4xl mx-auto px-4 py-6 lg:py-8">
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="text-2xl lg:text-3xl font-bold text-[#e0e0e0] mb-2">
+          랭킹
+        </h1>
+        <p className="text-sm text-[#a0a0a0]">
+          TOP 50 유저 랭킹을 확인하세요
+        </p>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-1 mb-6 overflow-x-auto pb-1">
+        {TABS.map((t) => (
+          <Link
+            key={t.key}
+            href={`/rankings?tab=${t.key}`}
+            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+              activeTab === t.key
+                ? 'bg-[#c9a227] text-black'
+                : 'bg-[#2a2a2a] text-[#a0a0a0] hover:bg-[#333] hover:text-[#e0e0e0]'
+            }`}
+          >
+            {t.label}
+          </Link>
         ))}
+      </div>
+
+      {/* Ranking List */}
+      <div className="space-y-2">
+        {rankedUsers.map((user, index) => {
+          const rank = index + 1;
+          const badge = getRankBadge(rank);
+          const isMe = user.id === currentUserId;
+
+          return (
+            <div
+              key={user.id}
+              className={`flex items-center gap-3 lg:gap-4 p-3 lg:p-4 rounded-lg border transition-colors ${
+                isMe
+                  ? 'border-[#22c55e] bg-[#22c55e]/10'
+                  : getRankColor(rank)
+              }`}
+            >
+              {/* Rank */}
+              <div className="flex-shrink-0 w-10 text-center">
+                {badge ? (
+                  <span className="text-2xl">{badge}</span>
+                ) : (
+                  <span className="text-lg font-bold text-[#888]">{rank}</span>
+                )}
+              </div>
+
+              {/* Avatar */}
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[#333] flex items-center justify-center text-sm font-bold text-[#c9a227] overflow-hidden">
+                {user.avatarUrl ? (
+                  <img
+                    src={user.avatarUrl}
+                    alt={user.nickname}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  user.nickname.charAt(0).toUpperCase()
+                )}
+              </div>
+
+              {/* User Info */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-[#e0e0e0] truncate">
+                    {user.nickname}
+                  </span>
+                  {isMe && (
+                    <span className="text-xs px-1.5 py-0.5 rounded bg-[#22c55e]/20 text-[#22c55e] font-medium">
+                      나
+                    </span>
+                  )}
+                </div>
+                <div className="text-xs text-[#888]">
+                  Lv.{user.level}
+                </div>
+              </div>
+
+              {/* Stat Value */}
+              <div className="flex-shrink-0 text-right">
+                <div className="text-sm lg:text-base font-bold text-[#c9a227]">
+                  {getStatValue(user, activeTab)}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+
+        {rankedUsers.length === 0 && (
+          <div className="py-12 text-center text-[#888]">
+            <p className="text-sm">랭킹 데이터가 없습니다</p>
+          </div>
+        )}
       </div>
     </div>
   );

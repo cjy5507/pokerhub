@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 import { pointTransactions, users } from '@/lib/db/schema';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, and } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
 
 export type PointTransactionType =
@@ -96,29 +96,21 @@ export async function spendPoints(
   }
 
   return await db.transaction(async (tx: any) => {
-    // Get current balance
-    const [user] = await tx
-      .select({ points: users.points })
-      .from(users)
-      .where(eq(users.id, userId));
+    // Atomically deduct points only if balance is sufficient (prevents double-spend race condition)
+    const result = await tx
+      .update(users)
+      .set({
+        points: sql`points - ${amount}`,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(users.id, userId), sql`points >= ${amount}`))
+      .returning({ points: users.points });
 
-    if (!user) {
-      throw new Error('User not found');
-    }
-
-    if (user.points < amount) {
+    if (result.length === 0) {
       throw new Error('Insufficient points');
     }
 
-    // Update user points atomically
-    const [updatedUser] = await tx
-      .update(users)
-      .set({
-        points: sql`${users.points} - ${amount}`,
-        updatedAt: new Date(),
-      })
-      .where(eq(users.id, userId))
-      .returning({ points: users.points });
+    const newBalance = result[0].points;
 
     // Record transaction (negative amount)
     const [transaction] = await tx
@@ -126,7 +118,7 @@ export async function spendPoints(
       .values({
         userId,
         amount: -amount,
-        balanceAfter: updatedUser.points,
+        balanceAfter: newBalance,
         type,
         referenceId,
         description,
@@ -135,7 +127,7 @@ export async function spendPoints(
 
     return {
       success: true,
-      newBalance: updatedUser.points,
+      newBalance,
       transactionId: transaction.id,
     };
   });

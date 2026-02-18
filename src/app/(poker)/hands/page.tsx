@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { PokerHand, Position, GameType, HandResult } from '@/types/poker';
 import { HandCard } from '@/components/poker/HandCard';
 import { getHands } from '../actions';
-import { Plus, Filter, ChevronDown } from 'lucide-react';
+import { Plus, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 
 const POSITIONS: Position[] = ['UTG', 'UTG+1', 'UTG+2', 'MP', 'HJ', 'CO', 'BTN', 'SB', 'BB'];
@@ -15,6 +15,9 @@ export default function HandsPage() {
   const [hands, setHands] = useState<PokerHand[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
 
   // Filters
   const [selectedPosition, setSelectedPosition] = useState<Position | ''>('');
@@ -24,19 +27,21 @@ export default function HandsPage() {
 
   useEffect(() => {
     loadHands();
-  }, [selectedPosition, selectedGameType, selectedResult, selectedTag]);
+  }, [selectedPosition, selectedGameType, selectedResult, selectedTag, page]);
 
   const loadHands = async () => {
     setIsLoading(true);
     try {
-      const filters: any = {};
+      const filters: any = { page };
       if (selectedPosition) filters.position = selectedPosition;
       if (selectedGameType) filters.gameType = selectedGameType;
       if (selectedResult) filters.result = selectedResult;
       if (selectedTag) filters.tag = selectedTag;
 
       const data = await getHands(filters);
-      setHands(data);
+      setHands(data.hands);
+      setTotalPages(data.totalPages);
+      setTotalCount(data.total);
     } catch (error) {
       console.error('Failed to load hands:', error);
     } finally {
@@ -49,6 +54,7 @@ export default function HandsPage() {
     setSelectedGameType('');
     setSelectedResult('');
     setSelectedTag('');
+    setPage(1);
   };
 
   const hasActiveFilters = selectedPosition || selectedGameType || selectedResult || selectedTag;
@@ -88,7 +94,7 @@ export default function HandsPage() {
                 </label>
                 <div className="grid grid-cols-5 gap-2">
                   <button
-                    onClick={() => setSelectedPosition('')}
+                    onClick={() => { setSelectedPosition(''); setPage(1); }}
                     className={cn(
                       'px-3 py-2 rounded text-xs font-medium transition-all',
                       selectedPosition === ''
@@ -101,7 +107,7 @@ export default function HandsPage() {
                   {POSITIONS.map(pos => (
                     <button
                       key={pos}
-                      onClick={() => setSelectedPosition(pos)}
+                      onClick={() => { setSelectedPosition(pos); setPage(1); }}
                       className={cn(
                         'px-3 py-2 rounded text-xs font-medium transition-all',
                         selectedPosition === pos
@@ -122,7 +128,7 @@ export default function HandsPage() {
                 </label>
                 <div className="grid grid-cols-3 gap-2">
                   <button
-                    onClick={() => setSelectedGameType('')}
+                    onClick={() => { setSelectedGameType(''); setPage(1); }}
                     className={cn(
                       'px-3 py-2 rounded text-xs font-medium transition-all',
                       selectedGameType === ''
@@ -133,7 +139,7 @@ export default function HandsPage() {
                     전체
                   </button>
                   <button
-                    onClick={() => setSelectedGameType('cash')}
+                    onClick={() => { setSelectedGameType('cash'); setPage(1); }}
                     className={cn(
                       'px-3 py-2 rounded text-xs font-medium transition-all',
                       selectedGameType === 'cash'
@@ -144,7 +150,7 @@ export default function HandsPage() {
                     캐시
                   </button>
                   <button
-                    onClick={() => setSelectedGameType('tournament')}
+                    onClick={() => { setSelectedGameType('tournament'); setPage(1); }}
                     className={cn(
                       'px-3 py-2 rounded text-xs font-medium transition-all',
                       selectedGameType === 'tournament'
@@ -164,7 +170,7 @@ export default function HandsPage() {
                 </label>
                 <div className="grid grid-cols-4 gap-2">
                   <button
-                    onClick={() => setSelectedResult('')}
+                    onClick={() => { setSelectedResult(''); setPage(1); }}
                     className={cn(
                       'px-3 py-2 rounded text-xs font-medium transition-all',
                       selectedResult === ''
@@ -175,7 +181,7 @@ export default function HandsPage() {
                     전체
                   </button>
                   <button
-                    onClick={() => setSelectedResult('won')}
+                    onClick={() => { setSelectedResult('won'); setPage(1); }}
                     className={cn(
                       'px-3 py-2 rounded text-xs font-medium transition-all',
                       selectedResult === 'won'
@@ -186,7 +192,7 @@ export default function HandsPage() {
                     승리
                   </button>
                   <button
-                    onClick={() => setSelectedResult('lost')}
+                    onClick={() => { setSelectedResult('lost'); setPage(1); }}
                     className={cn(
                       'px-3 py-2 rounded text-xs font-medium transition-all',
                       selectedResult === 'lost'
@@ -197,7 +203,7 @@ export default function HandsPage() {
                     패배
                   </button>
                   <button
-                    onClick={() => setSelectedResult('split')}
+                    onClick={() => { setSelectedResult('split'); setPage(1); }}
                     className={cn(
                       'px-3 py-2 rounded text-xs font-medium transition-all',
                       selectedResult === 'split'
@@ -217,7 +223,7 @@ export default function HandsPage() {
                 </label>
                 <div className="flex flex-wrap gap-2">
                   <button
-                    onClick={() => setSelectedTag('')}
+                    onClick={() => { setSelectedTag(''); setPage(1); }}
                     className={cn(
                       'px-3 py-1.5 rounded-full text-xs font-medium transition-all',
                       selectedTag === ''
@@ -230,7 +236,7 @@ export default function HandsPage() {
                   {TAGS.map(tag => (
                     <button
                       key={tag}
-                      onClick={() => setSelectedTag(tag)}
+                      onClick={() => { setSelectedTag(tag); setPage(1); }}
                       className={cn(
                         'px-3 py-1.5 rounded-full text-xs font-medium transition-all',
                         selectedTag === tag
@@ -284,7 +290,7 @@ export default function HandsPage() {
           <>
             {/* Results count */}
             <div className="mb-4 text-sm text-[#a0a0a0]">
-              총 <span className="text-[#e0e0e0] font-medium">{hands.length}</span>개의 핸드
+              총 <span className="text-[#e0e0e0] font-medium">{totalCount}</span>개의 핸드
             </div>
 
             {/* Hand cards grid */}
@@ -318,10 +324,40 @@ export default function HandsPage() {
               ))}
             </div>
 
-            {/* Pagination placeholder */}
-            <div className="mt-8 flex justify-center">
-              <div className="text-sm text-[#888]">페이지네이션 준비중</div>
-            </div>
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="mt-8 flex items-center justify-center gap-3">
+                <button
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                  className={cn(
+                    'flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-medium transition-all',
+                    page <= 1
+                      ? 'bg-[#2a2a2a] text-[#555] cursor-not-allowed'
+                      : 'bg-[#2a2a2a] text-[#e0e0e0] hover:bg-[#333]'
+                  )}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  이전
+                </button>
+                <span className="text-sm text-[#a0a0a0]">
+                  <span className="text-[#c9a227] font-bold">{page}</span> / {totalPages}
+                </span>
+                <button
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  disabled={page >= totalPages}
+                  className={cn(
+                    'flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-medium transition-all',
+                    page >= totalPages
+                      ? 'bg-[#2a2a2a] text-[#555] cursor-not-allowed'
+                      : 'bg-[#2a2a2a] text-[#e0e0e0] hover:bg-[#333]'
+                  )}
+                >
+                  다음
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
           </>
         )}
       </div>

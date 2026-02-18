@@ -48,6 +48,9 @@ export default function ShareHandPage() {
   const [turnActions, setTurnActions] = useState<ActionInput[]>([]);
   const [riverActions, setRiverActions] = useState<ActionInput[]>([]);
 
+  // Step 5.5: Result
+  const [result, setResult] = useState<'won' | 'lost' | 'split'>('won');
+
   // Step 6: Analysis notes
   const [notes, setNotes] = useState('');
 
@@ -82,6 +85,7 @@ export default function ShareHandPage() {
     formData.append('flopActions', JSON.stringify(flopActions));
     formData.append('turnActions', JSON.stringify(turnActions));
     formData.append('riverActions', JSON.stringify(riverActions));
+    formData.append('result', result);
     formData.append('notes', notes);
     formData.append('tags', JSON.stringify(selectedTags));
 

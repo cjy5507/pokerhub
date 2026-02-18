@@ -7,7 +7,7 @@ import {
   pokerGameResults,
   users,
 } from '@/lib/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, desc } from 'drizzle-orm';
 import { PokerEngine } from './engine';
 import { Deck } from './deck';
 import { GameState, Card, SeatState, PlayerAction } from './types';
@@ -151,25 +151,23 @@ export async function processAction(
 
       // Determine current street bet amounts
       const streetActions = actions.filter((a: any) => a.street === hand.status);
-      let currentBet = 0;
-      for (const act of streetActions) {
-        const seat = seatsArray[act.seatNumber];
-        if (!seat) continue;
-        if (['bet', 'raise', 'all_in'].includes(act.actionType)) {
-          currentBet = Math.max(currentBet, seat.totalBetInHand);
-        }
-      }
 
-      // Reset betInRound for current street
+      // Reset betInRound for current street (must run before currentBet calculation)
       for (const seat of seatsArray) {
-        if (seat) {
-          seat.betInRound = 0;
-        }
+        if (seat) seat.betInRound = 0;
       }
       for (const act of streetActions) {
         const seat = seatsArray[act.seatNumber];
         if (seat && ['call', 'bet', 'raise', 'all_in', 'post_sb', 'post_bb'].includes(act.actionType)) {
           seat.betInRound += act.amount;
+        }
+      }
+
+      // Now calculate currentBet from betInRound (per-street max, not hand-total)
+      let currentBet = 0;
+      for (const seat of seatsArray) {
+        if (seat) {
+          currentBet = Math.max(currentBet, seat.betInRound);
         }
       }
 
@@ -212,6 +210,11 @@ export async function processAction(
       for (const act of streetActions) {
         if (['bet', 'raise', 'all_in'].includes(act.actionType)) {
           actionClosedBySeat = act.seatNumber;
+          closerHasActed = true;
+        }
+        // Track closer's passive actions too (check, call, fold)
+        if (act.seatNumber === actionClosedBySeat &&
+            ['check', 'call', 'fold'].includes(act.actionType)) {
           closerHasActed = true;
         }
       }
@@ -328,10 +331,11 @@ export async function processAction(
           for (const result of results) {
             const seat = mergedState.seats[result.seatNumber];
             if (seat && !seat.isFolded) {
+              const winnerSeat = mergedState.seats[result.seatNumber];
               await tx
                 .update(pokerGameResults)
                 .set({
-                  chipChange: mergedState.pot,
+                  chipChange: mergedState.pot - (winnerSeat ? winnerSeat.totalBetInHand : 0),
                   isWinner: true,
                 })
                 .where(
@@ -569,6 +573,10 @@ export async function startNewHand(tableId: string): Promise<{ success: boolean;
         return { success: false, error: 'Table not found' };
       }
 
+      if (table.currentHandId) {
+        return { success: false, error: 'Hand already active' };
+      }
+
       // Load seats
       const dbSeats = await tx
         .select({
@@ -601,8 +609,40 @@ export async function startNewHand(tableId: string): Promise<{ success: boolean;
 
       // Determine dealer (rotate from last hand)
       const lastHandNumber = table.handCount || 0;
-      const dealerIndex = lastHandNumber % activeSeats.length;
-      const dealerSeat = activeSeats[dealerIndex].seatNumber;
+      let dealerSeat: number = activeSeats[0].seatNumber;
+      if (lastHandNumber === 0) {
+        // First hand: pick first active seat as dealer
+        dealerSeat = activeSeats[0].seatNumber;
+      } else {
+        // Find previous dealer from last completed hand
+        const lastHand = await tx
+          .select({ dealerSeat: pokerGameHands.dealerSeat })
+          .from(pokerGameHands)
+          .where(eq(pokerGameHands.tableId, table.id))
+          .orderBy(desc(pokerGameHands.handNumber))
+          .limit(1)
+          .then((rows: any[]) => rows[0]);
+
+        if (lastHand) {
+          // Next active player after previous dealer
+          const maxSeat = table.maxSeats;
+          let found = false;
+          for (let i = 1; i <= maxSeat; i++) {
+            const idx = (lastHand.dealerSeat + i) % maxSeat;
+            const s = seatsArray[idx];
+            if (s && s.isActive && !s.isSittingOut) {
+              dealerSeat = idx;
+              found = true;
+              break;
+            }
+          }
+          if (!found) {
+            dealerSeat = activeSeats[0].seatNumber;
+          }
+        } else {
+          dealerSeat = activeSeats[0].seatNumber;
+        }
+      }
 
       // Start hand using engine
       const engine = new PokerEngine();

@@ -1,14 +1,25 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import Link from 'next/link';
-import { Users, Plus, Coins, Hash, CircleDot } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Users, Plus, Coins, Hash, RefreshCw } from 'lucide-react';
 import { createPokerTable } from './actions';
 import type { PokerTableWithSeats } from './actions';
 
-type PokerLobbyClientProps = {
-  tables: PokerTableWithSeats[];
+type BlindFilter = {
+  label: string;
+  sb: number | null;
+  bb: number | null;
 };
+
+const BLIND_FILTERS: BlindFilter[] = [
+  { label: '전체', sb: null, bb: null },
+  { label: '10/20', sb: 10, bb: 20 },
+  { label: '50/100', sb: 50, bb: 100 },
+  { label: '100/200', sb: 100, bb: 200 },
+  { label: '500/1000', sb: 500, bb: 1000 },
+];
 
 type BlindOption = {
   sb: number;
@@ -24,13 +35,34 @@ const BLIND_OPTIONS: BlindOption[] = [
   { sb: 100, bb: 200, label: '100/200' },
 ];
 
-export function PokerLobbyClient({ tables }: PokerLobbyClientProps) {
+const STATUS_BADGE: Record<string, { label: string; color: string }> = {
+  waiting: { label: '대기 중', color: 'text-yellow-400 bg-yellow-400/10' },
+  playing: { label: '게임 중', color: 'text-green-400 bg-green-400/10' },
+  paused: { label: '일시정지', color: 'text-gray-400 bg-gray-400/10' },
+};
+
+type PokerLobbyClientProps = {
+  tables: PokerTableWithSeats[];
+  myTableId: string | null;
+};
+
+export function PokerLobbyClient({ tables, myTableId }: PokerLobbyClientProps) {
+  const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [tableName, setTableName] = useState('');
   const [selectedBlinds, setSelectedBlinds] = useState<BlindOption>(BLIND_OPTIONS[1]);
   const [maxSeats, setMaxSeats] = useState<2 | 6 | 9>(6);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [activeFilter, setActiveFilter] = useState<BlindFilter>(BLIND_FILTERS[0]);
+
+  // Auto-refresh every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      router.refresh();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,36 +93,17 @@ export function PokerLobbyClient({ tables }: PokerLobbyClientProps) {
     return `${min.toLocaleString()} - ${max.toLocaleString()}P`;
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'waiting':
-        return 'bg-[#22c55e] text-black';
-      case 'playing':
-        return 'bg-[#eab308] text-black';
-      case 'paused':
-        return 'bg-[#6b7280] text-white';
-      default:
-        return 'bg-[#333] text-[#a0a0a0]';
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'waiting':
-        return '대기중';
-      case 'playing':
-        return '진행중';
-      case 'paused':
-        return '일시정지';
-      default:
-        return '종료';
-    }
-  };
+  // Filter tables by blind level
+  const filteredTables = activeFilter.sb === null
+    ? tables
+    : tables.filter(
+        (t) => t.smallBlind === activeFilter.sb && t.bigBlind === activeFilter.bb
+      );
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-[#e0e0e0] p-4 md:p-8">
       {/* Header */}
-      <div className="max-w-7xl mx-auto mb-8">
+      <div className="max-w-7xl mx-auto mb-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold text-[#c9a227] flex items-center gap-3 mb-2">
@@ -109,11 +122,35 @@ export function PokerLobbyClient({ tables }: PokerLobbyClientProps) {
             테이블 만들기
           </button>
         </div>
+
+        {/* Blind Filters */}
+        <div className="flex flex-wrap gap-2">
+          {BLIND_FILTERS.map((filter) => (
+            <button
+              key={filter.label}
+              onClick={() => setActiveFilter(filter)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                activeFilter.label === filter.label
+                  ? 'bg-[#c9a227] text-black'
+                  : 'bg-[#1e1e1e] text-[#a0a0a0] border border-[#333] hover:border-[#555]'
+              }`}
+            >
+              {filter.label}
+            </button>
+          ))}
+          <button
+            onClick={() => router.refresh()}
+            className="ml-auto px-3 py-2 rounded-lg text-sm text-[#a0a0a0] bg-[#1e1e1e] border border-[#333] hover:border-[#555] transition-colors flex items-center gap-1"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            새로고침
+          </button>
+        </div>
       </div>
 
       {/* Table List */}
       <div className="max-w-7xl mx-auto">
-        {tables.length === 0 ? (
+        {filteredTables.length === 0 ? (
           <div className="bg-[#1e1e1e] border border-[#333] rounded-lg p-12 text-center">
             <Coins className="w-16 h-16 text-[#c9a227] mx-auto mb-4 opacity-50" />
             <p className="text-[#a0a0a0] text-lg mb-2">테이블이 없습니다</p>
@@ -121,72 +158,92 @@ export function PokerLobbyClient({ tables }: PokerLobbyClientProps) {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {tables.map((table) => (
-              <div
-                key={table.id}
-                className="bg-[#1e1e1e] border border-[#333] rounded-lg p-6 hover:border-[#c9a227] transition-colors"
-              >
-                {/* Table Name */}
-                <h3 className="text-xl font-bold text-[#e0e0e0] mb-4">{table.name}</h3>
+            {filteredTables.map((table) => {
+              const isMyTable = table.id === myTableId;
+              const badge = STATUS_BADGE[table.status] || STATUS_BADGE.paused;
 
-                {/* Blinds */}
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-[#a0a0a0] text-sm">SB/BB:</span>
-                  <span className="text-[#c9a227] font-semibold">
-                    {table.smallBlind}/{table.bigBlind}
-                  </span>
-                </div>
+              return (
+                <div
+                  key={table.id}
+                  className={`bg-[#1e1e1e] border rounded-lg p-6 transition-colors ${
+                    isMyTable
+                      ? 'ring-2 ring-yellow-400/50 border-yellow-400/30'
+                      : 'border-[#333] hover:border-[#c9a227]'
+                  }`}
+                >
+                  {/* My Table Badge */}
+                  {isMyTable && (
+                    <div className="mb-3">
+                      <span className="text-xs font-semibold text-yellow-400 bg-yellow-400/10 px-2 py-1 rounded">
+                        참여 중
+                      </span>
+                    </div>
+                  )}
 
-                {/* Buy-in Range */}
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-[#a0a0a0] text-sm">바이인:</span>
-                  <span className="text-[#e0e0e0] text-sm">
-                    {table.minBuyIn.toLocaleString()} - {table.maxBuyIn.toLocaleString()}P
-                  </span>
-                </div>
-
-                {/* Seats Indicator */}
-                <div className="flex items-center gap-2 mb-3">
-                  <Users className="w-4 h-4 text-[#a0a0a0]" />
-                  <span className="text-[#e0e0e0] text-sm">
-                    {table.seatCount}/{table.maxSeats} 석
-                  </span>
-                  <div className="flex gap-1 ml-2">
-                    {Array.from({ length: table.maxSeats }).map((_, i) => (
-                      <CircleDot
-                        key={i}
-                        className={`w-3 h-3 ${
-                          i < table.seatCount ? 'text-[#0d7c50]' : 'text-[#333]'
-                        }`}
-                      />
-                    ))}
+                  {/* Table Name + Status */}
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-bold text-[#e0e0e0]">{table.name}</h3>
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-semibold ${badge.color}`}
+                    >
+                      {badge.label}
+                    </span>
                   </div>
-                </div>
 
-                {/* Status and Hand Count */}
-                <div className="flex items-center justify-between mb-4">
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
-                      table.status
-                    )}`}
-                  >
-                    {getStatusLabel(table.status)}
-                  </span>
-                  <div className="flex items-center gap-1 text-[#a0a0a0] text-sm">
+                  {/* Blinds */}
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-[#a0a0a0] text-sm">SB/BB:</span>
+                    <span className="text-[#c9a227] font-semibold">
+                      {table.smallBlind}/{table.bigBlind}
+                    </span>
+                  </div>
+
+                  {/* Buy-in Range */}
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-[#a0a0a0] text-sm">바이인:</span>
+                    <span className="text-[#e0e0e0] text-sm">
+                      {table.minBuyIn.toLocaleString()} - {table.maxBuyIn.toLocaleString()}P
+                    </span>
+                  </div>
+
+                  {/* Seats + Dot Visualization */}
+                  <div className="flex items-center gap-2 mb-3">
+                    <Users className="w-4 h-4 text-[#a0a0a0]" />
+                    <span className="text-[#e0e0e0] text-sm">
+                      {table.activePlayers}/{table.maxSeats}
+                    </span>
+                    <div className="flex gap-1 ml-2">
+                      {Array.from({ length: table.maxSeats }).map((_, i) => (
+                        <div
+                          key={i}
+                          className={`w-2 h-2 rounded-full ${
+                            i < table.seatCount ? 'bg-green-400' : 'bg-white/20'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Hand Count */}
+                  <div className="flex items-center gap-1 text-[#a0a0a0] text-sm mb-4">
                     <Hash className="w-4 h-4" />
                     <span>{table.handCount} 핸드</span>
                   </div>
-                </div>
 
-                {/* Enter Button */}
-                <Link
-                  href={`/poker/${table.id}`}
-                  className="block w-full bg-[#0d7c50] hover:bg-[#0a6340] text-white font-semibold py-2 rounded-lg text-center transition-colors"
-                >
-                  입장
-                </Link>
-              </div>
-            ))}
+                  {/* Enter Button */}
+                  <Link
+                    href={`/poker/${table.id}`}
+                    className={`block w-full font-semibold py-2 rounded-lg text-center transition-colors ${
+                      isMyTable
+                        ? 'bg-yellow-500 hover:bg-yellow-600 text-black'
+                        : 'bg-[#0d7c50] hover:bg-[#0a6340] text-white'
+                    }`}
+                  >
+                    {isMyTable ? '돌아가기' : '입장'}
+                  </Link>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

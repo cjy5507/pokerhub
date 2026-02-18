@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import { missions, userMissions } from '@/lib/db/schema';
+import { missions, userMissions, posts, comments, pokerHands, attendance, postLikes } from '@/lib/db/schema';
 import { eq, and, gte, sql } from 'drizzle-orm';
 import { awardPoints } from './points';
 import { awardXp } from './xp';
@@ -34,136 +34,7 @@ interface UserMissionProgress {
 }
 
 /**
- * Daily mission pool - 10 options, pick 3 deterministically per user per day
- */
-const DAILY_MISSION_POOL: Omit<Mission, 'id' | 'isActive'>[] = [
-  {
-    type: 'daily',
-    nameKo: '게시글 1개 읽기',
-    descriptionKo: '커뮤니티 게시글을 1개 읽어보세요',
-    conditionType: 'post_count',
-    conditionTarget: 1,
-    pointReward: 30,
-    xpReward: 5,
-  },
-  {
-    type: 'daily',
-    nameKo: '댓글 1개 작성',
-    descriptionKo: '다른 사람의 게시글에 댓글을 남겨보세요',
-    conditionType: 'comment_count',
-    conditionTarget: 1,
-    pointReward: 50,
-    xpReward: 10,
-  },
-  {
-    type: 'daily',
-    nameKo: '좋아요 5개 누르기',
-    descriptionKo: '마음에 드는 게시글에 좋아요를 눌러보세요',
-    conditionType: 'like_received',
-    conditionTarget: 5,
-    pointReward: 30,
-    xpReward: 5,
-  },
-  {
-    type: 'daily',
-    nameKo: '전략글 1개 읽기',
-    descriptionKo: '전략 게시판의 글을 읽어보세요',
-    conditionType: 'post_count',
-    conditionTarget: 1,
-    pointReward: 50,
-    xpReward: 10,
-  },
-  {
-    type: 'daily',
-    nameKo: '게시글 3개 읽기',
-    descriptionKo: '커뮤니티 게시글을 3개 읽어보세요',
-    conditionType: 'post_count',
-    conditionTarget: 3,
-    pointReward: 50,
-    xpReward: 10,
-  },
-  {
-    type: 'daily',
-    nameKo: '댓글 3개 작성',
-    descriptionKo: '다양한 게시글에 댓글을 남겨보세요',
-    conditionType: 'comment_count',
-    conditionTarget: 3,
-    pointReward: 80,
-    xpReward: 15,
-  },
-  {
-    type: 'daily',
-    nameKo: '핸드 히스토리 공유',
-    descriptionKo: '자신의 핸드 히스토리를 공유해보세요',
-    conditionType: 'hand_share',
-    conditionTarget: 1,
-    pointReward: 100,
-    xpReward: 20,
-  },
-  {
-    type: 'daily',
-    nameKo: '출석 체크',
-    descriptionKo: '오늘도 PokerHub에 방문해주셔서 감사합니다',
-    conditionType: 'attendance',
-    conditionTarget: 1,
-    pointReward: 50,
-    xpReward: 10,
-  },
-  {
-    type: 'daily',
-    nameKo: '게시글 5개 읽기',
-    descriptionKo: '커뮤니티 게시글을 5개 읽어보세요',
-    conditionType: 'post_count',
-    conditionTarget: 5,
-    pointReward: 80,
-    xpReward: 15,
-  },
-  {
-    type: 'daily',
-    nameKo: '좋아요 10개 누르기',
-    descriptionKo: '다양한 게시글에 좋아요를 눌러보세요',
-    conditionType: 'like_received',
-    conditionTarget: 10,
-    pointReward: 50,
-    xpReward: 10,
-  },
-];
-
-/**
- * Weekly mission pool
- */
-const WEEKLY_MISSION_POOL: Omit<Mission, 'id' | 'isActive'>[] = [
-  {
-    type: 'weekly',
-    nameKo: '게시글 10개 작성',
-    descriptionKo: '이번 주에 게시글을 10개 작성해보세요',
-    conditionType: 'post_count',
-    conditionTarget: 10,
-    pointReward: 500,
-    xpReward: 100,
-  },
-  {
-    type: 'weekly',
-    nameKo: '댓글 20개 작성',
-    descriptionKo: '이번 주에 댓글을 20개 작성해보세요',
-    conditionType: 'comment_count',
-    conditionTarget: 20,
-    pointReward: 400,
-    xpReward: 80,
-  },
-  {
-    type: 'weekly',
-    nameKo: '핸드 히스토리 5개 공유',
-    descriptionKo: '이번 주에 핸드 히스토리를 5개 공유해보세요',
-    conditionType: 'hand_share',
-    conditionTarget: 5,
-    pointReward: 600,
-    xpReward: 120,
-  },
-];
-
-/**
- * Get daily missions for a user (deterministic selection)
+ * Get daily missions for a user from DB (deterministic selection)
  */
 export async function getDailyMissions(
   userId: string,
@@ -172,10 +43,27 @@ export async function getDailyMissions(
   if (!db) return [];
   const dateStr = getKstDate(date);
 
-  // Get or create user missions for today
-  const existingMissions = await db
-    .select()
+  // Check for existing user missions for today
+  const existingUserMissions = await db
+    .select({
+      id: userMissions.id,
+      missionId: userMissions.missionId,
+      progress: userMissions.progress,
+      isCompleted: userMissions.isCompleted,
+      rewardClaimed: userMissions.rewardClaimed,
+      completedAt: userMissions.completedAt,
+      // Mission fields
+      missionName: missions.nameKo,
+      missionDesc: missions.descriptionKo,
+      missionType: missions.type,
+      conditionType: missions.conditionType,
+      conditionTarget: missions.conditionTarget,
+      pointReward: missions.pointReward,
+      xpReward: missions.xpReward,
+      missionIsActive: missions.isActive,
+    })
     .from(userMissions)
+    .innerJoin(missions, eq(userMissions.missionId, missions.id))
     .where(
       and(
         eq(userMissions.userId, userId),
@@ -183,44 +71,111 @@ export async function getDailyMissions(
       )
     );
 
-  if (existingMissions.length > 0) {
-    // Return existing missions with progress
-    return existingMissions.map((um: any) => ({
-      id: um.id,
-      mission: DAILY_MISSION_POOL[0] as Mission, // TODO: Join with missions table
-      progress: um.progress,
-      isCompleted: um.isCompleted,
-      rewardClaimed: um.rewardClaimed,
-      completedAt: um.completedAt,
-    }));
+  if (existingUserMissions.length > 0) {
+    // Update progress for each mission based on actual activity
+    const withUpdatedProgress = await Promise.all(
+      existingUserMissions.map(async (um: any) => {
+        const currentProgress = await checkMissionProgress(
+          userId,
+          um.conditionType as MissionConditionType,
+          dateStr
+        );
+        const isNowCompleted = currentProgress >= um.conditionTarget;
+
+        // Update progress in DB if changed
+        if (currentProgress !== um.progress || (isNowCompleted && !um.isCompleted)) {
+          await db
+            .update(userMissions)
+            .set({
+              progress: currentProgress,
+              isCompleted: isNowCompleted,
+              completedAt: isNowCompleted && !um.isCompleted ? new Date() : um.completedAt,
+            })
+            .where(eq(userMissions.id, um.id));
+        }
+
+        return {
+          id: um.id,
+          mission: {
+            id: um.missionId,
+            type: um.missionType as MissionType,
+            nameKo: um.missionName,
+            descriptionKo: um.missionDesc,
+            conditionType: um.conditionType as MissionConditionType,
+            conditionTarget: um.conditionTarget,
+            pointReward: um.pointReward,
+            xpReward: um.xpReward,
+            isActive: um.missionIsActive,
+          },
+          progress: currentProgress,
+          isCompleted: isNowCompleted,
+          rewardClaimed: um.rewardClaimed,
+          completedAt: isNowCompleted ? (um.completedAt || new Date()) : null,
+        };
+      })
+    );
+    return withUpdatedProgress;
   }
 
-  // Generate deterministic daily missions
-  const selectedMissions = selectDailyMissions(userId, date);
+  // No existing missions for today - select from DB and create
+  const activeDailyMissions = await db
+    .select()
+    .from(missions)
+    .where(
+      and(
+        eq(missions.type, 'daily'),
+        eq(missions.isActive, true)
+      )
+    );
+
+  if (activeDailyMissions.length === 0) {
+    return [];
+  }
+
+  // Deterministically select 3 missions for this user today
+  const selectedMissions = selectMissionsFromPool(activeDailyMissions, userId, date, 3);
 
   // Create user missions
   const createdMissions = await db.transaction(async (tx: any) => {
-    const results = [];
+    const results: UserMissionProgress[] = [];
     for (const mission of selectedMissions) {
+      const currentProgress = await checkMissionProgress(
+        userId,
+        mission.conditionType as MissionConditionType,
+        dateStr
+      );
+      const isCompleted = currentProgress >= mission.conditionTarget;
+
       const [created] = await tx
         .insert(userMissions)
         .values({
           userId,
-          missionId: mission.id || 'temp', // TODO: Use real mission IDs
+          missionId: mission.id,
           periodStart: dateStr,
-          progress: 0,
-          isCompleted: false,
+          progress: currentProgress,
+          isCompleted,
           rewardClaimed: false,
+          completedAt: isCompleted ? new Date() : null,
         })
         .returning();
 
       results.push({
         id: created.id,
-        mission,
-        progress: 0,
-        isCompleted: false,
+        mission: {
+          id: mission.id,
+          type: mission.type as MissionType,
+          nameKo: mission.nameKo,
+          descriptionKo: mission.descriptionKo,
+          conditionType: mission.conditionType as MissionConditionType,
+          conditionTarget: mission.conditionTarget,
+          pointReward: mission.pointReward,
+          xpReward: mission.xpReward,
+          isActive: mission.isActive,
+        },
+        progress: currentProgress,
+        isCompleted,
         rewardClaimed: false,
-        completedAt: null,
+        completedAt: isCompleted ? new Date() : null,
       });
     }
     return results;
@@ -230,15 +185,21 @@ export async function getDailyMissions(
 }
 
 /**
- * Deterministically select 3 daily missions for a user
+ * Select N missions deterministically from a pool based on userId + date
  */
-function selectDailyMissions(userId: string, date: Date): Mission[] {
+function selectMissionsFromPool(
+  pool: typeof missions.$inferSelect[],
+  userId: string,
+  date: Date,
+  count: number
+): typeof missions.$inferSelect[] {
+  if (pool.length <= count) return pool;
+
   const dateStr = getKstDate(date);
   const seed = hashString(`${userId}-${dateStr}`);
-
-  // Use seeded random to pick 3 missions
-  const indices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
   const rng = seededRandom(seed);
+
+  const indices = pool.map((_, i) => i);
 
   // Fisher-Yates shuffle with seeded random
   for (let i = indices.length - 1; i > 0; i--) {
@@ -246,54 +207,139 @@ function selectDailyMissions(userId: string, date: Date): Mission[] {
     [indices[i], indices[j]] = [indices[j], indices[i]];
   }
 
-  return indices.slice(0, 3).map((idx) => ({
-    ...DAILY_MISSION_POOL[idx],
-    id: `daily-${idx}`,
-    isActive: true,
-  }));
+  return indices.slice(0, count).map((idx) => pool[idx]);
 }
 
 /**
- * Update mission progress
+ * Check actual progress for a condition type on a given date
+ */
+async function checkMissionProgress(
+  userId: string,
+  conditionType: MissionConditionType,
+  dateStr: string
+): Promise<number> {
+  if (!db) return 0;
+
+  const dayStart = new Date(`${dateStr}T00:00:00+09:00`);
+
+  switch (conditionType) {
+    case 'post_count': {
+      const [result] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(posts)
+        .where(
+          and(
+            eq(posts.authorId, userId),
+            eq(posts.status, 'published'),
+            gte(posts.createdAt, dayStart)
+          )
+        );
+      return Number(result?.count || 0);
+    }
+
+    case 'comment_count': {
+      const [result] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(comments)
+        .where(
+          and(
+            eq(comments.authorId, userId),
+            eq(comments.status, 'published'),
+            gte(comments.createdAt, dayStart)
+          )
+        );
+      return Number(result?.count || 0);
+    }
+
+    case 'hand_share': {
+      const [result] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(pokerHands)
+        .where(
+          and(
+            eq(pokerHands.authorId, userId),
+            gte(pokerHands.createdAt, dayStart)
+          )
+        );
+      return Number(result?.count || 0);
+    }
+
+    case 'attendance': {
+      const [result] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(attendance)
+        .where(
+          and(
+            eq(attendance.userId, userId),
+            eq(attendance.checkDate, dateStr)
+          )
+        );
+      return Number(result?.count || 0);
+    }
+
+    case 'like_received': {
+      const [result] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(postLikes)
+        .innerJoin(posts, eq(posts.id, postLikes.postId))
+        .where(
+          and(
+            eq(posts.authorId, userId),
+            gte(postLikes.createdAt, dayStart)
+          )
+        );
+      return Number(result?.count || 0);
+    }
+
+    default:
+      return 0;
+  }
+}
+
+/**
+ * Update mission progress for a user (called when user performs an action)
  */
 export async function updateMissionProgress(
   userId: string,
   conditionType: MissionConditionType,
-  incrementBy: number = 1
+  _incrementBy: number = 1
 ): Promise<void> {
   if (!db) return;
   const dateStr = getKstDate();
 
-  // Find active missions matching this condition type
+  // Find active user missions for today that match this condition type
   const activeMissions = await db
-    .select()
+    .select({
+      umId: userMissions.id,
+      umProgress: userMissions.progress,
+      umIsCompleted: userMissions.isCompleted,
+      conditionType: missions.conditionType,
+      conditionTarget: missions.conditionTarget,
+    })
     .from(userMissions)
+    .innerJoin(missions, eq(userMissions.missionId, missions.id))
     .where(
       and(
         eq(userMissions.userId, userId),
         eq(userMissions.periodStart, dateStr),
-        eq(userMissions.isCompleted, false)
+        eq(userMissions.isCompleted, false),
+        eq(missions.conditionType, conditionType)
       )
     );
 
-  // TODO: Filter by conditionType when missions table is properly joined
-
   for (const mission of activeMissions) {
-    const newProgress = mission.progress + incrementBy;
-
-    // TODO: Get conditionTarget from actual mission
-    const conditionTarget = 1; // Placeholder
-
-    const isCompleted = newProgress >= conditionTarget;
+    // Get fresh progress from actual data
+    const currentProgress = await checkMissionProgress(userId, conditionType, dateStr);
+    const isCompleted = currentProgress >= mission.conditionTarget;
 
     await db
       .update(userMissions)
       .set({
-        progress: newProgress,
+        progress: currentProgress,
         isCompleted,
         completedAt: isCompleted ? new Date() : null,
       })
-      .where(eq(userMissions.id, mission.id));
+      .where(eq(userMissions.id, mission.umId));
   }
 }
 
@@ -305,26 +351,34 @@ export async function claimMissionReward(
   userMissionId: string
 ): Promise<{ success: boolean; pointsEarned: number; xpEarned: number }> {
   if (!db) return { success: false, pointsEarned: 0, xpEarned: 0 };
-  const [userMission] = await db
-    .select()
-    .from(userMissions)
-    .where(eq(userMissions.id, userMissionId));
 
-  if (!userMission) {
+  // Join userMissions with missions to get actual rewards
+  const [result] = await db
+    .select({
+      umId: userMissions.id,
+      isCompleted: userMissions.isCompleted,
+      rewardClaimed: userMissions.rewardClaimed,
+      pointReward: missions.pointReward,
+      xpReward: missions.xpReward,
+    })
+    .from(userMissions)
+    .innerJoin(missions, eq(userMissions.missionId, missions.id))
+    .where(and(eq(userMissions.id, userMissionId), eq(userMissions.userId, userId)));
+
+  if (!result) {
     throw new Error('Mission not found');
   }
 
-  if (!userMission.isCompleted) {
+  if (!result.isCompleted) {
     throw new Error('Mission not completed');
   }
 
-  if (userMission.rewardClaimed) {
+  if (result.rewardClaimed) {
     throw new Error('Reward already claimed');
   }
 
-  // TODO: Get actual mission rewards
-  const pointReward = 50;
-  const xpReward = 10;
+  const pointReward = result.pointReward;
+  const xpReward = result.xpReward;
 
   await db.transaction(async (tx: any) => {
     // Mark reward as claimed
@@ -332,13 +386,15 @@ export async function claimMissionReward(
       .update(userMissions)
       .set({ rewardClaimed: true })
       .where(eq(userMissions.id, userMissionId));
-
-    // Award points
-    await awardPoints(userId, pointReward, 'earn_mission', userMissionId);
-
-    // Award XP
-    await awardXp(userId, xpReward, 'mission', userMissionId);
   });
+
+  // Award points and XP outside transaction (they have their own transactions)
+  if (pointReward > 0) {
+    await awardPoints(userId, pointReward, 'earn_mission', userMissionId);
+  }
+  if (xpReward > 0) {
+    await awardXp(userId, xpReward, 'mission', userMissionId);
+  }
 
   return {
     success: true,
@@ -348,13 +404,13 @@ export async function claimMissionReward(
 }
 
 /**
- * Check if all daily missions are completed
+ * Check if all daily missions are completed for bonus
  */
 export async function checkDailyAllClearBonus(userId: string): Promise<boolean> {
   if (!db) return false;
   const dateStr = getKstDate();
 
-  const missions = await db
+  const todayMissions = await db
     .select()
     .from(userMissions)
     .where(
@@ -364,10 +420,9 @@ export async function checkDailyAllClearBonus(userId: string): Promise<boolean> 
       )
     );
 
-  const allCompleted = missions.every((m: any) => m.rewardClaimed);
+  const allClaimed = todayMissions.every((m: any) => m.rewardClaimed);
 
-  if (allCompleted && missions.length === 3) {
-    // Award all-clear bonus
+  if (allClaimed && todayMissions.length >= 3) {
     await awardPoints(userId, 200, 'earn_mission', undefined, '일일 미션 전체 완료 보너스');
     await awardXp(userId, 25, 'mission');
     return true;
@@ -388,7 +443,7 @@ function hashString(str: string): number {
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
     hash = (hash << 5) - hash + char;
-    hash = hash & hash; // Convert to 32bit integer
+    hash = hash & hash;
   }
   return Math.abs(hash);
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import {
   TrendingUp,
@@ -13,15 +13,16 @@ import {
   Plus,
   Crown
 } from 'lucide-react';
+import { spinRoulette, getUserPoints } from '../actions';
 
 interface SpinResult {
-  multiplier: number;
+  multiplier: string;
   winAmount: number;
 }
 
 interface SpinHistory {
   bet: number;
-  multiplier: number;
+  multiplier: string;
   win: number;
   time: string;
 }
@@ -33,20 +34,25 @@ interface Stats {
 }
 
 const SEGMENTS = [
-  { multiplier: 0, color: '#ef4444', label: '0x', weight: 20, deg: 0 },
-  { multiplier: 0.5, color: '#f97316', label: '0.5x', weight: 25, deg: 45 },
-  { multiplier: 1, color: '#eab308', label: '1x', weight: 22, deg: 90 },
-  { multiplier: 1.5, color: '#84cc16', label: '1.5x', weight: 15, deg: 135 },
-  { multiplier: 2, color: '#22c55e', label: '2x', weight: 10, deg: 180 },
-  { multiplier: 3, color: '#3b82f6', label: '3x', weight: 5, deg: 225 },
-  { multiplier: 5, color: '#8b5cf6', label: '5x', weight: 2, deg: 270 },
-  { multiplier: 10, color: '#c9a227', label: '10x', weight: 1, deg: 315 },
+  { multiplier: '0x', color: '#ef4444', label: '0x', weight: 20, deg: 0 },
+  { multiplier: '1x', color: '#eab308', label: '1x', weight: 30, deg: 60 },
+  { multiplier: '2x', color: '#22c55e', label: '2x', weight: 25, deg: 120 },
+  { multiplier: '5x', color: '#3b82f6', label: '5x', weight: 15, deg: 180 },
+  { multiplier: '10x', color: '#8b5cf6', label: '10x', weight: 7, deg: 240 },
+  { multiplier: '50x', color: '#c9a227', label: '50x', weight: 3, deg: 300 },
 ];
+
+const SEGMENT_ANGLE = 360 / SEGMENTS.length; // 60 degrees each
 
 const BET_AMOUNTS = [50, 100, 200, 500];
 
+function parseMultiplier(m: string): number {
+  return parseFloat(m.replace('x', ''));
+}
+
 export default function RoulettePage() {
-  const [currentPoints, setCurrentPoints] = useState(1250);
+  const [currentPoints, setCurrentPoints] = useState(0);
+  const [isLoadingPoints, setIsLoadingPoints] = useState(true);
   const [betAmount, setBetAmount] = useState(100);
   const [isSpinning, setIsSpinning] = useState(false);
   const [spinDegree, setSpinDegree] = useState(0);
@@ -60,21 +66,19 @@ export default function RoulettePage() {
   const [showResult, setShowResult] = useState(false);
   const [winningSegmentIndex, setWinningSegmentIndex] = useState<number | null>(null);
 
-  const getRandomSegment = () => {
-    const random = Math.random() * 100;
-    let cumulative = 0;
-
-    for (let i = 0; i < SEGMENTS.length; i++) {
-      cumulative += SEGMENTS[i].weight;
-      if (random <= cumulative) {
-        return { segment: SEGMENTS[i], index: i };
-      }
+  const refreshBalance = useCallback(async () => {
+    const result = await getUserPoints();
+    if (result.success && result.points !== undefined) {
+      setCurrentPoints(result.points);
     }
+    setIsLoadingPoints(false);
+  }, []);
 
-    return { segment: SEGMENTS[0], index: 0 };
-  };
+  useEffect(() => {
+    refreshBalance();
+  }, [refreshBalance]);
 
-  const handleSpin = () => {
+  const handleSpin = async () => {
     if (isSpinning || currentPoints < betAmount) return;
 
     setIsSpinning(true);
@@ -82,68 +86,90 @@ export default function RoulettePage() {
     setShowResult(false);
     setWinningSegmentIndex(null);
 
-    // Deduct bet
-    setCurrentPoints((prev) => prev - betAmount);
+    try {
+      const serverResult = await spinRoulette(betAmount);
 
-    // Get random result
-    const { segment: selectedSegment, index: segmentIndex } = getRandomSegment();
-    const winAmount = Math.floor(betAmount * selectedSegment.multiplier);
+      if (!serverResult.success) {
+        alert(serverResult.error || '룰렛 실행에 실패했습니다');
+        setIsSpinning(false);
+        return;
+      }
 
-    // Calculate target rotation
-    const segmentOffset = Math.random() * 45;
-    const targetDeg = selectedSegment.deg + segmentOffset;
+      const multiplier = serverResult.multiplier!;
+      const winAmount = serverResult.winAmount!;
 
-    // Add 4 full rotations (1440 degrees) plus target
-    const finalRotation = spinDegree + 1440 + (360 - targetDeg);
+      // Find the matching segment for animation
+      const segmentIndex = SEGMENTS.findIndex(s => s.multiplier === multiplier);
+      const targetSegment = SEGMENTS[segmentIndex >= 0 ? segmentIndex : 0];
 
-    setSpinDegree(finalRotation);
+      // Calculate target rotation for animation
+      const segmentOffset = Math.random() * (SEGMENT_ANGLE - 4) + 2; // random within segment
+      const targetDeg = targetSegment.deg + segmentOffset;
+      const finalRotation = spinDegree + 1440 + (360 - targetDeg);
 
-    // After spin completes
-    setTimeout(() => {
+      setSpinDegree(finalRotation);
+
+      // After spin animation completes
+      setTimeout(async () => {
+        setIsSpinning(false);
+        setResult({ multiplier, winAmount });
+        setShowResult(true);
+        if (segmentIndex >= 0) {
+          setWinningSegmentIndex(segmentIndex);
+        }
+
+        // Refresh real balance from server
+        await refreshBalance();
+
+        // Update history
+        const newEntry: SpinHistory = {
+          bet: betAmount,
+          multiplier,
+          win: winAmount,
+          time: new Date().toLocaleTimeString('ko-KR'),
+        };
+        setHistory(prev => [newEntry, ...prev].slice(0, 20));
+
+        // Update stats
+        setStats(prev => ({
+          totalSpins: prev.totalSpins + 1,
+          totalBet: prev.totalBet + betAmount,
+          totalWon: prev.totalWon + winAmount,
+        }));
+
+        // Clear winning segment highlight after 2 seconds
+        setTimeout(() => setWinningSegmentIndex(null), 2000);
+      }, 4000);
+    } catch {
+      alert('룰렛 실행에 실패했습니다. 다시 시도해주세요.');
       setIsSpinning(false);
-      setResult({ multiplier: selectedSegment.multiplier, winAmount });
-      setShowResult(true);
-      setWinningSegmentIndex(segmentIndex);
-
-      // Update points
-      setCurrentPoints((prev) => prev + winAmount);
-
-      // Update history
-      const newEntry: SpinHistory = {
-        bet: betAmount,
-        multiplier: selectedSegment.multiplier,
-        win: winAmount,
-        time: new Date().toLocaleTimeString('ko-KR'),
-      };
-      setHistory((prev) => [newEntry, ...prev].slice(0, 20));
-
-      // Update stats
-      setStats((prev) => ({
-        totalSpins: prev.totalSpins + 1,
-        totalBet: prev.totalBet + betAmount,
-        totalWon: prev.totalWon + winAmount,
-      }));
-
-      // Clear winning segment highlight after 2 seconds
-      setTimeout(() => setWinningSegmentIndex(null), 2000);
-    }, 4000);
+    }
   };
 
   const profit = stats.totalWon - stats.totalBet;
 
-  const getResultIcon = (multiplier: number) => {
-    if (multiplier === 0) return <X className="w-8 h-8 text-red-400" />;
-    if (multiplier <= 1) return <Minus className="w-8 h-8 text-yellow-400" />;
-    if (multiplier < 5) return <Plus className="w-8 h-8 text-green-400" />;
+  const getResultIcon = (multiplier: string) => {
+    const val = parseMultiplier(multiplier);
+    if (val === 0) return <X className="w-8 h-8 text-red-400" />;
+    if (val <= 1) return <Minus className="w-8 h-8 text-yellow-400" />;
+    if (val < 10) return <Plus className="w-8 h-8 text-green-400" />;
     return <Crown className="w-8 h-8 text-[#c9a227]" />;
   };
 
-  const getResultColor = (multiplier: number) => {
-    if (multiplier === 0) return 'from-red-900/50 to-red-800/50 border-red-400';
-    if (multiplier <= 1) return 'from-yellow-900/50 to-yellow-800/50 border-yellow-400';
-    if (multiplier < 5) return 'from-green-900/50 to-green-800/50 border-green-400';
+  const getResultColor = (multiplier: string) => {
+    const val = parseMultiplier(multiplier);
+    if (val === 0) return 'from-red-900/50 to-red-800/50 border-red-400';
+    if (val <= 1) return 'from-yellow-900/50 to-yellow-800/50 border-yellow-400';
+    if (val < 10) return 'from-green-900/50 to-green-800/50 border-green-400';
     return 'from-amber-900/50 to-amber-800/50 border-[#c9a227]';
   };
+
+  // Build conic gradient from SEGMENTS
+  const conicGradient = SEGMENTS.map((seg, i) => {
+    const start = i * SEGMENT_ANGLE;
+    const end = (i + 1) * SEGMENT_ANGLE;
+    return `${seg.color} ${start}deg ${end}deg`;
+  }).join(', ');
 
   return (
     <div className="min-h-screen bg-[#121212] text-[#e0e0e0] pb-20 px-4 py-6">
@@ -157,7 +183,7 @@ export default function RoulettePage() {
         {/* Current Points */}
         <div className="bg-[#1e1e1e] border border-[#333] rounded-xl p-4 text-center">
           <div className="text-sm text-[#a0a0a0] mb-1">보유 포인트</div>
-          <div className="text-3xl font-bold text-[#c9a227]">{currentPoints.toLocaleString()}P</div>
+          <div className="text-3xl font-bold text-[#c9a227]">{isLoadingPoints ? '...' : `${currentPoints.toLocaleString()}P`}</div>
         </div>
       </div>
 
@@ -185,16 +211,7 @@ export default function RoulettePage() {
                   )}
                   style={{
                     transform: `rotate(${spinDegree}deg)`,
-                    background: `conic-gradient(
-                      #ef4444 0deg 45deg,
-                      #f97316 45deg 90deg,
-                      #eab308 90deg 135deg,
-                      #84cc16 135deg 180deg,
-                      #22c55e 180deg 225deg,
-                      #3b82f6 225deg 270deg,
-                      #8b5cf6 270deg 315deg,
-                      #c9a227 315deg 360deg
-                    )`,
+                    background: `conic-gradient(${conicGradient})`,
                   }}
                 >
                   {/* Segment Borders */}
@@ -219,8 +236,8 @@ export default function RoulettePage() {
                           transparent 0deg,
                           transparent ${SEGMENTS[winningSegmentIndex].deg}deg,
                           rgba(255,255,255,0.3) ${SEGMENTS[winningSegmentIndex].deg}deg,
-                          rgba(255,255,255,0.3) ${SEGMENTS[winningSegmentIndex].deg + 45}deg,
-                          transparent ${SEGMENTS[winningSegmentIndex].deg + 45}deg,
+                          rgba(255,255,255,0.3) ${SEGMENTS[winningSegmentIndex].deg + SEGMENT_ANGLE}deg,
+                          transparent ${SEGMENTS[winningSegmentIndex].deg + SEGMENT_ANGLE}deg,
                           transparent 360deg
                         )`,
                       }}
@@ -238,7 +255,7 @@ export default function RoulettePage() {
                       key={index}
                       className="absolute w-full h-full flex items-center justify-center text-white font-bold text-lg pointer-events-none"
                       style={{
-                        transform: `rotate(${segment.deg + 22.5}deg)`,
+                        transform: `rotate(${segment.deg + SEGMENT_ANGLE / 2}deg)`,
                       }}
                     >
                       <div
@@ -305,14 +322,14 @@ export default function RoulettePage() {
               <div className="flex items-center justify-center gap-4">
                 {getResultIcon(result.multiplier)}
                 <div className="text-center">
-                  <div className="text-2xl font-bold mb-1">{result.multiplier}x</div>
+                  <div className="text-2xl font-bold mb-1">{result.multiplier}</div>
                   <div className={cn(
                     "text-3xl font-bold",
-                    result.multiplier === 0
+                    parseMultiplier(result.multiplier) === 0
                       ? "text-red-400"
-                      : result.multiplier <= 1
+                      : parseMultiplier(result.multiplier) <= 1
                       ? "text-yellow-400"
-                      : result.multiplier < 5
+                      : parseMultiplier(result.multiplier) < 10
                       ? "text-green-400"
                       : "text-[#c9a227]"
                   )}>
@@ -390,8 +407,8 @@ export default function RoulettePage() {
                       <div className="text-xs text-[#a0a0a0]">{spin.time}</div>
                       <div className="text-sm">
                         <span className="text-[#a0a0a0]">{spin.bet}P</span>
-                        <span className="mx-2 text-[#888]">×</span>
-                        <span className="font-bold">{spin.multiplier}x</span>
+                        <span className="mx-2 text-[#888]">x</span>
+                        <span className="font-bold">{spin.multiplier}</span>
                       </div>
                     </div>
                     <div className={cn(

@@ -20,6 +20,7 @@ export default function ChatRoomClient({ room, initialMessages }: ChatRoomClient
   const [messages, setMessages] = useState<ChatMessageData[]>(initialMessages);
   const [input, setInput] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [sseRetry, setSseRetry] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -27,6 +28,39 @@ export default function ChatRoomClient({ room, initialMessages }: ChatRoomClient
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // SSE: real-time message subscription
+  useEffect(() => {
+    const eventSource = new EventSource(`/api/chat/${room.id}`);
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+
+    eventSource.onmessage = (event) => {
+      try {
+        const parsed = JSON.parse(event.data);
+        if (parsed.type === 'message' && parsed.data) {
+          setMessages((prev) => {
+            if (prev.some((m) => m.id === parsed.data.id)) return prev;
+            return [...prev, parsed.data as ChatMessageData];
+          });
+        }
+      } catch {
+        // Ignore parse errors
+      }
+    };
+
+    eventSource.onerror = () => {
+      eventSource.close();
+      // Auto-reconnect after 3 seconds by bumping retry counter
+      reconnectTimer = setTimeout(() => {
+        setSseRetry((prev) => prev + 1);
+      }, 3000);
+    };
+
+    return () => {
+      eventSource.close();
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+    };
+  }, [room.id, sseRetry]);
 
   const handleSendMessage = async () => {
     if (!input.trim() || isSending) return;

@@ -18,9 +18,9 @@ const typeLabels = {
 
 const typeColors = {
   general: 'bg-ph-elevated text-ph-text-secondary',
-  game: 'bg-[#1e3a28] text-[#4ade80]',
-  tournament: 'bg-[#2a1e3a] text-[#c084fc]',
-  private: 'bg-[#3a1e1e] text-[#f87171]',
+  game: 'bg-ph-success-dim text-ph-success',
+  tournament: 'bg-purple-500/15 text-purple-400',
+  private: 'bg-ph-error-dim text-ph-error',
 };
 
 export default async function ChatPage() {

@@ -333,7 +333,7 @@ export default function SettingsPage() {
               <button
                 onClick={handleProfileSave}
                 disabled={loading}
-                className="mt-6 bg-ph-gold hover:bg-[#b89220] disabled:bg-ph-elevated disabled:text-ph-text-muted text-ph-bg font-medium px-6 py-2 rounded flex items-center gap-2 transition-colors"
+                className="mt-6 bg-ph-gold hover:bg-ph-gold-hover disabled:bg-ph-elevated disabled:text-ph-text-muted text-ph-bg font-medium px-6 py-2 rounded flex items-center gap-2 transition-colors"
               >
                 {loading ? (
                   <>
@@ -393,7 +393,7 @@ export default function SettingsPage() {
               <button
                 onClick={handleNotificationsSave}
                 disabled={loading}
-                className="mt-6 bg-ph-gold hover:bg-[#b89220] disabled:bg-ph-elevated disabled:text-ph-text-muted text-ph-bg font-medium px-6 py-2 rounded flex items-center gap-2 transition-colors"
+                className="mt-6 bg-ph-gold hover:bg-ph-gold-hover disabled:bg-ph-elevated disabled:text-ph-text-muted text-ph-bg font-medium px-6 py-2 rounded flex items-center gap-2 transition-colors"
               >
                 {loading ? (
                   <>
@@ -445,7 +445,7 @@ export default function SettingsPage() {
                 <button
                   onClick={handleTitlePurchase}
                   disabled={loading || customTitle.trim().length < 2}
-                  className="bg-ph-gold hover:bg-[#b89220] disabled:bg-ph-elevated disabled:text-ph-text-muted text-ph-bg font-medium px-4 py-2 rounded whitespace-nowrap transition-colors"
+                  className="bg-ph-gold hover:bg-ph-gold-hover disabled:bg-ph-elevated disabled:text-ph-text-muted text-ph-bg font-medium px-4 py-2 rounded whitespace-nowrap transition-colors"
                 >
                   {loading ? '처리 중...' : '500P로 변경'}
                 </button>
@@ -530,7 +530,7 @@ export default function SettingsPage() {
                               <button
                                 onClick={() => handleBadgePurchase(badge.id)}
                                 disabled={loading || shopPoints < badge.price}
-                                className="bg-ph-gold hover:bg-[#b89220] disabled:bg-ph-elevated disabled:text-ph-text-muted text-ph-bg text-sm font-medium px-3 py-1 rounded transition-colors"
+                                className="bg-ph-gold hover:bg-ph-gold-hover disabled:bg-ph-elevated disabled:text-ph-text-muted text-ph-bg text-sm font-medium px-3 py-1 rounded transition-colors"
                               >
                                 구매
                               </button>
@@ -587,7 +587,7 @@ export default function SettingsPage() {
               <button
                 onClick={handlePasswordChange}
                 disabled={loading || !currentPassword || !newPassword || !confirmPassword}
-                className="mt-6 bg-ph-gold hover:bg-[#b89220] disabled:bg-ph-elevated disabled:text-ph-text-muted text-ph-bg font-medium px-6 py-2 rounded transition-colors"
+                className="mt-6 bg-ph-gold hover:bg-ph-gold-hover disabled:bg-ph-elevated disabled:text-ph-text-muted text-ph-bg font-medium px-6 py-2 rounded transition-colors"
               >
                 {loading ? '변경 중...' : '비밀번호 변경'}
               </button>

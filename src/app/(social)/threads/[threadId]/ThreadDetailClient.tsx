@@ -75,18 +75,18 @@ export function ThreadDetailClient({ thread: initialThread, replies: initialRepl
       {/* Back button */}
       <Link
         href="/threads"
-        className="inline-flex items-center gap-2 text-sm text-[#a0a0a0] hover:text-[#c9a227] transition-colors"
+        className="inline-flex items-center gap-2 text-sm text-ph-text-secondary hover:text-ph-gold transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
         쓰레드로 돌아가기
       </Link>
 
       {/* Thread detail */}
-      <div className="bg-[#1e1e1e] border border-[#333] rounded-lg p-4 space-y-3">
+      <div className="bg-ph-surface border border-ph-border rounded-lg p-4 space-y-3">
         {/* Author row */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#2a2a2a] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-ph-elevated flex items-center justify-center">
               {thread.author.avatarUrl ? (
                 <img
                   src={thread.author.avatarUrl}
@@ -94,19 +94,19 @@ export function ThreadDetailClient({ thread: initialThread, replies: initialRepl
                   className="w-full h-full rounded-full object-cover"
                 />
               ) : (
-                <User className="w-5 h-5 text-[#888]" />
+                <User className="w-5 h-5 text-ph-text-muted" />
               )}
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-[#e0e0e0]">
+                <span className="text-sm font-medium text-ph-text">
                   {thread.author.nickname}
                 </span>
-                <span className="text-xs bg-[#2a2a2a] border border-[#333] px-1.5 py-0.5 rounded text-[#a0a0a0]">
+                <span className="text-xs bg-ph-elevated border border-ph-border px-1.5 py-0.5 rounded text-ph-text-secondary">
                   Lv.{thread.author.level}
                 </span>
               </div>
-              <span className="text-xs text-[#888]">
+              <span className="text-xs text-ph-text-muted">
                 {formatRelativeTime(thread.createdAt)}
               </span>
             </div>
@@ -115,7 +115,7 @@ export function ThreadDetailClient({ thread: initialThread, replies: initialRepl
           {isAuthor && (
             <button
               onClick={handleDelete}
-              className="p-2 text-[#888] hover:text-[#ef4444] transition-colors"
+              className="p-2 text-ph-text-muted hover:text-ph-error transition-colors"
               aria-label="삭제"
             >
               <Trash2 className="w-4 h-4" />
@@ -124,7 +124,7 @@ export function ThreadDetailClient({ thread: initialThread, replies: initialRepl
         </div>
 
         {/* Content */}
-        <div className="text-[#e0e0e0] whitespace-pre-wrap text-sm">
+        <div className="text-ph-text whitespace-pre-wrap text-sm">
           {thread.content}
         </div>
 
@@ -145,20 +145,20 @@ export function ThreadDetailClient({ thread: initialThread, replies: initialRepl
             onClick={handleLikeToggle}
             disabled={isTogglingLike || !currentUserId}
             className={`flex items-center gap-1.5 transition-colors ${
-              thread.isLiked ? 'text-[#ef4444]' : 'text-[#a0a0a0] hover:text-[#ef4444]'
+              thread.isLiked ? 'text-ph-error' : 'text-ph-text-secondary hover:text-ph-error'
             } disabled:opacity-50`}
           >
             <Heart className="w-5 h-5" fill={thread.isLiked ? 'currentColor' : 'none'} />
             <span className="text-sm">{thread.likesCount}</span>
           </button>
 
-          <div className="flex items-center gap-1.5 text-[#a0a0a0]">
+          <div className="flex items-center gap-1.5 text-ph-text-secondary">
             <MessageCircle className="w-5 h-5" />
             <span className="text-sm">{thread.repliesCount}</span>
           </div>
 
           <button
-            className="flex items-center gap-1.5 text-[#a0a0a0] hover:text-[#c9a227] transition-colors"
+            className="flex items-center gap-1.5 text-ph-text-secondary hover:text-ph-gold transition-colors"
             aria-label="공유"
           >
             <Share2 className="w-5 h-5" />
@@ -168,7 +168,7 @@ export function ThreadDetailClient({ thread: initialThread, replies: initialRepl
 
       {/* Replies */}
       <div className="space-y-4">
-        <h2 className="text-lg font-bold text-[#e0e0e0]">
+        <h2 className="text-lg font-bold text-ph-text">
           댓글 {replies.length}개
         </h2>
 
@@ -177,10 +177,10 @@ export function ThreadDetailClient({ thread: initialThread, replies: initialRepl
             {replies.map((reply) => (
               <div
                 key={reply.id}
-                className="bg-[#1e1e1e] border border-[#333] rounded-lg p-4 space-y-2"
+                className="bg-ph-surface border border-ph-border rounded-lg p-4 space-y-2"
               >
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-[#2a2a2a] flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-full bg-ph-elevated flex items-center justify-center">
                     {reply.author.avatarUrl ? (
                       <img
                         src={reply.author.avatarUrl}
@@ -188,24 +188,24 @@ export function ThreadDetailClient({ thread: initialThread, replies: initialRepl
                         className="w-full h-full rounded-full object-cover"
                       />
                     ) : (
-                      <User className="w-4 h-4 text-[#888]" />
+                      <User className="w-4 h-4 text-ph-text-muted" />
                     )}
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-[#e0e0e0]">
+                      <span className="text-sm font-medium text-ph-text">
                         {reply.author.nickname}
                       </span>
-                      <span className="text-xs bg-[#2a2a2a] border border-[#333] px-1.5 py-0.5 rounded text-[#a0a0a0]">
+                      <span className="text-xs bg-ph-elevated border border-ph-border px-1.5 py-0.5 rounded text-ph-text-secondary">
                         Lv.{reply.author.level}
                       </span>
                     </div>
-                    <span className="text-xs text-[#888]">
+                    <span className="text-xs text-ph-text-muted">
                       {formatRelativeTime(reply.createdAt)}
                     </span>
                   </div>
                 </div>
-                <p className="text-sm text-[#e0e0e0]">{reply.content}</p>
+                <p className="text-sm text-ph-text">{reply.content}</p>
               </div>
             ))}
           </div>
@@ -213,23 +213,23 @@ export function ThreadDetailClient({ thread: initialThread, replies: initialRepl
 
         {/* Reply input */}
         {currentUserId && (
-          <div className="bg-[#1e1e1e] border border-[#333] rounded-lg p-4 space-y-3">
+          <div className="bg-ph-surface border border-ph-border rounded-lg p-4 space-y-3">
             <textarea
               value={replyContent}
               onChange={(e) => setReplyContent(e.target.value)}
               placeholder="댓글을 입력하세요..."
-              className="w-full bg-[#2a2a2a] border border-[#333] rounded-lg px-3 py-2 text-sm text-[#e0e0e0] placeholder:text-[#888] focus:outline-none focus:border-[#c9a227] resize-none"
+              className="w-full bg-ph-elevated border border-ph-border rounded-lg px-3 py-2 text-sm text-ph-text placeholder:text-ph-text-muted focus:outline-none focus:border-ph-gold resize-none"
               rows={3}
               maxLength={300}
             />
             <div className="flex items-center justify-between">
-              <span className="text-xs text-[#888]">
+              <span className="text-xs text-ph-text-muted">
                 {300 - replyContent.length}자
               </span>
               <button
                 onClick={handleReplySubmit}
                 disabled={!replyContent.trim() || isSubmitting}
-                className="px-4 py-2 bg-[#c9a227] hover:bg-[#d4af37] text-black text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-4 py-2 bg-ph-gold hover:bg-ph-gold-hover text-black text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 <Send className="w-4 h-4" />
                 {isSubmitting ? '작성 중...' : '댓글 작성'}

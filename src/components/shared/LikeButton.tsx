@@ -97,14 +97,14 @@ export function LikeButton({
         className={cn(
           iconSizes[size],
           'transition-colors duration-200',
-          isLiked ? 'fill-[#ef4444] text-[#ef4444]' : 'text-[#a0a0a0]',
+          isLiked ? 'fill-ph-error text-ph-error' : 'text-ph-text-secondary',
           isAnimating && 'animate-[likePop_300ms_ease-out]'
         )}
       />
       {showCount && (
         <span className={cn(
           'font-medium tabular-nums',
-          isLiked ? 'text-[#ef4444]' : 'text-[#a0a0a0]'
+          isLiked ? 'text-ph-error' : 'text-ph-text-secondary'
         )}>
           {formatNumber(likes)}
         </span>

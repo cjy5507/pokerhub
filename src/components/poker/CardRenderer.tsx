@@ -22,10 +22,10 @@ const suitSymbols = {
 } as const;
 
 const suitColors = {
-  h: 'text-[#dc2626]',
-  d: 'text-[#dc2626]',
-  s: 'text-[#1a1a1a]',
-  c: 'text-[#1a1a1a]',
+  h: 'text-ph-card-red',
+  d: 'text-ph-card-red',
+  s: 'text-ph-text',
+  c: 'text-ph-text',
 } as const;
 
 const sizeClasses = {

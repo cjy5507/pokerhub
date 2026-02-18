@@ -81,19 +81,19 @@ export function ThreadCompose({ onThreadCreated }: ThreadComposeProps) {
   };
 
   return (
-    <div className="bg-[#1e1e1e] border border-[#333] rounded-lg p-4 space-y-3">
+    <div className="bg-ph-surface border border-ph-border rounded-lg p-4 space-y-3">
       <textarea
         value={content}
         onChange={(e) => setContent(e.target.value)}
         placeholder="무슨 생각을 하고 계신가요?"
-        className="w-full bg-[#2a2a2a] border border-[#333] rounded-lg px-3 py-2 text-sm text-[#e0e0e0] placeholder:text-[#888] focus:outline-none focus:border-[#c9a227] resize-none"
+        className="w-full bg-ph-elevated border border-ph-border rounded-lg px-3 py-2 text-sm text-ph-text placeholder:text-ph-text-muted focus:outline-none focus:border-ph-gold resize-none"
         rows={3}
         maxLength={maxChars}
       />
 
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <label className="cursor-pointer p-2 text-[#a0a0a0] hover:text-[#c9a227] transition-colors">
+          <label className="cursor-pointer p-2 text-ph-text-secondary hover:text-ph-gold transition-colors">
             <input
               type="file"
               accept="image/*"
@@ -105,18 +105,18 @@ export function ThreadCompose({ onThreadCreated }: ThreadComposeProps) {
           </label>
 
           {isUploading && (
-            <span className="text-xs text-[#a0a0a0]">업로드 중...</span>
+            <span className="text-xs text-ph-text-secondary">업로드 중...</span>
           )}
 
           {imageUrl && !isUploading && (
-            <span className="text-xs text-[#c9a227]">이미지 첨부됨</span>
+            <span className="text-xs text-ph-gold">이미지 첨부됨</span>
           )}
         </div>
 
         <div className="flex items-center gap-3">
           <span
             className={`text-xs ${
-              charsRemaining < 50 ? 'text-[#ef4444]' : 'text-[#888]'
+              charsRemaining < 50 ? 'text-ph-error' : 'text-ph-text-muted'
             }`}
           >
             {charsRemaining}자
@@ -125,7 +125,7 @@ export function ThreadCompose({ onThreadCreated }: ThreadComposeProps) {
           <button
             onClick={handleSubmit}
             disabled={!content.trim() || isSubmitting || isUploading}
-            className="px-4 py-2 bg-[#c9a227] hover:bg-[#d4af37] text-black text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 bg-ph-gold hover:bg-ph-gold-hover text-black text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting ? '게시 중...' : '게시'}
           </button>
@@ -133,7 +133,7 @@ export function ThreadCompose({ onThreadCreated }: ThreadComposeProps) {
       </div>
 
       {error && (
-        <p className="text-xs text-[#ef4444]">{error}</p>
+        <p className="text-xs text-ph-error">{error}</p>
       )}
     </div>
   );

@@ -57,18 +57,18 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
       title={title}
       className={`p-2 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
         active
-          ? 'bg-[#2a2a2a] text-[#c9a227]'
-          : 'hover:bg-[#2a2a2a] text-[#a0a0a0]'
+          ? 'bg-ph-elevated text-ph-gold'
+          : 'hover:bg-ph-elevated text-ph-text-secondary'
       }`}
     >
       {children}
     </button>
   );
 
-  const ToolbarDivider = () => <div className="w-px h-6 bg-[#333]" />;
+  const ToolbarDivider = () => <div className="w-px h-6 bg-ph-border" />;
 
   return (
-    <div className="sticky top-0 z-10 bg-[#1e1e1e] border-b border-[#333] p-2 flex items-center gap-1 overflow-x-auto">
+    <div className="sticky top-0 z-10 bg-ph-surface border-b border-ph-border p-2 flex items-center gap-1 overflow-x-auto">
       {/* Text formatting */}
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBold().run()}

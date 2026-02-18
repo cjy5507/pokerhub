@@ -49,16 +49,16 @@ export default function ChatSidebarPanel() {
   const activeRoom = rooms.find((r) => r.id === activeRoomId);
 
   return (
-    <div className="flex h-[500px] flex-col bg-[#1e1e1e] border border-[#333] rounded-lg overflow-hidden">
+    <div className="flex h-[500px] flex-col bg-ph-surface border border-ph-border rounded-lg overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2.5 border-b border-[#333]">
+      <div className="flex items-center justify-between px-3 py-2.5 border-b border-ph-border">
         <div className="flex items-center gap-2">
-          <MessageSquare className="w-4 h-4 text-[#c9a227]" />
-          <h3 className="text-sm font-semibold text-[#c9a227]">실시간 채팅</h3>
+          <MessageSquare className="w-4 h-4 text-ph-gold" />
+          <h3 className="text-sm font-semibold text-ph-gold">실시간 채팅</h3>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-          <span className="text-xs text-[#a0a0a0]">
+          <span className="text-xs text-ph-text-secondary">
             {activeRoom?.participantCount ?? 0}
           </span>
         </div>
@@ -67,11 +67,11 @@ export default function ChatSidebarPanel() {
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto px-2 py-2 space-y-2">
         {isLoading ? (
-          <div className="flex items-center justify-center h-full text-xs text-[#a0a0a0]">
+          <div className="flex items-center justify-center h-full text-xs text-ph-text-secondary">
             메시지 로딩 중...
           </div>
         ) : messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center text-xs text-[#a0a0a0]">
+          <div className="flex flex-col items-center justify-center h-full text-center text-xs text-ph-text-secondary">
             <MessageSquare className="w-8 h-8 mb-2 opacity-50" />
             <p>첫 메시지를 남겨보세요!</p>
           </div>
@@ -89,7 +89,7 @@ export default function ChatSidebarPanel() {
                 >
                   {/* Avatar */}
                   {!isOwn && (
-                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#c9a227] flex items-center justify-center text-[#1e1e1e] text-[10px] font-bold">
+                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-ph-gold flex items-center justify-center text-ph-surface text-[10px] font-bold">
                       {message.sender.nickname[0]}
                     </div>
                   )}
@@ -97,7 +97,7 @@ export default function ChatSidebarPanel() {
                   {/* Message Content */}
                   <div className={cn('flex flex-col max-w-[80%]', isOwn ? 'items-end' : 'items-start')}>
                     {!isOwn && (
-                      <span className="text-[10px] text-[#c9a227] font-medium mb-0.5 px-1">
+                      <span className="text-[10px] text-ph-gold font-medium mb-0.5 px-1">
                         {message.sender.nickname}
                       </span>
                     )}
@@ -105,13 +105,13 @@ export default function ChatSidebarPanel() {
                       className={cn(
                         'px-2.5 py-1.5 rounded-lg text-xs',
                         isOwn
-                          ? 'bg-[#2a2a2a] text-[#e0e0e0]'
-                          : 'bg-[#252525] text-[#e0e0e0]'
+                          ? 'bg-ph-elevated text-ph-text'
+                          : 'bg-ph-elevated text-ph-text'
                       )}
                     >
                       <p className="whitespace-pre-wrap break-words">{message.content}</p>
                     </div>
-                    <span className="text-[10px] text-[#888] mt-0.5 px-1">
+                    <span className="text-[10px] text-ph-text-muted mt-0.5 px-1">
                       {formatRelativeTime(message.createdAt)}
                     </span>
                   </div>
@@ -124,7 +124,7 @@ export default function ChatSidebarPanel() {
       </div>
 
       {/* Input Area */}
-      <div className="flex items-center gap-2 px-2 py-2 border-t border-[#333] bg-[#1a1a1a]">
+      <div className="flex items-center gap-2 px-2 py-2 border-t border-ph-border bg-ph-surface">
         {session ? (
           <>
             <input
@@ -134,12 +134,12 @@ export default function ChatSidebarPanel() {
               onKeyDown={handleKeyDown}
               placeholder="메시지 입력..."
               disabled={isSending || !activeRoomId}
-              className="flex-1 px-3 py-1.5 text-sm bg-[#2a2a2a] text-[#e0e0e0] placeholder:text-[#888] border border-[#333] rounded focus:outline-none focus:border-[#c9a227] disabled:opacity-50"
+              className="flex-1 px-3 py-1.5 text-sm bg-ph-elevated text-ph-text placeholder:text-ph-text-muted border border-ph-border rounded focus:outline-none focus:border-ph-gold disabled:opacity-50"
             />
             <button
               onClick={handleSend}
               disabled={!inputValue.trim() || isSending || !activeRoomId}
-              className="flex-shrink-0 p-1.5 bg-[#c9a227] text-[#1e1e1e] rounded hover:bg-[#d4af37] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex-shrink-0 p-1.5 bg-ph-gold text-ph-surface rounded hover:bg-ph-gold-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               aria-label="전송"
             >
               <Send className="w-4 h-4" />
@@ -147,7 +147,7 @@ export default function ChatSidebarPanel() {
           </>
         ) : (
           <div className="flex-1 text-center py-2">
-            <a href="/login" className="text-xs text-[#c9a227] hover:underline">
+            <a href="/login" className="text-xs text-ph-gold hover:underline">
               로그인 후 채팅하기
             </a>
           </div>

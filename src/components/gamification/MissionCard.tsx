@@ -44,8 +44,8 @@ export function MissionCard({
   return (
     <div
       className={cn(
-        'bg-[#1e1e1e] rounded-lg p-4 transition-all duration-200',
-        isDailyBonus && isCompleted && 'border-2 border-[#c9a227] shadow-[0_0_12px_rgba(201,162,39,0.3)]',
+        'bg-ph-surface rounded-lg p-4 transition-all duration-200',
+        isDailyBonus && isCompleted && 'border-2 border-ph-gold shadow-[0_0_12px_rgba(201,162,39,0.3)]',
         isClaimed && 'opacity-60',
         className
       )}
@@ -54,32 +54,32 @@ export function MissionCard({
         {/* Icon */}
         <div className={cn(
           'flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center',
-          isCompleted && !isClaimed ? 'bg-[#c9a227]/20' : 'bg-[#2a2a2a]'
+          isCompleted && !isClaimed ? 'bg-ph-gold/20' : 'bg-ph-elevated'
         )}>
           <Icon
             className={cn(
               'w-5 h-5',
-              isCompleted && !isClaimed ? 'text-[#c9a227]' : 'text-[#a0a0a0]'
+              isCompleted && !isClaimed ? 'text-ph-gold' : 'text-ph-text-secondary'
             )}
           />
         </div>
 
         {/* Content */}
         <div className="flex-1 min-w-0">
-          <h4 className="text-sm lg:text-base font-semibold text-[#e0e0e0] mb-1">
+          <h4 className="text-sm lg:text-base font-semibold text-ph-text mb-1">
             {title}
           </h4>
           {description && (
-            <p className="text-xs text-[#a0a0a0] mb-2">{description}</p>
+            <p className="text-xs text-ph-text-secondary mb-2">{description}</p>
           )}
 
           {/* Progress bar */}
           <div className="mb-2">
-            <div className="h-1 bg-[#333] rounded-full overflow-hidden">
+            <div className="h-1 bg-ph-border rounded-full overflow-hidden">
               <div
                 className={cn(
                   'h-full transition-all duration-500 rounded-full',
-                  isCompleted ? 'bg-[#c9a227]' : 'bg-[#c9a227]/50'
+                  isCompleted ? 'bg-ph-gold' : 'bg-ph-gold/50'
                 )}
                 style={{ width: `${progress}%` }}
               />
@@ -90,20 +90,20 @@ export function MissionCard({
           <div className="flex items-center justify-between text-xs">
             <span className={cn(
               'font-medium',
-              isCompleted ? 'text-[#c9a227]' : 'text-[#a0a0a0]'
+              isCompleted ? 'text-ph-gold' : 'text-ph-text-secondary'
             )}>
               {current}/{target} 완료
             </span>
-            <span className="text-[#c9a227] font-bold">+{reward}P</span>
+            <span className="text-ph-gold font-bold">+{reward}P</span>
           </div>
         </div>
 
         {/* Reward badge */}
         <div className={cn(
           'flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-bold',
-          isCompleted && !isClaimed && 'bg-[#c9a227] text-black',
-          !isCompleted && 'bg-[#2a2a2a] text-[#a0a0a0]',
-          isClaimed && 'bg-[#22c55e]/20 text-[#22c55e]'
+          isCompleted && !isClaimed && 'bg-ph-gold text-black',
+          !isCompleted && 'bg-ph-elevated text-ph-text-secondary',
+          isClaimed && 'bg-ph-success/20 text-ph-success'
         )}>
           {isClaimed ? '완료' : `${reward}P`}
         </div>
@@ -115,8 +115,8 @@ export function MissionCard({
           onClick={handleClaim}
           className={cn(
             'w-full py-2.5 rounded-lg font-bold text-sm',
-            'bg-[#c9a227] text-black',
-            'hover:bg-[#d4af37]',
+            'bg-ph-gold text-black',
+            'hover:bg-ph-gold-hover',
             'transition-all duration-200 active:scale-98',
             'min-h-[44px] touch-manipulation'
           )}
@@ -127,8 +127,8 @@ export function MissionCard({
 
       {/* Completed overlay */}
       {isClaimed && (
-        <div className="absolute inset-0 flex items-center justify-center bg-[#1e1e1e]/80 rounded-lg">
-          <div className="flex items-center gap-2 text-[#22c55e]">
+        <div className="absolute inset-0 flex items-center justify-center bg-ph-surface/80 rounded-lg">
+          <div className="flex items-center gap-2 text-ph-success">
             <Check className="w-6 h-6" />
             <span className="font-bold">완료</span>
           </div>

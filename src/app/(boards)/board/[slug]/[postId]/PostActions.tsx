@@ -121,7 +121,7 @@ export function PostActions({
           'flex items-center gap-1.5 text-sm transition-all duration-200',
           'min-h-[44px] px-3 disabled:opacity-50',
           'hover:scale-105 active:scale-95',
-          isLiked ? 'text-[#ef4444]' : 'text-[#a0a0a0] hover:text-[#e0e0e0]'
+          isLiked ? 'text-ph-error' : 'text-ph-text-secondary hover:text-ph-text'
         )}
       >
         <Heart className={cn('w-5 h-5', isLiked && 'fill-current')} />
@@ -135,7 +135,7 @@ export function PostActions({
         className={cn(
           'flex items-center gap-1.5 text-sm transition-colors',
           'min-h-[44px] px-3 disabled:opacity-50',
-          isBookmarked ? 'text-[#c9a227]' : 'text-[#a0a0a0] hover:text-[#e0e0e0]'
+          isBookmarked ? 'text-ph-gold' : 'text-ph-text-secondary hover:text-ph-text'
         )}
         aria-label={isBookmarked ? '북마크 취소' : '북마크'}
       >
@@ -145,7 +145,7 @@ export function PostActions({
       {/* Share */}
       <button
         onClick={handleShare}
-        className="flex items-center gap-1.5 text-sm text-[#a0a0a0] hover:text-[#e0e0e0] transition-colors min-h-[44px] px-3"
+        className="flex items-center gap-1.5 text-sm text-ph-text-secondary hover:text-ph-text transition-colors min-h-[44px] px-3"
         aria-label="공유"
       >
         <Share2 className="w-5 h-5" />
@@ -159,7 +159,7 @@ export function PostActions({
         <>
           <button
             onClick={() => router.push(`/board/${boardSlug}/write?edit=${postId}`)}
-            className="flex items-center gap-1.5 text-sm text-[#a0a0a0] hover:text-[#3b82f6] transition-colors min-h-[44px] px-3"
+            className="flex items-center gap-1.5 text-sm text-ph-text-secondary hover:text-ph-info transition-colors min-h-[44px] px-3"
           >
             <Edit className="w-5 h-5" />
             <span className="hidden sm:inline">수정</span>
@@ -167,7 +167,7 @@ export function PostActions({
           <button
             onClick={handleDelete}
             disabled={isPending}
-            className="flex items-center gap-1.5 text-sm text-[#a0a0a0] hover:text-[#ef4444] transition-colors min-h-[44px] px-3 disabled:opacity-50"
+            className="flex items-center gap-1.5 text-sm text-ph-text-secondary hover:text-ph-error transition-colors min-h-[44px] px-3 disabled:opacity-50"
           >
             <Trash2 className="w-5 h-5" />
             <span className="hidden sm:inline">삭제</span>
@@ -180,7 +180,7 @@ export function PostActions({
         <button
           onClick={handleReport}
           disabled={isPending}
-          className="flex items-center gap-1.5 text-sm text-[#a0a0a0] hover:text-[#ef4444] transition-colors min-h-[44px] px-3 disabled:opacity-50"
+          className="flex items-center gap-1.5 text-sm text-ph-text-secondary hover:text-ph-error transition-colors min-h-[44px] px-3 disabled:opacity-50"
         >
           <Flag className="w-5 h-5" />
           <span className="hidden sm:inline">신고</span>

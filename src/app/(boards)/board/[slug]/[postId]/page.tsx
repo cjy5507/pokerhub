@@ -29,10 +29,10 @@ export default async function PostPage({ params }: PostPageProps) {
       // Likely a DB connection issue
       return (
         <div className="max-w-4xl mx-auto px-4 py-16 text-center">
-          <div className="bg-[#1a1a1a] rounded-lg p-8 border border-[#333]">
-            <h2 className="text-xl font-bold text-[#e0e0e0] mb-4">데이터베이스 연결 필요</h2>
-            <p className="text-[#a0a0a0] mb-2">데이터를 불러올 수 없습니다.</p>
-            <p className="text-sm text-[#666]">.env 파일의 DATABASE_URL 설정을 확인해주세요.</p>
+          <div className="bg-ph-surface rounded-lg p-8 border border-ph-border">
+            <h2 className="text-xl font-bold text-ph-text mb-4">데이터베이스 연결 필요</h2>
+            <p className="text-ph-text-secondary mb-2">데이터를 불러올 수 없습니다.</p>
+            <p className="text-sm text-ph-text-dim">.env 파일의 DATABASE_URL 설정을 확인해주세요.</p>
           </div>
         </div>
       );
@@ -58,17 +58,17 @@ export default async function PostPage({ params }: PostPageProps) {
       <div className="mb-4">
         <Link
           href={`/board/${slug}`}
-          className="text-sm text-[#3b82f6] hover:underline"
+          className="text-sm text-ph-info hover:underline"
         >
           ← {post.board?.nameKo || '게시판'}
         </Link>
       </div>
 
       {/* Post container */}
-      <div className="bg-[#1a1a1a] rounded-lg overflow-hidden">
+      <div className="bg-ph-surface rounded-lg overflow-hidden">
         {/* Post header */}
-        <div className="p-6 border-b border-[#333]">
-          <h1 className="text-2xl font-bold text-[#e0e0e0] mb-4">{post.title}</h1>
+        <div className="p-6 border-b border-ph-border">
+          <h1 className="text-2xl font-bold text-ph-text mb-4">{post.title}</h1>
 
           <div className="flex items-center gap-4 text-sm">
             <AuthorBadge
@@ -77,14 +77,14 @@ export default async function PostPage({ params }: PostPageProps) {
               level={post.author?.level || 1}
             />
             {post.author?.customTitle && (
-              <span className="text-xs text-[#c9a227] font-medium">
+              <span className="text-xs text-ph-gold font-medium">
                 {post.author.customTitle}
               </span>
             )}
-            <span className="text-[#888]">·</span>
-            <span className="text-[#a0a0a0]">{timeAgo}</span>
-            <span className="text-[#888]">·</span>
-            <div className="flex items-center gap-1 text-[#a0a0a0]">
+            <span className="text-ph-text-muted">·</span>
+            <span className="text-ph-text-secondary">{timeAgo}</span>
+            <span className="text-ph-text-muted">·</span>
+            <div className="flex items-center gap-1 text-ph-text-secondary">
               <Eye className="w-4 h-4" />
               <span>{post.viewCount}</span>
             </div>
@@ -92,14 +92,14 @@ export default async function PostPage({ params }: PostPageProps) {
         </div>
 
         {/* Post content */}
-        <div className="p-6 border-b border-[#333]">
+        <div className="p-6 border-b border-ph-border">
           {post.contentHtml ? (
             <div
               className="prose prose-invert max-w-none"
               dangerouslySetInnerHTML={{ __html: post.contentHtml }}
             />
           ) : (
-            <div className="whitespace-pre-wrap text-[#e0e0e0]">{post.content}</div>
+            <div className="whitespace-pre-wrap text-ph-text">{post.content}</div>
           )}
         </div>
 
@@ -126,18 +126,18 @@ export default async function PostPage({ params }: PostPageProps) {
       {/* Related posts */}
       {relatedPosts.length > 0 && (
         <div className="mt-8">
-          <h2 className="text-lg font-bold text-[#e0e0e0] mb-4">관련 게시글</h2>
-          <div className="bg-[#1a1a1a] rounded-lg divide-y divide-[#333]">
+          <h2 className="text-lg font-bold text-ph-text mb-4">관련 게시글</h2>
+          <div className="bg-ph-surface rounded-lg divide-y divide-ph-border">
             {relatedPosts.map((relatedPost: any) => (
               <Link
                 key={relatedPost.id}
                 href={`/board/${slug}/${relatedPost.id}`}
-                className="block p-4 hover:bg-[#2a2a2a] transition-colors"
+                className="block p-4 hover:bg-ph-elevated transition-colors"
               >
-                <h3 className="text-[#e0e0e0] font-medium mb-2 line-clamp-1">
+                <h3 className="text-ph-text font-medium mb-2 line-clamp-1">
                   {relatedPost.title}
                 </h3>
-                <div className="flex items-center gap-3 text-xs text-[#a0a0a0]">
+                <div className="flex items-center gap-3 text-xs text-ph-text-secondary">
                   <span>조회 {relatedPost.viewCount}</span>
                   <span>좋아요 {relatedPost.likeCount}</span>
                   <span>댓글 {relatedPost.commentCount}</span>

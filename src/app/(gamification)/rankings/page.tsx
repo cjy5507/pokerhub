@@ -34,10 +34,10 @@ function getRankBadge(rank: number): string | null {
 }
 
 function getRankColor(rank: number): string {
-  if (rank === 1) return 'border-[#c9a227] bg-[#c9a227]/10';
-  if (rank === 2) return 'border-[#a0a0a0] bg-[#a0a0a0]/10';
-  if (rank === 3) return 'border-[#cd7f32] bg-[#cd7f32]/10';
-  return 'border-[#333] bg-[#1e1e1e]';
+  if (rank === 1) return 'border-ph-gold bg-ph-gold/10';
+  if (rank === 2) return 'border-ph-silver bg-ph-silver/10';
+  if (rank === 3) return 'border-ph-bronze bg-ph-bronze/10';
+  return 'border-ph-border bg-ph-surface';
 }
 
 function getStatValue(user: RankedUser, tab: TabKey): string {
@@ -67,8 +67,8 @@ export default async function RankingsPage({
   if (!db) {
     return (
       <div className="container max-w-4xl mx-auto px-4 py-6">
-        <h1 className="text-2xl font-bold text-[#e0e0e0] mb-4">랭킹</h1>
-        <p className="text-[#a0a0a0]">데이터베이스에 연결할 수 없습니다</p>
+        <h1 className="text-2xl font-bold text-ph-text mb-4">랭킹</h1>
+        <p className="text-ph-text-secondary">데이터베이스에 연결할 수 없습니다</p>
       </div>
     );
   }
@@ -184,10 +184,10 @@ export default async function RankingsPage({
     <div className="container max-w-4xl mx-auto px-4 py-6 lg:py-8">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl lg:text-3xl font-bold text-[#e0e0e0] mb-2">
+        <h1 className="text-2xl lg:text-3xl font-bold text-ph-text mb-2">
           랭킹
         </h1>
-        <p className="text-sm text-[#a0a0a0]">
+        <p className="text-sm text-ph-text-secondary">
           TOP 50 유저 랭킹을 확인하세요
         </p>
       </div>
@@ -200,8 +200,8 @@ export default async function RankingsPage({
             href={`/rankings?tab=${t.key}`}
             className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
               activeTab === t.key
-                ? 'bg-[#c9a227] text-black'
-                : 'bg-[#2a2a2a] text-[#a0a0a0] hover:bg-[#333] hover:text-[#e0e0e0]'
+                ? 'bg-ph-gold text-black'
+                : 'bg-ph-elevated text-ph-text-secondary hover:bg-ph-border hover:text-ph-text'
             }`}
           >
             {t.label}
@@ -221,7 +221,7 @@ export default async function RankingsPage({
               key={user.id}
               className={`flex items-center gap-3 lg:gap-4 p-3 lg:p-4 rounded-lg border transition-colors ${
                 isMe
-                  ? 'border-[#22c55e] bg-[#22c55e]/10'
+                  ? 'border-ph-success bg-ph-success/10'
                   : getRankColor(rank)
               }`}
             >
@@ -230,12 +230,12 @@ export default async function RankingsPage({
                 {badge ? (
                   <span className="text-2xl">{badge}</span>
                 ) : (
-                  <span className="text-lg font-bold text-[#888]">{rank}</span>
+                  <span className="text-lg font-bold text-ph-text-muted">{rank}</span>
                 )}
               </div>
 
               {/* Avatar */}
-              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[#333] flex items-center justify-center text-sm font-bold text-[#c9a227] overflow-hidden">
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-ph-border flex items-center justify-center text-sm font-bold text-ph-gold overflow-hidden">
                 {user.avatarUrl ? (
                   <img
                     src={user.avatarUrl}
@@ -250,23 +250,23 @@ export default async function RankingsPage({
               {/* User Info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-[#e0e0e0] truncate">
+                  <span className="font-semibold text-ph-text truncate">
                     {user.nickname}
                   </span>
                   {isMe && (
-                    <span className="text-xs px-1.5 py-0.5 rounded bg-[#22c55e]/20 text-[#22c55e] font-medium">
+                    <span className="text-xs px-1.5 py-0.5 rounded bg-ph-success/20 text-ph-success font-medium">
                       나
                     </span>
                   )}
                 </div>
-                <div className="text-xs text-[#888]">
+                <div className="text-xs text-ph-text-muted">
                   Lv.{user.level}
                 </div>
               </div>
 
               {/* Stat Value */}
               <div className="flex-shrink-0 text-right">
-                <div className="text-sm lg:text-base font-bold text-[#c9a227]">
+                <div className="text-sm lg:text-base font-bold text-ph-gold">
                   {getStatValue(user, activeTab)}
                 </div>
               </div>
@@ -275,7 +275,7 @@ export default async function RankingsPage({
         })}
 
         {rankedUsers.length === 0 && (
-          <div className="py-12 text-center text-[#888]">
+          <div className="py-12 text-center text-ph-text-muted">
             <p className="text-sm">랭킹 데이터가 없습니다</p>
           </div>
         )}

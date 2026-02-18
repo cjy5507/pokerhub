@@ -107,7 +107,7 @@ export function PostEditor({
       <div>
         <label
           htmlFor="board"
-          className="block text-sm font-medium text-[#a0a0a0] mb-2"
+          className="block text-sm font-medium text-ph-text-secondary mb-2"
         >
           게시판
         </label>
@@ -115,7 +115,7 @@ export function PostEditor({
           id="board"
           value={boardId}
           onChange={(e) => setBoardId(e.target.value)}
-          className="w-full px-4 py-2 bg-[#1e1e1e] border border-[#333] rounded-lg text-[#e0e0e0] focus:outline-none focus:ring-2 focus:ring-[#c9a227]"
+          className="w-full px-4 py-2 bg-ph-surface border border-ph-border rounded-lg text-ph-text focus:outline-none focus:ring-2 focus:ring-ph-gold"
           disabled={isPending}
         >
           {boards.map((board) => (
@@ -130,9 +130,9 @@ export function PostEditor({
       <div>
         <label
           htmlFor="title"
-          className="block text-sm font-medium text-[#e0e0e0] mb-2"
+          className="block text-sm font-medium text-ph-text mb-2"
         >
-          제목 <span className="text-[#ef4444]">*</span>
+          제목 <span className="text-ph-error">*</span>
         </label>
         <input
           id="title"
@@ -144,17 +144,17 @@ export function PostEditor({
           }}
           placeholder="제목을 입력하세요"
           className={cn(
-            "w-full px-4 py-3 bg-[#121212] border text-[#e0e0e0] placeholder:text-[#888] rounded-lg focus:outline-none disabled:opacity-50",
-            errors.title ? 'border-[#ef4444] focus:border-[#ef4444]' : 'border-[#333] focus:border-[#c9a227]'
+            "w-full px-4 py-3 bg-ph-bg border text-ph-text placeholder:text-ph-text-muted rounded-lg focus:outline-none disabled:opacity-50",
+            errors.title ? 'border-ph-error focus:border-ph-error' : 'border-ph-border focus:border-ph-gold'
           )}
           maxLength={200}
           disabled={isPending}
         />
         <div className="mt-1 flex justify-between items-center">
           {errors.title && (
-            <span className="text-sm text-[#ef4444]">{errors.title}</span>
+            <span className="text-sm text-ph-error">{errors.title}</span>
           )}
-          <span className="text-xs text-[#888] ml-auto">
+          <span className="text-xs text-ph-text-muted ml-auto">
             {title.length}/200
           </span>
         </div>
@@ -164,14 +164,14 @@ export function PostEditor({
       <div>
         <label
           htmlFor="content"
-          className="block text-sm font-medium text-[#e0e0e0] mb-2"
+          className="block text-sm font-medium text-ph-text mb-2"
         >
-          내용 <span className="text-[#ef4444]">*</span>
+          내용 <span className="text-ph-error">*</span>
         </label>
         <div
           className={cn(
             "rounded-lg",
-            errors.content && "ring-2 ring-[#ef4444]"
+            errors.content && "ring-2 ring-ph-error"
           )}
         >
           <RichTextEditor
@@ -183,25 +183,25 @@ export function PostEditor({
         </div>
         {errors.content && (
           <div className="mt-1">
-            <span className="text-sm text-[#ef4444]">{errors.content}</span>
+            <span className="text-sm text-ph-error">{errors.content}</span>
           </div>
         )}
       </div>
 
       {/* Action buttons */}
-      <div className="flex gap-3 justify-end pt-4 border-t border-[#333]">
+      <div className="flex gap-3 justify-end pt-4 border-t border-ph-border">
         <button
           type="button"
           onClick={handleCancel}
           disabled={isPending}
-          className="px-6 py-3 bg-[#2a2a2a] hover:bg-[#333] text-[#e0e0e0] rounded-lg font-medium transition-colors disabled:opacity-50 min-h-[44px]"
+          className="px-6 py-3 bg-ph-elevated hover:bg-ph-border text-ph-text rounded-lg font-medium transition-colors disabled:opacity-50 min-h-[44px]"
         >
           취소
         </button>
         <button
           type="submit"
           disabled={isPending}
-          className="px-6 py-3 bg-[#c9a227] hover:bg-[#d4af37] text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:bg-[#666] min-h-[44px]"
+          className="px-6 py-3 bg-ph-gold hover:bg-ph-gold-hover text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:bg-ph-text-dim min-h-[44px]"
         >
           {isPending ? '작성 중...' : '게시글 작성'}
         </button>

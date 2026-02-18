@@ -11,7 +11,7 @@ export default async function PokerTableLayout({
   return (
     <SessionProvider session={session}>
       {/* Full-screen immersive poker layout -- no header, footer, sidebar, or mobile nav */}
-      <div className="fixed inset-0 z-[9999] bg-[#0a0a0a]">
+      <div className="fixed inset-0 z-[9999] bg-ph-deep">
         {children}
       </div>
     </SessionProvider>

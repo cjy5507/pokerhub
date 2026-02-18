@@ -28,8 +28,8 @@ export function FollowButton({ userId, initialIsFollowing }: FollowButtonProps) 
       disabled={loading}
       className={`px-4 py-2 rounded font-medium transition-colors ${
         isFollowing
-          ? 'bg-[#2a2a2a] border border-[#333] text-[#e0e0e0] hover:border-[#c9a227]'
-          : 'bg-[#c9a227] text-[#121212] hover:bg-[#b89220]'
+          ? 'bg-ph-elevated border border-ph-border text-ph-text hover:border-ph-gold'
+          : 'bg-ph-gold text-ph-bg hover:bg-ph-gold-hover'
       } disabled:opacity-50 disabled:cursor-not-allowed`}
     >
       {loading ? '...' : isFollowing ? '팔로잉' : '팔로우'}

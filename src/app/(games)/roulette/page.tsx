@@ -153,7 +153,7 @@ export default function RoulettePage() {
     if (val === 0) return <X className="w-8 h-8 text-red-400" />;
     if (val <= 1) return <Minus className="w-8 h-8 text-yellow-400" />;
     if (val < 10) return <Plus className="w-8 h-8 text-green-400" />;
-    return <Crown className="w-8 h-8 text-[#c9a227]" />;
+    return <Crown className="w-8 h-8 text-ph-gold" />;
   };
 
   const getResultColor = (multiplier: string) => {
@@ -161,7 +161,7 @@ export default function RoulettePage() {
     if (val === 0) return 'from-red-900/50 to-red-800/50 border-red-400';
     if (val <= 1) return 'from-yellow-900/50 to-yellow-800/50 border-yellow-400';
     if (val < 10) return 'from-green-900/50 to-green-800/50 border-green-400';
-    return 'from-amber-900/50 to-amber-800/50 border-[#c9a227]';
+    return 'from-amber-900/50 to-amber-800/50 border-ph-gold';
   };
 
   // Build conic gradient from SEGMENTS
@@ -172,18 +172,18 @@ export default function RoulettePage() {
   }).join(', ');
 
   return (
-    <div className="min-h-screen bg-[#121212] text-[#e0e0e0] pb-20 px-4 py-6">
+    <div className="min-h-screen bg-ph-bg text-ph-text pb-20 px-4 py-6">
       {/* Header */}
       <div className="max-w-5xl mx-auto mb-8">
         <div className="flex items-center justify-center gap-3 mb-4">
-          <Disc className="w-8 h-8 text-[#c9a227]" />
+          <Disc className="w-8 h-8 text-ph-gold" />
           <h1 className="text-3xl font-bold">포인트 룰렛</h1>
         </div>
 
         {/* Current Points */}
-        <div className="bg-[#1e1e1e] border border-[#333] rounded-xl p-4 text-center">
-          <div className="text-sm text-[#a0a0a0] mb-1">보유 포인트</div>
-          <div className="text-3xl font-bold text-[#c9a227]">{isLoadingPoints ? '...' : `${currentPoints.toLocaleString()}P`}</div>
+        <div className="bg-ph-surface border border-ph-border rounded-xl p-4 text-center">
+          <div className="text-sm text-ph-text-secondary mb-1">보유 포인트</div>
+          <div className="text-3xl font-bold text-ph-gold">{isLoadingPoints ? '...' : `${currentPoints.toLocaleString()}P`}</div>
         </div>
       </div>
 
@@ -192,12 +192,12 @@ export default function RoulettePage() {
         {/* Left Column - Wheel */}
         <div className="space-y-6">
           {/* Wheel Container */}
-          <div className="bg-[#1e1e1e] border border-[#333] rounded-xl p-8">
+          <div className="bg-ph-surface border border-ph-border rounded-xl p-8">
             <div className="relative mx-auto" style={{ width: '320px', height: '320px' }}>
               {/* Pointer */}
               <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 z-20">
                 <div
-                  className="w-0 h-0 border-l-[20px] border-l-transparent border-r-[20px] border-r-transparent border-t-[40px] border-t-[#c9a227]"
+                  className="w-0 h-0 border-l-[20px] border-l-transparent border-r-[20px] border-r-transparent border-t-[40px] border-t-ph-gold"
                   style={{ filter: 'drop-shadow(0 0 10px rgba(201,162,39,0.5))' }}
                 />
               </div>
@@ -206,7 +206,7 @@ export default function RoulettePage() {
               <div className="absolute inset-0 flex items-center justify-center">
                 <div
                   className={cn(
-                    "relative w-[300px] h-[300px] rounded-full shadow-[0_0_30px_rgba(201,162,39,0.3)] border-4 border-[#c9a227]/30",
+                    "relative w-[300px] h-[300px] rounded-full shadow-[0_0_30px_rgba(201,162,39,0.3)] border-4 border-ph-gold/30",
                     isSpinning && "shadow-[0_0_50px_rgba(201,162,39,0.6)] transition-transform duration-[4000ms] ease-out"
                   )}
                   style={{
@@ -246,7 +246,7 @@ export default function RoulettePage() {
 
                   {/* Center Circle */}
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-16 h-16 rounded-full bg-[#1e1e1e] border-4 border-white shadow-lg" />
+                    <div className="w-16 h-16 rounded-full bg-ph-surface border-4 border-white shadow-lg" />
                   </div>
 
                   {/* Segment Labels */}
@@ -275,8 +275,8 @@ export default function RoulettePage() {
           </div>
 
           {/* Bet Selection */}
-          <div className="bg-[#1e1e1e] border border-[#333] rounded-xl p-6">
-            <div className="text-sm text-[#a0a0a0] mb-3">배팅 금액 선택</div>
+          <div className="bg-ph-surface border border-ph-border rounded-xl p-6">
+            <div className="text-sm text-ph-text-secondary mb-3">배팅 금액 선택</div>
             <div className="grid grid-cols-4 gap-2 mb-4">
               {BET_AMOUNTS.map((amount) => (
                 <button
@@ -286,8 +286,8 @@ export default function RoulettePage() {
                   className={cn(
                     "py-3 rounded-lg font-semibold transition-all",
                     betAmount === amount
-                      ? "bg-[#c9a227] text-black shadow-[0_0_20px_rgba(201,162,39,0.4)]"
-                      : "bg-[#2a2a2a] text-[#e0e0e0] hover:bg-[#333]",
+                      ? "bg-ph-gold text-black shadow-[0_0_20px_rgba(201,162,39,0.4)]"
+                      : "bg-ph-elevated text-ph-text hover:bg-ph-elevated",
                     isSpinning && "opacity-50 cursor-not-allowed"
                   )}
                 >
@@ -304,7 +304,7 @@ export default function RoulettePage() {
                 "w-full py-4 rounded-xl font-bold text-xl transition-all",
                 isSpinning || currentPoints < betAmount
                   ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-                  : "bg-gradient-to-r from-[#c9a227] to-[#d4af37] text-black hover:shadow-[0_0_30px_rgba(201,162,39,0.5)] hover:scale-[1.02]"
+                  : "bg-gradient-to-r from-ph-gold to-ph-gold-hover text-black hover:shadow-[0_0_30px_rgba(201,162,39,0.5)] hover:scale-[1.02]"
               )}
             >
               {isSpinning ? "스핀 중..." : currentPoints < betAmount ? "포인트 부족" : "SPIN"}
@@ -331,7 +331,7 @@ export default function RoulettePage() {
                       ? "text-yellow-400"
                       : parseMultiplier(result.multiplier) < 10
                       ? "text-green-400"
-                      : "text-[#c9a227]"
+                      : "text-ph-gold"
                   )}>
                     {result.winAmount > 0 ? "+" : ""}{result.winAmount.toLocaleString()}P
                   </div>
@@ -344,30 +344,30 @@ export default function RoulettePage() {
         {/* Right Column - Stats & History */}
         <div className="space-y-6">
           {/* Statistics */}
-          <div className="bg-[#1e1e1e] border border-[#333] rounded-xl p-6">
+          <div className="bg-ph-surface border border-ph-border rounded-xl p-6">
             <div className="flex items-center gap-2 mb-4">
-              <BarChart3 className="w-5 h-5 text-[#c9a227]" />
+              <BarChart3 className="w-5 h-5 text-ph-gold" />
               <h2 className="text-lg font-bold">통계</h2>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-[#2a2a2a] rounded-lg p-4">
-                <div className="text-sm text-[#a0a0a0] mb-1">총 스핀</div>
+              <div className="bg-ph-elevated rounded-lg p-4">
+                <div className="text-sm text-ph-text-secondary mb-1">총 스핀</div>
                 <div className="text-2xl font-bold">{stats.totalSpins}</div>
               </div>
 
-              <div className="bg-[#2a2a2a] rounded-lg p-4">
-                <div className="text-sm text-[#a0a0a0] mb-1">총 배팅</div>
+              <div className="bg-ph-elevated rounded-lg p-4">
+                <div className="text-sm text-ph-text-secondary mb-1">총 배팅</div>
                 <div className="text-2xl font-bold text-red-400">{stats.totalBet.toLocaleString()}P</div>
               </div>
 
-              <div className="bg-[#2a2a2a] rounded-lg p-4">
-                <div className="text-sm text-[#a0a0a0] mb-1">총 획득</div>
+              <div className="bg-ph-elevated rounded-lg p-4">
+                <div className="text-sm text-ph-text-secondary mb-1">총 획득</div>
                 <div className="text-2xl font-bold text-green-400">{stats.totalWon.toLocaleString()}P</div>
               </div>
 
-              <div className="bg-[#2a2a2a] rounded-lg p-4">
-                <div className="text-sm text-[#a0a0a0] mb-1 flex items-center gap-1">
+              <div className="bg-ph-elevated rounded-lg p-4">
+                <div className="text-sm text-ph-text-secondary mb-1 flex items-center gap-1">
                   {profit >= 0 ? (
                     <TrendingUp className="w-4 h-4 text-green-400" />
                   ) : (
@@ -386,14 +386,14 @@ export default function RoulettePage() {
           </div>
 
           {/* History */}
-          <div className="bg-[#1e1e1e] border border-[#333] rounded-xl p-6">
+          <div className="bg-ph-surface border border-ph-border rounded-xl p-6">
             <div className="flex items-center gap-2 mb-4">
-              <History className="w-5 h-5 text-[#c9a227]" />
+              <History className="w-5 h-5 text-ph-gold" />
               <h2 className="text-lg font-bold">최근 기록</h2>
             </div>
 
             {history.length === 0 ? (
-              <div className="text-center py-8 text-[#a0a0a0]">
+              <div className="text-center py-8 text-ph-text-secondary">
                 아직 스핀 기록이 없습니다
               </div>
             ) : (
@@ -401,13 +401,13 @@ export default function RoulettePage() {
                 {history.map((spin, index) => (
                   <div
                     key={index}
-                    className="bg-[#2a2a2a] rounded-lg p-3 flex items-center justify-between"
+                    className="bg-ph-elevated rounded-lg p-3 flex items-center justify-between"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="text-xs text-[#a0a0a0]">{spin.time}</div>
+                      <div className="text-xs text-ph-text-secondary">{spin.time}</div>
                       <div className="text-sm">
-                        <span className="text-[#a0a0a0]">{spin.bet}P</span>
-                        <span className="mx-2 text-[#888]">x</span>
+                        <span className="text-ph-text-secondary">{spin.bet}P</span>
+                        <span className="mx-2 text-ph-text-muted">x</span>
                         <span className="font-bold">{spin.multiplier}</span>
                       </div>
                     </div>

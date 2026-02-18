@@ -115,7 +115,7 @@ export function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
 
     return parts.map((part, i) =>
       regex.test(part) ? (
-        <span key={i} className="text-[#c9a227]">{part}</span>
+        <span key={i} className="text-ph-gold">{part}</span>
       ) : (
         <span key={i}>{part}</span>
       )
@@ -127,25 +127,25 @@ export function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm">
       {/* Mobile Layout */}
-      <div className="lg:hidden fixed inset-0 bg-[#121212] flex flex-col">
+      <div className="lg:hidden fixed inset-0 bg-ph-bg flex flex-col">
         {/* Top Bar */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-[#333]">
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-ph-border">
           <button
             onClick={onClose}
-            className="min-w-[44px] min-h-[44px] flex items-center justify-center text-[#a0a0a0] hover:text-[#e0e0e0] transition-colors"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center text-ph-text-secondary hover:text-ph-text transition-colors"
             aria-label="닫기"
           >
             <X className="w-6 h-6" />
           </button>
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#a0a0a0]" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-ph-text-secondary" />
             <input
               ref={inputRef}
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="검색어를 입력하세요"
-              className="w-full pl-10 pr-4 py-2.5 bg-[#2a2a2a] border border-[#333] rounded-lg text-[#e0e0e0] placeholder:text-[#888] focus:outline-none focus:border-[#c9a227] transition-all"
+              className="w-full pl-10 pr-4 py-2.5 bg-ph-elevated border border-ph-border rounded-lg text-ph-text placeholder:text-ph-text-muted focus:outline-none focus:border-ph-gold transition-all"
             />
           </div>
         </div>
@@ -154,7 +154,7 @@ export function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
         <div className="flex-1 overflow-y-auto">
           {query.trim() === '' && recentSearches.length > 0 && (
             <div className="p-4">
-              <h3 className="text-sm font-medium text-[#a0a0a0] mb-3 flex items-center gap-2">
+              <h3 className="text-sm font-medium text-ph-text-secondary mb-3 flex items-center gap-2">
                 <Clock className="w-4 h-4" />
                 최근 검색어
               </h3>
@@ -162,17 +162,17 @@ export function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                 {recentSearches.map((recent, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between gap-3 p-3 bg-[#1e1e1e] rounded-lg hover:bg-[#2a2a2a] transition-colors"
+                    className="flex items-center justify-between gap-3 p-3 bg-ph-surface rounded-lg hover:bg-ph-elevated transition-colors"
                   >
                     <button
                       onClick={() => handleRecentSearchClick(recent)}
-                      className="flex-1 text-left text-[#e0e0e0]"
+                      className="flex-1 text-left text-ph-text"
                     >
                       {recent}
                     </button>
                     <button
                       onClick={() => removeRecentSearch(recent)}
-                      className="min-w-[32px] min-h-[32px] flex items-center justify-center text-[#888] hover:text-[#e0e0e0] transition-colors"
+                      className="min-w-[32px] min-h-[32px] flex items-center justify-center text-ph-text-muted hover:text-ph-text transition-colors"
                       aria-label="삭제"
                     >
                       <X className="w-4 h-4" />
@@ -184,7 +184,7 @@ export function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
           )}
 
           {query.trim() !== '' && !isSearching && results.length === 0 && (
-            <div className="p-8 text-center text-[#888]">
+            <div className="p-8 text-center text-ph-text-muted">
               검색 결과 없음
             </div>
           )}
@@ -195,12 +195,12 @@ export function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                 <button
                   key={result.id}
                   onClick={handleResultClick}
-                  className="w-full p-4 bg-[#1e1e1e] rounded-lg hover:bg-[#2a2a2a] transition-all text-left"
+                  className="w-full p-4 bg-ph-surface rounded-lg hover:bg-ph-elevated transition-all text-left"
                 >
-                  <h4 className="font-medium text-[#e0e0e0] mb-2">
+                  <h4 className="font-medium text-ph-text mb-2">
                     {highlightMatch(result.title, query)}
                   </h4>
-                  <div className="flex items-center gap-3 text-xs text-[#a0a0a0]">
+                  <div className="flex items-center gap-3 text-xs text-ph-text-secondary">
                     <span>{result.author}</span>
                     <span>•</span>
                     <span>{result.board}</span>
@@ -216,23 +216,23 @@ export function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
 
       {/* Desktop Layout */}
       <div className="hidden lg:flex items-start justify-center pt-24 px-4">
-        <div className="w-full max-w-[600px] bg-[#1e1e1e] rounded-lg border border-[#333] shadow-2xl">
+        <div className="w-full max-w-[600px] bg-ph-surface rounded-lg border border-ph-border shadow-2xl">
           {/* Header */}
-          <div className="flex items-center gap-3 p-4 border-b border-[#333]">
+          <div className="flex items-center gap-3 p-4 border-b border-ph-border">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#a0a0a0]" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-ph-text-secondary" />
               <input
                 ref={inputRef}
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="검색어를 입력하세요"
-                className="w-full pl-10 pr-4 py-2.5 bg-[#2a2a2a] border border-[#333] rounded-lg text-[#e0e0e0] placeholder:text-[#888] focus:outline-none focus:border-[#c9a227] transition-all"
+                className="w-full pl-10 pr-4 py-2.5 bg-ph-elevated border border-ph-border rounded-lg text-ph-text placeholder:text-ph-text-muted focus:outline-none focus:border-ph-gold transition-all"
               />
             </div>
             <button
               onClick={onClose}
-              className="min-w-[40px] min-h-[40px] flex items-center justify-center text-[#a0a0a0] hover:text-[#e0e0e0] transition-colors"
+              className="min-w-[40px] min-h-[40px] flex items-center justify-center text-ph-text-secondary hover:text-ph-text transition-colors"
               aria-label="닫기"
             >
               <X className="w-5 h-5" />
@@ -243,7 +243,7 @@ export function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
           <div className="max-h-[500px] overflow-y-auto">
             {query.trim() === '' && recentSearches.length > 0 && (
               <div className="p-4">
-                <h3 className="text-sm font-medium text-[#a0a0a0] mb-3 flex items-center gap-2">
+                <h3 className="text-sm font-medium text-ph-text-secondary mb-3 flex items-center gap-2">
                   <Clock className="w-4 h-4" />
                   최근 검색어
                 </h3>
@@ -251,17 +251,17 @@ export function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                   {recentSearches.map((recent, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center justify-between gap-3 p-3 bg-[#121212] rounded-lg hover:bg-[#2a2a2a] transition-colors"
+                      className="flex items-center justify-between gap-3 p-3 bg-ph-bg rounded-lg hover:bg-ph-elevated transition-colors"
                     >
                       <button
                         onClick={() => handleRecentSearchClick(recent)}
-                        className="flex-1 text-left text-[#e0e0e0]"
+                        className="flex-1 text-left text-ph-text"
                       >
                         {recent}
                       </button>
                       <button
                         onClick={() => removeRecentSearch(recent)}
-                        className="min-w-[32px] min-h-[32px] flex items-center justify-center text-[#888] hover:text-[#e0e0e0] transition-colors"
+                        className="min-w-[32px] min-h-[32px] flex items-center justify-center text-ph-text-muted hover:text-ph-text transition-colors"
                         aria-label="삭제"
                       >
                         <X className="w-4 h-4" />
@@ -273,7 +273,7 @@ export function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
             )}
 
             {query.trim() !== '' && !isSearching && results.length === 0 && (
-              <div className="p-8 text-center text-[#888]">
+              <div className="p-8 text-center text-ph-text-muted">
                 검색 결과 없음
               </div>
             )}
@@ -284,12 +284,12 @@ export function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                   <button
                     key={result.id}
                     onClick={handleResultClick}
-                    className="w-full p-4 bg-[#121212] rounded-lg hover:bg-[#2a2a2a] transition-all text-left"
+                    className="w-full p-4 bg-ph-bg rounded-lg hover:bg-ph-elevated transition-all text-left"
                   >
-                    <h4 className="font-medium text-[#e0e0e0] mb-2">
+                    <h4 className="font-medium text-ph-text mb-2">
                       {highlightMatch(result.title, query)}
                     </h4>
-                    <div className="flex items-center gap-3 text-xs text-[#a0a0a0]">
+                    <div className="flex items-center gap-3 text-xs text-ph-text-secondary">
                       <span>{result.author}</span>
                       <span>•</span>
                       <span>{result.board}</span>
@@ -303,7 +303,7 @@ export function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
           </div>
 
           {/* Footer Hint */}
-          <div className="p-3 border-t border-[#333] text-center text-xs text-[#888]">
+          <div className="p-3 border-t border-ph-border text-center text-xs text-ph-text-muted">
             Esc로 닫기
           </div>
         </div>

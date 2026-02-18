@@ -119,35 +119,35 @@ export default function LotteryPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#121212] text-[#e0e0e0] pb-20">
+    <div className="min-h-screen bg-ph-bg text-ph-text pb-20">
       {/* Header */}
-      <div className="border-b border-[#333] bg-[#1a1a1a]">
+      <div className="border-b border-ph-border bg-ph-surface">
         <div className="max-w-4xl mx-auto px-4 py-6">
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-3 bg-gradient-to-br from-[#c9a227] to-[#8b7520] rounded-xl shadow-lg shadow-[#c9a227]/20">
+            <div className="p-3 bg-gradient-to-br from-ph-gold to-ph-gold-hover rounded-xl shadow-lg shadow-ph-gold/20">
               <Ticket size={28} className="text-black" />
             </div>
             <div>
-              <h1 className="text-3xl font-black tracking-tight text-[#e0e0e0]">복권</h1>
-              <p className="text-sm text-[#a0a0a0]">운을 시험해보세요</p>
+              <h1 className="text-3xl font-black tracking-tight text-ph-text">복권</h1>
+              <p className="text-sm text-ph-text-secondary">운을 시험해보세요</p>
             </div>
           </div>
 
           {/* Points Display */}
-          <div className="p-4 bg-[#1e1e1e] border border-[#333] rounded-xl flex items-center justify-between">
+          <div className="p-4 bg-ph-surface border border-ph-border rounded-xl flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Star className="text-[#c9a227]" size={20} />
-              <span className="text-[#a0a0a0]">보유 포인트</span>
+              <Star className="text-ph-gold" size={20} />
+              <span className="text-ph-text-secondary">보유 포인트</span>
             </div>
-            <span className="text-2xl font-bold text-[#c9a227]">{isLoadingPoints ? '...' : `${userPoints.toLocaleString()}P`}</span>
+            <span className="text-2xl font-bold text-ph-gold">{isLoadingPoints ? '...' : `${userPoints.toLocaleString()}P`}</span>
           </div>
 
           {/* Daily Limit */}
           <div className="mt-3 flex items-center justify-between text-sm">
-            <span className="text-[#a0a0a0]">오늘의 구매</span>
+            <span className="text-ph-text-secondary">오늘의 구매</span>
             <span className={cn(
               "font-medium",
-              todayCount >= DAILY_LIMIT ? "text-red-400" : "text-[#c9a227]"
+              todayCount >= DAILY_LIMIT ? "text-red-400" : "text-ph-gold"
             )}>
               {todayCount} / {DAILY_LIMIT}
             </span>
@@ -157,18 +157,18 @@ export default function LotteryPage() {
 
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
         {/* Card Flip Area */}
-        <div className="bg-[#1e1e1e] border border-[#333] rounded-2xl p-6">
-          <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-[#e0e0e0]">
-            <Gift className="text-[#c9a227]" size={24} />
+        <div className="bg-ph-surface border border-ph-border rounded-2xl p-6">
+          <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-ph-text">
+            <Gift className="text-ph-gold" size={24} />
             복권 카드
           </h2>
 
           {!currentTicket ? (
             <div className="flex flex-col items-center justify-center py-12">
-              <div className="w-80 h-96 rounded-2xl bg-gradient-to-br from-[#2a2a2a] to-[#1e1e1e] border-2 border-dashed border-[#444] flex items-center justify-center mb-6">
+              <div className="w-80 h-96 rounded-2xl bg-gradient-to-br from-ph-elevated to-ph-surface border-2 border-dashed border-ph-border-medium flex items-center justify-center mb-6">
                 <div className="text-center">
-                  <Ticket size={64} className="text-[#444] mx-auto mb-4" />
-                  <p className="text-[#a0a0a0]">복권을 구매하세요</p>
+                  <Ticket size={64} className="text-ph-border-medium mx-auto mb-4" />
+                  <p className="text-ph-text-secondary">복권을 구매하세요</p>
                 </div>
               </div>
               <button
@@ -176,7 +176,7 @@ export default function LotteryPage() {
                 disabled={isPurchasing || userPoints < TICKET_COST || todayCount >= DAILY_LIMIT}
                 className={cn(
                   "px-8 py-4 rounded-xl font-bold text-lg transition-all transform hover:scale-105 active:scale-95",
-                  "bg-gradient-to-r from-[#c9a227] to-[#8b7520] text-black shadow-lg shadow-[#c9a227]/30",
+                  "bg-gradient-to-r from-ph-gold to-ph-gold-hover text-black shadow-lg shadow-ph-gold/30",
                   "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                 )}
               >
@@ -200,7 +200,7 @@ export default function LotteryPage() {
                 >
                   {/* Card Back (Hidden state) */}
                   <div
-                    className="absolute inset-0 rounded-2xl overflow-hidden border-4 border-[#c9a227] shadow-2xl"
+                    className="absolute inset-0 rounded-2xl overflow-hidden border-4 border-ph-gold shadow-2xl"
                     style={{
                       backfaceVisibility: 'hidden',
                       transform: 'rotateY(0deg)',
@@ -210,20 +210,20 @@ export default function LotteryPage() {
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="text-center">
                         <div className="relative mb-4">
-                          <Star size={80} className="text-[#c9a227] mx-auto animate-pulse" />
+                          <Star size={80} className="text-ph-gold mx-auto animate-pulse" />
                           <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="w-20 h-20 bg-[#c9a227]/20 rounded-full blur-xl animate-pulse" />
+                            <div className="w-20 h-20 bg-ph-gold/20 rounded-full blur-xl animate-pulse" />
                           </div>
                         </div>
-                        <p className="text-2xl font-black text-[#c9a227] tracking-wider">클릭하여 공개</p>
-                        <p className="text-sm text-[#a0a0a0] mt-2">카드를 뒤집어보세요</p>
+                        <p className="text-2xl font-black text-ph-gold tracking-wider">클릭하여 공개</p>
+                        <p className="text-sm text-ph-text-secondary mt-2">카드를 뒤집어보세요</p>
                       </div>
                     </div>
                     {/* Decorative pattern */}
                     <div className="absolute inset-0 opacity-10">
                       <div className="grid grid-cols-4 h-full">
                         {Array.from({ length: 16 }).map((_, i) => (
-                          <div key={i} className="border border-[#c9a227]/30" />
+                          <div key={i} className="border border-ph-gold/30" />
                         ))}
                       </div>
                     </div>
@@ -277,7 +277,7 @@ export default function LotteryPage() {
                 {isRevealed && (
                   <button
                     onClick={handleReset}
-                    className="px-8 py-4 rounded-xl font-bold text-lg transition-all transform hover:scale-105 active:scale-95 bg-gradient-to-r from-[#c9a227] to-[#8b7520] text-black shadow-lg shadow-[#c9a227]/30"
+                    className="px-8 py-4 rounded-xl font-bold text-lg transition-all transform hover:scale-105 active:scale-95 bg-gradient-to-r from-ph-gold to-ph-gold-hover text-black shadow-lg shadow-ph-gold/30"
                   >
                     다시 구매하기
                   </button>
@@ -288,9 +288,9 @@ export default function LotteryPage() {
         </div>
 
         {/* Prize Tiers with visual probability bars */}
-        <div className="bg-[#1e1e1e] border border-[#333] rounded-2xl p-6">
-          <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-[#e0e0e0]">
-            <TrendingUp className="text-[#c9a227]" size={24} />
+        <div className="bg-ph-surface border border-ph-border rounded-2xl p-6">
+          <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-ph-text">
+            <TrendingUp className="text-ph-gold" size={24} />
             당첨 확률
           </h2>
           <div className="space-y-3">
@@ -300,15 +300,15 @@ export default function LotteryPage() {
                 <div key={tier.id} className="space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <TierIcon size={20} className="text-[#c9a227]" />
-                      <span className="font-bold text-[#e0e0e0]">{tier.name}</span>
-                      <span className="text-2xl font-black text-[#c9a227]">
+                      <TierIcon size={20} className="text-ph-gold" />
+                      <span className="font-bold text-ph-text">{tier.name}</span>
+                      <span className="text-2xl font-black text-ph-gold">
                         {tier.prize > 0 ? `${tier.prize.toLocaleString()}P` : '0P'}
                       </span>
                     </div>
-                    <span className="text-sm text-[#a0a0a0] font-medium">{tier.probability}%</span>
+                    <span className="text-sm text-ph-text-secondary font-medium">{tier.probability}%</span>
                   </div>
-                  <div className="h-3 bg-[#2a2a2a] rounded-full overflow-hidden">
+                  <div className="h-3 bg-ph-elevated rounded-full overflow-hidden">
                     <div
                       className={cn("h-full bg-gradient-to-r", tier.color, "transition-all duration-500")}
                       style={{ width: `${Math.min(tier.probability * 2, 100)}%` }}
@@ -318,22 +318,22 @@ export default function LotteryPage() {
               );
             })}
           </div>
-          <div className="mt-4 pt-4 border-t border-[#333]">
-            <p className="text-sm text-[#a0a0a0]">1장당 {TICKET_COST}P / 일 {DAILY_LIMIT}장 한도</p>
+          <div className="mt-4 pt-4 border-t border-ph-border">
+            <p className="text-sm text-ph-text-secondary">1장당 {TICKET_COST}P / 일 {DAILY_LIMIT}장 한도</p>
           </div>
         </div>
 
         {/* Recent Winners */}
-        <div className="bg-[#1e1e1e] border border-[#333] rounded-2xl p-6">
-          <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-[#e0e0e0]">
-            <Trophy className="text-[#c9a227]" size={24} />
+        <div className="bg-ph-surface border border-ph-border rounded-2xl p-6">
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-ph-text">
+            <Trophy className="text-ph-gold" size={24} />
             최근 당첨자
           </h2>
           <div className="space-y-2">
             {MOCK_WINNERS.map((winner, idx) => (
               <div
                 key={idx}
-                className="flex items-center justify-between p-3 rounded-lg bg-[#2a2a2a] hover:bg-[#333] transition-colors"
+                className="flex items-center justify-between p-3 rounded-lg bg-ph-elevated hover:bg-ph-elevated transition-colors"
               >
                 <div className="flex items-center gap-3">
                   <div className={cn(
@@ -343,12 +343,12 @@ export default function LotteryPage() {
                     winner.tier === 'third' && "bg-blue-500",
                     winner.tier === 'fourth' && "bg-green-500"
                   )} />
-                  <span className="font-medium text-[#e0e0e0]">{winner.nickname}</span>
-                  <span className="text-sm text-[#a0a0a0]">{getTierInfo(winner.tier).name}</span>
+                  <span className="font-medium text-ph-text">{winner.nickname}</span>
+                  <span className="text-sm text-ph-text-secondary">{getTierInfo(winner.tier).name}</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="font-bold text-[#c9a227]">{winner.prize.toLocaleString()}P</span>
-                  <span className="text-xs text-[#a0a0a0]">{winner.time}</span>
+                  <span className="font-bold text-ph-gold">{winner.prize.toLocaleString()}P</span>
+                  <span className="text-xs text-ph-text-secondary">{winner.time}</span>
                 </div>
               </div>
             ))}
@@ -357,24 +357,24 @@ export default function LotteryPage() {
 
         {/* My History */}
         {history.length > 0 && (
-          <div className="bg-[#1e1e1e] border border-[#333] rounded-2xl p-6">
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-[#e0e0e0]">
-              <Ticket className="text-[#c9a227]" size={24} />
+          <div className="bg-ph-surface border border-ph-border rounded-2xl p-6">
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-ph-text">
+              <Ticket className="text-ph-gold" size={24} />
               내 복권 기록
             </h2>
             <div className="space-y-2">
               {history.map((ticket, idx) => (
                 <div
                   key={ticket.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-[#2a2a2a]"
+                  className="flex items-center justify-between p-3 rounded-lg bg-ph-elevated"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-sm text-[#a0a0a0]">#{history.length - idx}</span>
-                    <span className="font-medium text-[#e0e0e0]">{getTierInfo(ticket.tier).name}</span>
+                    <span className="text-sm text-ph-text-secondary">#{history.length - idx}</span>
+                    <span className="font-medium text-ph-text">{getTierInfo(ticket.tier).name}</span>
                   </div>
                   <span className={cn(
                     "font-bold",
-                    ticket.prizeAmount > 0 ? "text-[#c9a227]" : "text-[#a0a0a0]"
+                    ticket.prizeAmount > 0 ? "text-ph-gold" : "text-ph-text-secondary"
                   )}>
                     {ticket.prizeAmount > 0 ? `+${ticket.prizeAmount.toLocaleString()}P` : '꽝'}
                   </span>

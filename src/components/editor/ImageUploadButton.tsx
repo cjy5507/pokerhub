@@ -86,7 +86,7 @@ export function ImageUploadButton({ editor }: ImageUploadButtonProps) {
         onClick={handleButtonClick}
         disabled={isUploading}
         title="이미지 업로드"
-        className="p-2 rounded transition-colors hover:bg-[#2a2a2a] text-[#a0a0a0] disabled:opacity-50 disabled:cursor-not-allowed"
+        className="p-2 rounded transition-colors hover:bg-ph-elevated text-ph-text-secondary disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isUploading ? (
           <Loader2 size={18} className="animate-spin" />

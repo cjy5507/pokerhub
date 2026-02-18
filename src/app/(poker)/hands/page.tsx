@@ -60,36 +60,36 @@ export default function HandsPage() {
   const hasActiveFilters = selectedPosition || selectedGameType || selectedResult || selectedTag;
 
   return (
-    <div className="min-h-screen bg-[#121212] text-[#e0e0e0]">
+    <div className="min-h-screen bg-ph-bg text-ph-text">
       {/* Header */}
-      <div className="sticky top-0 z-50 bg-[#1e1e1e] border-b border-[#333]">
+      <div className="sticky top-0 z-50 bg-ph-surface border-b border-ph-border">
         <div className="max-w-6xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-3">
-            <h1 className="text-2xl font-bold text-[#c9a227]">핸드 히스토리</h1>
+            <h1 className="text-2xl font-bold text-ph-gold">핸드 히스토리</h1>
 
             <button
               onClick={() => setShowFilters(!showFilters)}
               className={cn(
                 'flex items-center gap-2 px-4 py-2 rounded-lg transition-all',
                 showFilters
-                  ? 'bg-[#c9a227] text-black'
-                  : 'bg-[#2a2a2a] text-[#a0a0a0] hover:bg-[#333]'
+                  ? 'bg-ph-gold text-black'
+                  : 'bg-ph-elevated text-ph-text-secondary hover:bg-ph-elevated'
               )}
             >
               <Filter className="w-4 h-4" />
               <span className="text-sm font-medium">필터</span>
               {hasActiveFilters && (
-                <span className="w-2 h-2 rounded-full bg-[#ef4444]" />
+                <span className="w-2 h-2 rounded-full bg-ph-error" />
               )}
             </button>
           </div>
 
           {/* Filters Panel */}
           {showFilters && (
-            <div className="bg-[#2a2a2a] rounded-lg p-4 space-y-4">
+            <div className="bg-ph-elevated rounded-lg p-4 space-y-4">
               {/* Position filter */}
               <div>
-                <label className="block text-xs font-medium text-[#a0a0a0] mb-2">
+                <label className="block text-xs font-medium text-ph-text-secondary mb-2">
                   포지션
                 </label>
                 <div className="grid grid-cols-5 gap-2">
@@ -98,8 +98,8 @@ export default function HandsPage() {
                     className={cn(
                       'px-3 py-2 rounded text-xs font-medium transition-all',
                       selectedPosition === ''
-                        ? 'bg-[#c9a227] text-black'
-                        : 'bg-[#1e1e1e] text-[#a0a0a0] hover:bg-[#333]'
+                        ? 'bg-ph-gold text-black'
+                        : 'bg-ph-surface text-ph-text-secondary hover:bg-ph-elevated'
                     )}
                   >
                     전체
@@ -111,8 +111,8 @@ export default function HandsPage() {
                       className={cn(
                         'px-3 py-2 rounded text-xs font-medium transition-all',
                         selectedPosition === pos
-                          ? 'bg-[#c9a227] text-black'
-                          : 'bg-[#1e1e1e] text-[#a0a0a0] hover:bg-[#333]'
+                          ? 'bg-ph-gold text-black'
+                          : 'bg-ph-surface text-ph-text-secondary hover:bg-ph-elevated'
                       )}
                     >
                       {pos}
@@ -123,7 +123,7 @@ export default function HandsPage() {
 
               {/* Game type filter */}
               <div>
-                <label className="block text-xs font-medium text-[#a0a0a0] mb-2">
+                <label className="block text-xs font-medium text-ph-text-secondary mb-2">
                   게임 타입
                 </label>
                 <div className="grid grid-cols-3 gap-2">
@@ -132,8 +132,8 @@ export default function HandsPage() {
                     className={cn(
                       'px-3 py-2 rounded text-xs font-medium transition-all',
                       selectedGameType === ''
-                        ? 'bg-[#c9a227] text-black'
-                        : 'bg-[#1e1e1e] text-[#a0a0a0] hover:bg-[#333]'
+                        ? 'bg-ph-gold text-black'
+                        : 'bg-ph-surface text-ph-text-secondary hover:bg-ph-elevated'
                     )}
                   >
                     전체
@@ -143,8 +143,8 @@ export default function HandsPage() {
                     className={cn(
                       'px-3 py-2 rounded text-xs font-medium transition-all',
                       selectedGameType === 'cash'
-                        ? 'bg-[#c9a227] text-black'
-                        : 'bg-[#1e1e1e] text-[#a0a0a0] hover:bg-[#333]'
+                        ? 'bg-ph-gold text-black'
+                        : 'bg-ph-surface text-ph-text-secondary hover:bg-ph-elevated'
                     )}
                   >
                     캐시
@@ -154,8 +154,8 @@ export default function HandsPage() {
                     className={cn(
                       'px-3 py-2 rounded text-xs font-medium transition-all',
                       selectedGameType === 'tournament'
-                        ? 'bg-[#c9a227] text-black'
-                        : 'bg-[#1e1e1e] text-[#a0a0a0] hover:bg-[#333]'
+                        ? 'bg-ph-gold text-black'
+                        : 'bg-ph-surface text-ph-text-secondary hover:bg-ph-elevated'
                     )}
                   >
                     토너먼트
@@ -165,7 +165,7 @@ export default function HandsPage() {
 
               {/* Result filter */}
               <div>
-                <label className="block text-xs font-medium text-[#a0a0a0] mb-2">
+                <label className="block text-xs font-medium text-ph-text-secondary mb-2">
                   결과
                 </label>
                 <div className="grid grid-cols-4 gap-2">
@@ -174,8 +174,8 @@ export default function HandsPage() {
                     className={cn(
                       'px-3 py-2 rounded text-xs font-medium transition-all',
                       selectedResult === ''
-                        ? 'bg-[#c9a227] text-black'
-                        : 'bg-[#1e1e1e] text-[#a0a0a0] hover:bg-[#333]'
+                        ? 'bg-ph-gold text-black'
+                        : 'bg-ph-surface text-ph-text-secondary hover:bg-ph-elevated'
                     )}
                   >
                     전체
@@ -185,8 +185,8 @@ export default function HandsPage() {
                     className={cn(
                       'px-3 py-2 rounded text-xs font-medium transition-all',
                       selectedResult === 'won'
-                        ? 'bg-[#c9a227] text-black'
-                        : 'bg-[#1e1e1e] text-[#a0a0a0] hover:bg-[#333]'
+                        ? 'bg-ph-gold text-black'
+                        : 'bg-ph-surface text-ph-text-secondary hover:bg-ph-elevated'
                     )}
                   >
                     승리
@@ -196,8 +196,8 @@ export default function HandsPage() {
                     className={cn(
                       'px-3 py-2 rounded text-xs font-medium transition-all',
                       selectedResult === 'lost'
-                        ? 'bg-[#c9a227] text-black'
-                        : 'bg-[#1e1e1e] text-[#a0a0a0] hover:bg-[#333]'
+                        ? 'bg-ph-gold text-black'
+                        : 'bg-ph-surface text-ph-text-secondary hover:bg-ph-elevated'
                     )}
                   >
                     패배
@@ -207,8 +207,8 @@ export default function HandsPage() {
                     className={cn(
                       'px-3 py-2 rounded text-xs font-medium transition-all',
                       selectedResult === 'split'
-                        ? 'bg-[#c9a227] text-black'
-                        : 'bg-[#1e1e1e] text-[#a0a0a0] hover:bg-[#333]'
+                        ? 'bg-ph-gold text-black'
+                        : 'bg-ph-surface text-ph-text-secondary hover:bg-ph-elevated'
                     )}
                   >
                     스플릿
@@ -218,7 +218,7 @@ export default function HandsPage() {
 
               {/* Tag filter */}
               <div>
-                <label className="block text-xs font-medium text-[#a0a0a0] mb-2">
+                <label className="block text-xs font-medium text-ph-text-secondary mb-2">
                   태그
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -227,8 +227,8 @@ export default function HandsPage() {
                     className={cn(
                       'px-3 py-1.5 rounded-full text-xs font-medium transition-all',
                       selectedTag === ''
-                        ? 'bg-[#c9a227] text-black'
-                        : 'bg-[#1e1e1e] text-[#a0a0a0] hover:bg-[#333] border border-[#333]'
+                        ? 'bg-ph-gold text-black'
+                        : 'bg-ph-surface text-ph-text-secondary hover:bg-ph-elevated border border-ph-border'
                     )}
                   >
                     전체
@@ -240,8 +240,8 @@ export default function HandsPage() {
                       className={cn(
                         'px-3 py-1.5 rounded-full text-xs font-medium transition-all',
                         selectedTag === tag
-                          ? 'bg-[#c9a227] text-black'
-                          : 'bg-[#1e1e1e] text-[#a0a0a0] hover:bg-[#333] border border-[#333]'
+                          ? 'bg-ph-gold text-black'
+                          : 'bg-ph-surface text-ph-text-secondary hover:bg-ph-elevated border border-ph-border'
                       )}
                     >
                       #{tag}
@@ -252,10 +252,10 @@ export default function HandsPage() {
 
               {/* Reset filters */}
               {hasActiveFilters && (
-                <div className="pt-2 border-t border-[#333]">
+                <div className="pt-2 border-t border-ph-border">
                   <button
                     onClick={resetFilters}
-                    className="w-full px-4 py-2 text-sm font-medium text-[#a0a0a0] hover:text-[#e0e0e0] transition-colors"
+                    className="w-full px-4 py-2 text-sm font-medium text-ph-text-secondary hover:text-ph-text transition-colors"
                   >
                     필터 초기화
                   </button>
@@ -270,17 +270,17 @@ export default function HandsPage() {
       <div className="max-w-6xl mx-auto px-4 py-6 pb-24">
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
-            <div className="text-[#888]">로딩 중...</div>
+            <div className="text-ph-text-muted">로딩 중...</div>
           </div>
         ) : hands.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="text-[#888] mb-4">
+            <div className="text-ph-text-muted mb-4">
               {hasActiveFilters ? '조건에 맞는 핸드가 없습니다' : '아직 공유된 핸드가 없습니다'}
             </div>
             {!hasActiveFilters && (
               <Link
                 href="/hands/share"
-                className="px-6 py-3 bg-[#c9a227] text-black rounded-lg font-medium hover:bg-[#d4af37] transition-colors"
+                className="px-6 py-3 bg-ph-gold text-black rounded-lg font-medium hover:bg-ph-gold-hover transition-colors"
               >
                 첫 번째 핸드 공유하기
               </Link>
@@ -289,8 +289,8 @@ export default function HandsPage() {
         ) : (
           <>
             {/* Results count */}
-            <div className="mb-4 text-sm text-[#a0a0a0]">
-              총 <span className="text-[#e0e0e0] font-medium">{totalCount}</span>개의 핸드
+            <div className="mb-4 text-sm text-ph-text-secondary">
+              총 <span className="text-ph-text font-medium">{totalCount}</span>개의 핸드
             </div>
 
             {/* Hand cards grid */}
@@ -333,15 +333,15 @@ export default function HandsPage() {
                   className={cn(
                     'flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-medium transition-all',
                     page <= 1
-                      ? 'bg-[#2a2a2a] text-[#555] cursor-not-allowed'
-                      : 'bg-[#2a2a2a] text-[#e0e0e0] hover:bg-[#333]'
+                      ? 'bg-ph-elevated text-ph-text-dim cursor-not-allowed'
+                      : 'bg-ph-elevated text-ph-text hover:bg-ph-elevated'
                   )}
                 >
                   <ChevronLeft className="w-4 h-4" />
                   이전
                 </button>
-                <span className="text-sm text-[#a0a0a0]">
-                  <span className="text-[#c9a227] font-bold">{page}</span> / {totalPages}
+                <span className="text-sm text-ph-text-secondary">
+                  <span className="text-ph-gold font-bold">{page}</span> / {totalPages}
                 </span>
                 <button
                   onClick={() => setPage(p => Math.min(totalPages, p + 1))}
@@ -349,8 +349,8 @@ export default function HandsPage() {
                   className={cn(
                     'flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-medium transition-all',
                     page >= totalPages
-                      ? 'bg-[#2a2a2a] text-[#555] cursor-not-allowed'
-                      : 'bg-[#2a2a2a] text-[#e0e0e0] hover:bg-[#333]'
+                      ? 'bg-ph-elevated text-ph-text-dim cursor-not-allowed'
+                      : 'bg-ph-elevated text-ph-text hover:bg-ph-elevated'
                   )}
                 >
                   다음
@@ -365,7 +365,7 @@ export default function HandsPage() {
       {/* Floating CTA Button */}
       <Link
         href="/hands/share"
-        className="fixed bottom-6 right-6 w-14 h-14 bg-[#c9a227] rounded-full shadow-lg flex items-center justify-center hover:bg-[#d4af37] transition-all hover:scale-110 z-40"
+        className="fixed bottom-6 right-6 w-14 h-14 bg-ph-gold rounded-full shadow-lg flex items-center justify-center hover:bg-ph-gold-hover transition-all hover:scale-110 z-40"
         aria-label="핸드 공유하기"
       >
         <Plus className="w-6 h-6 text-black" />

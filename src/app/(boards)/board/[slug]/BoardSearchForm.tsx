@@ -37,7 +37,7 @@ export function BoardSearchForm({ boardSlug, currentSearch, currentTarget }: Boa
       <select
         value={target}
         onChange={(e) => setTarget(e.target.value as typeof target)}
-        className="px-3 py-2 bg-[#1e1e1e] border border-[#333] text-[#e0e0e0] rounded-lg focus:outline-none focus:border-[#c9a227] min-h-[44px]"
+        className="px-3 py-2 bg-ph-surface border border-ph-border text-ph-text rounded-lg focus:outline-none focus:border-ph-gold min-h-[44px]"
       >
         <option value="title">제목</option>
         <option value="content">내용</option>
@@ -52,11 +52,11 @@ export function BoardSearchForm({ boardSlug, currentSearch, currentTarget }: Boa
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="검색어를 입력하세요"
-          className="w-full px-4 py-2 pr-10 bg-[#1e1e1e] border border-[#333] text-[#e0e0e0] placeholder:text-[#888] rounded-lg focus:outline-none focus:border-[#c9a227] min-h-[44px]"
+          className="w-full px-4 py-2 pr-10 bg-ph-surface border border-ph-border text-ph-text placeholder:text-ph-text-muted rounded-lg focus:outline-none focus:border-ph-gold min-h-[44px]"
         />
         <button
           type="submit"
-          className="absolute right-2 top-1/2 -translate-y-1/2 text-[#a0a0a0] hover:text-[#c9a227] transition-colors p-2"
+          className="absolute right-2 top-1/2 -translate-y-1/2 text-ph-text-secondary hover:text-ph-gold transition-colors p-2"
           aria-label="검색"
         >
           <Search className="w-5 h-5" />

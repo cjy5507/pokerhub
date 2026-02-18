@@ -35,8 +35,8 @@ export function BoardSortTabs({ currentSort, boardSlug }: BoardSortTabsProps) {
           className={cn(
             'px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition-colors min-h-[44px]',
             currentSort === option.value
-              ? 'bg-[#3b82f6] text-white'
-              : 'bg-[#2a2a2a] text-[#a0a0a0] hover:bg-[#333333]'
+              ? 'bg-ph-info text-white'
+              : 'bg-ph-elevated text-ph-text-secondary hover:bg-ph-border'
           )}
         >
           {option.label}

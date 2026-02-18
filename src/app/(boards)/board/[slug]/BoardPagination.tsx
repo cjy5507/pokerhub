@@ -49,13 +49,13 @@ export function BoardPagination({
       {currentPage > 1 ? (
         <Link
           href={buildUrl(currentPage - 1)}
-          className="flex items-center justify-center w-10 h-10 rounded-lg bg-[#2a2a2a] text-[#e0e0e0] hover:bg-[#333333] transition-colors min-h-[44px] min-w-[44px]"
+          className="flex items-center justify-center w-10 h-10 rounded-lg bg-ph-elevated text-ph-text hover:bg-ph-border transition-colors min-h-[44px] min-w-[44px]"
           aria-label="이전 페이지"
         >
           <ChevronLeft className="w-5 h-5" />
         </Link>
       ) : (
-        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-[#1a1a1a] text-[#888] min-h-[44px] min-w-[44px]">
+        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-ph-surface text-ph-text-muted min-h-[44px] min-w-[44px]">
           <ChevronLeft className="w-5 h-5" />
         </div>
       )}
@@ -68,8 +68,8 @@ export function BoardPagination({
           className={cn(
             'flex items-center justify-center w-10 h-10 rounded-lg font-medium text-sm transition-colors min-h-[44px] min-w-[44px]',
             page === currentPage
-              ? 'bg-[#3b82f6] text-white'
-              : 'bg-[#2a2a2a] text-[#e0e0e0] hover:bg-[#333333]'
+              ? 'bg-ph-info text-white'
+              : 'bg-ph-elevated text-ph-text hover:bg-ph-border'
           )}
           aria-label={`${page}페이지`}
           aria-current={page === currentPage ? 'page' : undefined}
@@ -82,13 +82,13 @@ export function BoardPagination({
       {currentPage < totalPages ? (
         <Link
           href={buildUrl(currentPage + 1)}
-          className="flex items-center justify-center w-10 h-10 rounded-lg bg-[#2a2a2a] text-[#e0e0e0] hover:bg-[#333333] transition-colors min-h-[44px] min-w-[44px]"
+          className="flex items-center justify-center w-10 h-10 rounded-lg bg-ph-elevated text-ph-text hover:bg-ph-border transition-colors min-h-[44px] min-w-[44px]"
           aria-label="다음 페이지"
         >
           <ChevronRight className="w-5 h-5" />
         </Link>
       ) : (
-        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-[#1a1a1a] text-[#888] min-h-[44px] min-w-[44px]">
+        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-ph-surface text-ph-text-muted min-h-[44px] min-w-[44px]">
           <ChevronRight className="w-5 h-5" />
         </div>
       )}

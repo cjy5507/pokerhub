@@ -9,8 +9,8 @@ type BadgeListProps = {
 
 const rarityStyles = {
   common: {
-    bg: 'bg-[#2a2a2a]',
-    border: 'border-[#555]',
+    bg: 'bg-ph-elevated',
+    border: 'border-ph-text-secondary',
     glow: '',
   },
   rare: {
@@ -44,8 +44,8 @@ export function BadgeList({ badges }: BadgeListProps) {
   }
 
   return (
-    <div className="bg-[#1e1e1e] border border-[#333] rounded-lg p-6 mb-8">
-      <h3 className="text-xl font-bold text-[#e0e0e0] mb-4">획득한 뱃지</h3>
+    <div className="bg-ph-surface border border-ph-border rounded-lg p-6 mb-8">
+      <h3 className="text-xl font-bold text-ph-text mb-4">획득한 뱃지</h3>
 
       <div className="flex flex-wrap gap-3">
         {badges.map((badge) => {
@@ -72,12 +72,12 @@ export function BadgeList({ badges }: BadgeListProps) {
               `}
               title={badge.descriptionKo || badge.descriptionEn || ''}
             >
-              <Icon className="w-5 h-5 text-[#c9a227]" />
+              <Icon className="w-5 h-5 text-ph-gold" />
               <div>
-                <div className="text-sm font-semibold text-[#e0e0e0]">
+                <div className="text-sm font-semibold text-ph-text">
                   {badge.nameKo || badge.nameEn}
                 </div>
-                <div className="text-xs text-[#999] capitalize">
+                <div className="text-xs text-ph-text-muted capitalize">
                   {badge.rarity}
                 </div>
               </div>

@@ -3,7 +3,8 @@
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { TrendingUp, ThumbsUp, MessageCircle } from 'lucide-react';
+import { TrendingUp, ThumbsUp } from 'lucide-react';
+import ChatSidebarPanel from '@/components/chat/ChatSidebarPanel';
 import { useSession } from '@/components/providers/SessionProvider';
 
 type SidebarProps = {
@@ -137,17 +138,8 @@ export default function Sidebar({ popularPosts, onlineCount, todayPosts, userLev
         </div>
       </div>
 
-      {/* 5. Chat Link (collapsed) */}
-      <Link
-        href="/chat"
-        className="flex items-center justify-between bg-op-surface rounded-lg px-4 py-3 border border-op-border hover:bg-op-elevated transition-colors group"
-      >
-        <div className="flex items-center gap-2">
-          <MessageCircle className="w-4 h-4 text-op-gold" />
-          <span className="text-sm font-medium text-op-text">실시간 채팅</span>
-        </div>
-        <span className="text-xs text-op-text-muted group-hover:text-op-gold transition-colors">→</span>
-      </Link>
+      {/* 5. Real-time Chat Panel */}
+      <ChatSidebarPanel />
     </aside>
   );
 }

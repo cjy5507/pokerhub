@@ -42,3 +42,4 @@ next-env.d.ts
 .omc/
 .smh/
 .playwright-mcp/
+.env*.local

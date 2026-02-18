@@ -207,7 +207,7 @@ export function MarketClient({
 
   // Filtered + sorted items
   const items = useMemo(() => {
-    let filtered =
+    const filtered =
       category === 'all'
         ? initialItems
         : initialItems.filter((item) => item.category === category);

@@ -143,7 +143,7 @@ export class PokerEngine {
     // ── Deal hole cards ───────────────────────────────────────
     const holeCards = new Map<number, Card[]>();
 
-    let dealStart = nextOccupiedSeat(seatArray, dealerSeat, (s) => s.isActive && !s.isSittingOut)!;
+    const dealStart = nextOccupiedSeat(seatArray, dealerSeat, (s) => s.isActive && !s.isSittingOut)!;
     const dealOrder: number[] = [];
     let current = dealStart;
     do {

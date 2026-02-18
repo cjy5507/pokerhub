@@ -62,16 +62,6 @@ export default function SettingsClient() {
   const [customTitle, setCustomTitle] = useState('');
   const [currentTitle, setCurrentTitle] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadSettings();
-  }, []);
-
-  useEffect(() => {
-    if (activeTab === 'shop') {
-      loadShop();
-    }
-  }, [activeTab]);
-
   async function loadSettings() {
     const result = await getUserSettings();
     if (result.success && result.settings) {
@@ -93,6 +83,18 @@ export default function SettingsClient() {
     }
     setShopLoading(false);
   }
+
+  useEffect(() => {
+    loadSettings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'shop') {
+      loadShop();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
 
   async function handleProfileSave() {
     setLoading(true);

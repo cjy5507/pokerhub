@@ -21,6 +21,42 @@ interface EditorToolbarProps {
   editor: Editor | null;
 }
 
+interface ToolbarButtonProps {
+  onClick: () => void;
+  active?: boolean;
+  disabled?: boolean;
+  children: React.ReactNode;
+  title: string;
+}
+
+function ToolbarButton({
+  onClick,
+  active = false,
+  disabled = false,
+  children,
+  title,
+}: ToolbarButtonProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      className={`p-2 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
+        active
+          ? 'bg-op-elevated text-op-gold'
+          : 'hover:bg-op-elevated text-op-text-secondary'
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function ToolbarDivider() {
+  return <div className="w-px h-6 bg-op-border" />;
+}
+
 export function EditorToolbar({ editor }: EditorToolbarProps) {
   if (!editor) {
     return null;
@@ -36,36 +72,6 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
       editor.chain().focus().setLink({ href: url }).run();
     }
   };
-
-  const ToolbarButton = ({
-    onClick,
-    active = false,
-    disabled = false,
-    children,
-    title,
-  }: {
-    onClick: () => void;
-    active?: boolean;
-    disabled?: boolean;
-    children: React.ReactNode;
-    title: string;
-  }) => (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      title={title}
-      className={`p-2 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
-        active
-          ? 'bg-op-elevated text-op-gold'
-          : 'hover:bg-op-elevated text-op-text-secondary'
-      }`}
-    >
-      {children}
-    </button>
-  );
-
-  const ToolbarDivider = () => <div className="w-px h-6 bg-op-border" />;
 
   return (
     <div className="sticky top-0 z-10 bg-op-surface border-b border-op-border p-2 flex items-center gap-1 overflow-x-auto">

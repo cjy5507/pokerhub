@@ -10,7 +10,7 @@ export default function ContactPage() {
           <p>문의사항이 있으시면 아래 이메일로 연락해주세요.</p>
         </div>
         <div className="bg-op-elevated rounded-lg p-4">
-          <p className="text-op-text font-medium">support@pokerhub.kr</p>
+          <p className="text-op-text font-medium">support@openpoker.kr</p>
         </div>
         <div className="text-sm text-op-text-muted space-y-2">
           <p>운영시간: 평일 10:00 - 18:00 (주말/공휴일 제외)</p>

@@ -83,7 +83,7 @@ export async function getNewsItems(options?: {
 
   const results = await Promise.allSettled(feedsToFetch.map(fetchFeed));
 
-  let allItems: NewsItem[] = [];
+  const allItems: NewsItem[] = [];
   for (const result of results) {
     if (result.status === 'fulfilled') {
       allItems.push(...result.value);

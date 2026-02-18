@@ -499,7 +499,7 @@ export async function convertGameHandToHistory(
     .where(eq(pokerTableSeats.tableId, gameHand.tableId));
 
   // Find hero seat number: first from current seats, fallback to results matching stack
-  let heroSeatNumber: number | null = userSeat?.seatNumber ?? null;
+  const heroSeatNumber: number | null = userSeat?.seatNumber ?? null;
 
   // If user no longer at table, we can't verify — still allow if they were recently there
   // We'll allow conversion if the hand exists and user is logged in

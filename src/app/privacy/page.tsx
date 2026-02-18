@@ -77,7 +77,7 @@ export default function PrivacyPage() {
           <p>회사는 개인정보 처리에 관한 업무를 총괄해서 책임지고, 이용자의 불만 처리 및 피해 구제를 위해 아래와 같이 개인정보 보호책임자를 지정하고 있습니다.</p>
           <div className="bg-op-elevated rounded p-3 mt-2">
             <p>개인정보 보호책임자: Open Poker 운영팀</p>
-            <p>문의: support@pokerhub.kr</p>
+            <p>문의: support@openpoker.kr</p>
           </div>
         </section>
 

@@ -5,7 +5,7 @@ import { getSession } from '@/lib/auth/session';
 import { StrategyClient } from './StrategyClient';
 
 export const metadata = {
-  title: '전략 허브 - Open Poker',
+  title: '전략 허브',
   description: '포커 전략, 교육 콘텐츠, 프리플랍/포스트플랍 전략을 한눈에',
 };
 
@@ -112,7 +112,7 @@ export default async function StrategyHubPage({
   // Fetch strategy posts
   const offset = (currentPage - 1) * limit;
 
-  let conditions = [...baseConditions];
+  const conditions = [...baseConditions];
   if (filteredPostIds !== null) {
     if (filteredPostIds.length === 0) {
       // No posts match the filter
@@ -162,7 +162,7 @@ export default async function StrategyHubPage({
 
   // Fetch tags for each post
   const postIds = strategyPosts.map((p: any) => p.id);
-  let postTagsMap: Record<string, string[]> = {};
+  const postTagsMap: Record<string, string[]> = {};
 
   if (postIds.length > 0) {
     const tagResults = await db

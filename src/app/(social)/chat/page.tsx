@@ -5,7 +5,7 @@ import { formatRelativeTime } from '@/lib/utils/time';
 import { cn } from '@/lib/utils';
 
 export const metadata = {
-  title: '채팅 - Open Poker',
+  title: '채팅',
   description: '포커 커뮤니티 실시간 채팅',
 };
 

@@ -86,11 +86,11 @@ describe('game actions', () => {
     it('should have probabilities that sum to 1.0', () => {
       // We test the constant indirectly: the tiers are defined in the module
       const tiers = [
-        { tier: 'first', probability: 0.01, prize: 10000 },
-        { tier: 'second', probability: 0.05, prize: 1000 },
-        { tier: 'third', probability: 0.15, prize: 500 },
-        { tier: 'fourth', probability: 0.30, prize: 200 },
-        { tier: 'none', probability: 0.49, prize: 0 },
+        { tier: 'first', probability: 0.005, prize: 5000 },
+        { tier: 'second', probability: 0.03, prize: 500 },
+        { tier: 'third', probability: 0.08, prize: 200 },
+        { tier: 'fourth', probability: 0.20, prize: 100 },
+        { tier: 'none', probability: 0.685, prize: 0 },
       ];
 
       const sum = tiers.reduce((acc, t) => acc + t.probability, 0);
@@ -99,17 +99,17 @@ describe('game actions', () => {
 
     it('should have correct prizes for each tier', () => {
       const prizes: Record<string, number> = {
-        first: 10000,
-        second: 1000,
-        third: 500,
-        fourth: 200,
+        first: 5000,
+        second: 500,
+        third: 200,
+        fourth: 100,
         none: 0,
       };
 
-      expect(prizes.first).toBe(10000);
-      expect(prizes.second).toBe(1000);
-      expect(prizes.third).toBe(500);
-      expect(prizes.fourth).toBe(200);
+      expect(prizes.first).toBe(5000);
+      expect(prizes.second).toBe(500);
+      expect(prizes.third).toBe(200);
+      expect(prizes.fourth).toBe(100);
       expect(prizes.none).toBe(0);
     });
   });
@@ -117,22 +117,22 @@ describe('game actions', () => {
   // ── Roulette multiplier logic ─────────────────────────────────
 
   describe('roulette multiplier weights (constants verification)', () => {
-    it('should have correct weights [20, 30, 25, 15, 7, 3]', () => {
+    it('should have correct weights [40, 20, 20, 12, 5, 3]', () => {
       const multipliers = [
-        { multiplier: '0x', weight: 20 },
-        { multiplier: '1x', weight: 30 },
-        { multiplier: '2x', weight: 25 },
-        { multiplier: '5x', weight: 15 },
-        { multiplier: '10x', weight: 7 },
-        { multiplier: '50x', weight: 3 },
+        { multiplier: '0x', weight: 40 },
+        { multiplier: '0.5x', weight: 20 },
+        { multiplier: '1x', weight: 20 },
+        { multiplier: '2x', weight: 12 },
+        { multiplier: '3x', weight: 5 },
+        { multiplier: '5x', weight: 3 },
       ];
 
       const totalWeight = multipliers.reduce((sum, m) => sum + m.weight, 0);
       expect(totalWeight).toBe(100);
 
-      expect(multipliers[0]).toEqual({ multiplier: '0x', weight: 20 });
-      expect(multipliers[1]).toEqual({ multiplier: '1x', weight: 30 });
-      expect(multipliers[5]).toEqual({ multiplier: '50x', weight: 3 });
+      expect(multipliers[0]).toEqual({ multiplier: '0x', weight: 40 });
+      expect(multipliers[1]).toEqual({ multiplier: '0.5x', weight: 20 });
+      expect(multipliers[5]).toEqual({ multiplier: '5x', weight: 3 });
     });
   });
 
@@ -176,8 +176,8 @@ describe('game actions', () => {
       mockGetSession.mockResolvedValue({ userId: 'user-1' });
       setupSelect([{ id: 'user-1', points: 1000 }]);
 
-      // randomInt(0, 100) returns 35 -> within '1x' bucket [20, 50)
-      mockRandomInt.mockReturnValueOnce(35);
+      // randomInt(0, 100) returns 65 -> within '1x' bucket [60, 80)
+      mockRandomInt.mockReturnValueOnce(65);
 
       mockTransaction.mockImplementation(async (fn: any) => {
         const tx = {
@@ -207,8 +207,8 @@ describe('game actions', () => {
       mockGetSession.mockResolvedValue({ userId: 'user-1' });
       setupSelect([{ id: 'user-1', points: 1000 }]);
 
-      // randomInt(0, 100) returns 80 -> within '5x' bucket [75, 90)
-      mockRandomInt.mockReturnValueOnce(80);
+      // randomInt(0, 100) returns 98 -> within '5x' bucket [97, 100)
+      mockRandomInt.mockReturnValueOnce(98);
 
       mockTransaction.mockImplementation(async (fn: any) => {
         const tx = {
@@ -234,12 +234,12 @@ describe('game actions', () => {
       expect(result.winAmount).toBe(500);
     });
 
-    it('50x multiplier should yield 50 * betAmount', async () => {
+    it('0.5x multiplier should yield half betAmount', async () => {
       mockGetSession.mockResolvedValue({ userId: 'user-1' });
       setupSelect([{ id: 'user-1', points: 1000 }]);
 
-      // randomInt(0, 100) returns 98 -> within '50x' bucket [97, 100)
-      mockRandomInt.mockReturnValueOnce(98);
+      // randomInt(0, 100) returns 45 -> within '0.5x' bucket [40, 60)
+      mockRandomInt.mockReturnValueOnce(45);
 
       mockTransaction.mockImplementation(async (fn: any) => {
         const tx = {
@@ -250,7 +250,7 @@ describe('game actions', () => {
           update: vi.fn().mockReturnValue({
             set: vi.fn().mockReturnValue({
               where: vi.fn().mockReturnValue({
-                returning: vi.fn().mockResolvedValue([{ points: 6000 }]),
+                returning: vi.fn().mockResolvedValue([{ points: 900 }]),
               }),
             }),
           }),
@@ -261,8 +261,8 @@ describe('game actions', () => {
       const result = await spinRoulette(200);
 
       expect(result.success).toBe(true);
-      expect(result.multiplier).toBe('50x');
-      expect(result.winAmount).toBe(10000);
+      expect(result.multiplier).toBe('0.5x');
+      expect(result.winAmount).toBe(100); // 200 * 0.5
     });
   });
 
@@ -337,8 +337,8 @@ describe('game actions', () => {
       setupSelect([{ id: 'user-1', points: 1000 }]); // enough points
       setupSelect([{ todayCount: 2 }]); // under daily limit
 
-      // randomInt(0, 1000000) returns 500000 -> 500000/1000000 = 0.5 -> fourth tier (cumulative 0.51)
-      mockRandomInt.mockReturnValueOnce(500000);
+      // randomInt(0, 1000000) returns 200000 -> 200000/1000000 = 0.2 -> fourth tier (cumulative 0.315)
+      mockRandomInt.mockReturnValueOnce(200000);
 
       mockTransaction.mockImplementation(async (fn: any) => {
         // tx.insert().values().returning() chain
@@ -347,7 +347,7 @@ describe('game actions', () => {
             returning: vi.fn().mockResolvedValue([{
               id: 'ticket-1',
               tier: 'fourth',
-              prizeAmount: 200,
+              prizeAmount: 100,
             }]),
           }),
         });
@@ -369,7 +369,7 @@ describe('game actions', () => {
       expect(result.success).toBe(true);
       expect(result.ticket).toBeDefined();
       expect(result.ticket!.tier).toBe('fourth');
-      expect(result.ticket!.prizeAmount).toBe(200);
+      expect(result.ticket!.prizeAmount).toBe(100);
     });
 
     it('should award prize when tier is not none', async () => {
@@ -377,15 +377,15 @@ describe('game actions', () => {
       setupSelect([{ id: 'user-1', points: 1000 }]);
       setupSelect([{ todayCount: 0 }]);
 
-      // randomInt(0, 1000000) returns 5000 -> 5000/1000000 = 0.005 -> first tier (cumulative 0.01)
-      mockRandomInt.mockReturnValueOnce(5000);
+      // randomInt(0, 1000000) returns 4000 -> 4000/1000000 = 0.004 -> first tier (cumulative 0.005)
+      mockRandomInt.mockReturnValueOnce(4000);
 
       const mockTxInsert = vi.fn().mockReturnValue({
         values: vi.fn().mockReturnValue({
           returning: vi.fn().mockResolvedValue([{
             id: 'ticket-1',
             tier: 'first',
-            prizeAmount: 10000,
+            prizeAmount: 5000,
           }]),
         }),
       });
@@ -393,7 +393,7 @@ describe('game actions', () => {
       const mockTxUpdate = vi.fn().mockReturnValue({
         set: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            returning: vi.fn().mockResolvedValue([{ points: 10900 }]),
+            returning: vi.fn().mockResolvedValue([{ points: 5900 }]),
           }),
         }),
       });
@@ -410,7 +410,7 @@ describe('game actions', () => {
 
       expect(result.success).toBe(true);
       expect(result.ticket!.tier).toBe('first');
-      expect(result.ticket!.prizeAmount).toBe(10000);
+      expect(result.ticket!.prizeAmount).toBe(5000);
 
       // insert called: lottery ticket + point deduction log + prize log
       // update called: deduct cost + add prize
@@ -448,8 +448,8 @@ describe('game actions', () => {
         mockGetSession.mockResolvedValue({ userId: 'user-1' });
         setupSelect([{ id: 'user-1', points: 10000 }]);
 
-        // randomInt(0, 100) returns 25 -> within '1x' bucket [20, 50)
-        mockRandomInt.mockReturnValueOnce(25);
+        // randomInt(0, 100) returns 65 -> within '1x' bucket [60, 80)
+        mockRandomInt.mockReturnValueOnce(65);
 
         mockTransaction.mockImplementation(async (fn: any) => {
           const tx = {
@@ -487,8 +487,8 @@ describe('game actions', () => {
       mockGetSession.mockResolvedValue({ userId: 'user-1' });
       setupSelect([{ id: 'user-1', points: 1000 }]);
 
-      // randomInt(0, 100) returns 60 -> within '2x' bucket [50, 75)
-      mockRandomInt.mockReturnValueOnce(60);
+      // randomInt(0, 100) returns 85 -> within '2x' bucket [80, 92)
+      mockRandomInt.mockReturnValueOnce(85);
 
       mockTransaction.mockImplementation(async (fn: any) => {
         const tx = {
@@ -545,11 +545,11 @@ describe('game actions', () => {
       expect(result.winAmount).toBe(0);
     });
 
-    it('should handle 10x multiplier (betAmount * 10)', async () => {
+    it('should handle 3x multiplier (betAmount * 3)', async () => {
       mockGetSession.mockResolvedValue({ userId: 'user-1' });
       setupSelect([{ id: 'user-1', points: 1000 }]);
 
-      // randomInt(0, 100) returns 93 -> within '10x' bucket [90, 97)
+      // randomInt(0, 100) returns 93 -> within '3x' bucket [92, 97)
       mockRandomInt.mockReturnValueOnce(93);
 
       mockTransaction.mockImplementation(async (fn: any) => {
@@ -561,7 +561,7 @@ describe('game actions', () => {
           update: vi.fn().mockReturnValue({
             set: vi.fn().mockReturnValue({
               where: vi.fn().mockReturnValue({
-                returning: vi.fn().mockResolvedValue([{ points: 5500 }]),
+                returning: vi.fn().mockResolvedValue([{ points: 2500 }]),
               }),
             }),
           }),
@@ -572,8 +572,8 @@ describe('game actions', () => {
       const result = await spinRoulette(500);
 
       expect(result.success).toBe(true);
-      expect(result.multiplier).toBe('10x');
-      expect(result.winAmount).toBe(5000);
+      expect(result.multiplier).toBe('3x');
+      expect(result.winAmount).toBe(1500);
     });
   });
 });

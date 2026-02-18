@@ -76,7 +76,10 @@ export default function Sidebar({ popularPosts, onlineCount, todayPosts, userLev
         </div>
       )}
 
-      {/* 2. Board Directory */}
+      {/* 2. Real-time Chat Panel (replaces board directory) */}
+      <ChatSidebarPanel />
+
+      {/* Board Directory - hidden
       <div className="bg-op-surface rounded-lg p-4 border border-op-border">
         <h3 className="text-sm font-semibold text-op-text mb-3">게시판</h3>
         <div className="space-y-1">
@@ -91,6 +94,7 @@ export default function Sidebar({ popularPosts, onlineCount, todayPosts, userLev
           <SidebarLink href="/rankings" label="랭킹" />
         </div>
       </div>
+      */}
 
       {/* 3. Popular Posts (8 items) */}
       <div className="bg-op-surface rounded-lg p-4 border border-op-border">
@@ -138,8 +142,6 @@ export default function Sidebar({ popularPosts, onlineCount, todayPosts, userLev
         </div>
       </div>
 
-      {/* 5. Real-time Chat Panel */}
-      <ChatSidebarPanel />
     </aside>
   );
 }

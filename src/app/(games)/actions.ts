@@ -23,12 +23,13 @@ function getRandomReward(): number {
 }
 
 // Lottery tier probabilities (matching frontend)
+// EV = 76P per 100P cost (24% house edge)
 const LOTTERY_TIERS = [
-  { tier: 'first' as const, probability: 0.01, prize: 10000 },
-  { tier: 'second' as const, probability: 0.05, prize: 1000 },
-  { tier: 'third' as const, probability: 0.15, prize: 500 },
-  { tier: 'fourth' as const, probability: 0.30, prize: 200 },
-  { tier: 'none' as const, probability: 0.49, prize: 0 },
+  { tier: 'first' as const, probability: 0.005, prize: 5000 },
+  { tier: 'second' as const, probability: 0.03, prize: 500 },
+  { tier: 'third' as const, probability: 0.08, prize: 200 },
+  { tier: 'fourth' as const, probability: 0.20, prize: 100 },
+  { tier: 'none' as const, probability: 0.685, prize: 0 },
 ];
 
 function determineLotteryTier(): { tier: 'first' | 'second' | 'third' | 'fourth' | 'none'; prize: number } {
@@ -46,13 +47,14 @@ function determineLotteryTier(): { tier: 'first' | 'second' | 'third' | 'fourth'
 }
 
 // Roulette multipliers (weighted random)
+// EV = 84P per 100P bet (16% house edge)
 const ROULETTE_MULTIPLIERS = [
-  { multiplier: '0x', weight: 20 },
-  { multiplier: '1x', weight: 30 },
-  { multiplier: '2x', weight: 25 },
-  { multiplier: '5x', weight: 15 },
-  { multiplier: '10x', weight: 7 },
-  { multiplier: '50x', weight: 3 },
+  { multiplier: '0x', weight: 40 },
+  { multiplier: '0.5x', weight: 20 },
+  { multiplier: '1x', weight: 20 },
+  { multiplier: '2x', weight: 12 },
+  { multiplier: '3x', weight: 5 },
+  { multiplier: '5x', weight: 3 },
 ];
 
 function determineRouletteMultiplier(): string {

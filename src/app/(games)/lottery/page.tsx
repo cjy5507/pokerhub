@@ -7,11 +7,11 @@ import { buyLotteryTicket, getUserPoints } from '../actions';
 
 // Prize tiers configuration matching server-side tiers
 const PRIZE_TIERS = [
-  { id: 'first', name: '1등', prize: 10000, probability: 1, color: 'from-red-500 to-yellow-500', glow: 'shadow-red-500/50', icon: Crown },
-  { id: 'second', name: '2등', prize: 1000, probability: 5, color: 'from-purple-500 to-pink-500', glow: 'shadow-purple-500/50', icon: Star },
-  { id: 'third', name: '3등', prize: 500, probability: 15, color: 'from-blue-500 to-cyan-500', glow: 'shadow-blue-500/50', icon: Zap },
-  { id: 'fourth', name: '4등', prize: 200, probability: 30, color: 'from-green-500 to-emerald-500', glow: 'shadow-green-500/50', icon: Trophy },
-  { id: 'none', name: '꽝', prize: 0, probability: 49, color: 'from-gray-600 to-gray-700', glow: 'shadow-gray-500/30', icon: X },
+  { id: 'first', name: '1등', prize: 5000, probability: 0.5, color: 'from-red-500 to-yellow-500', glow: 'shadow-red-500/50', icon: Crown },
+  { id: 'second', name: '2등', prize: 500, probability: 3, color: 'from-purple-500 to-pink-500', glow: 'shadow-purple-500/50', icon: Star },
+  { id: 'third', name: '3등', prize: 200, probability: 8, color: 'from-blue-500 to-cyan-500', glow: 'shadow-blue-500/50', icon: Zap },
+  { id: 'fourth', name: '4등', prize: 100, probability: 20, color: 'from-green-500 to-emerald-500', glow: 'shadow-green-500/50', icon: Trophy },
+  { id: 'none', name: '꽝', prize: 0, probability: 68.5, color: 'from-gray-600 to-gray-700', glow: 'shadow-gray-500/30', icon: X },
 ] as const;
 
 type TierType = typeof PRIZE_TIERS[number]['id'];
@@ -24,14 +24,14 @@ interface LotteryTicket {
 
 // Mock data with Korean names
 const MOCK_WINNERS = [
-  { nickname: '김민수', tier: 'first' as const, prize: 10000, time: '2분 전' },
-  { nickname: '박지영', tier: 'third' as const, prize: 500, time: '5분 전' },
-  { nickname: '이준호', tier: 'second' as const, prize: 1000, time: '12분 전' },
-  { nickname: '최수진', tier: 'fourth' as const, prize: 200, time: '23분 전' },
-  { nickname: '정태웅', tier: 'fourth' as const, prize: 200, time: '34분 전' },
-  { nickname: '강서연', tier: 'first' as const, prize: 10000, time: '1시간 전' },
-  { nickname: '윤재현', tier: 'third' as const, prize: 500, time: '1시간 전' },
-  { nickname: '한유진', tier: 'second' as const, prize: 1000, time: '2시간 전' },
+  { nickname: '김민수', tier: 'first' as const, prize: 5000, time: '2분 전' },
+  { nickname: '박지영', tier: 'third' as const, prize: 200, time: '5분 전' },
+  { nickname: '이준호', tier: 'second' as const, prize: 500, time: '12분 전' },
+  { nickname: '최수진', tier: 'fourth' as const, prize: 100, time: '23분 전' },
+  { nickname: '정태웅', tier: 'fourth' as const, prize: 100, time: '34분 전' },
+  { nickname: '강서연', tier: 'first' as const, prize: 5000, time: '1시간 전' },
+  { nickname: '윤재현', tier: 'third' as const, prize: 200, time: '1시간 전' },
+  { nickname: '한유진', tier: 'second' as const, prize: 500, time: '2시간 전' },
 ];
 
 export default function LotteryPage() {

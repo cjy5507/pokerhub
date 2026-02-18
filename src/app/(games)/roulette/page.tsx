@@ -34,12 +34,12 @@ interface Stats {
 }
 
 const SEGMENTS = [
-  { multiplier: '0x', color: '#ef4444', label: '0x', weight: 20, deg: 0 },
-  { multiplier: '1x', color: '#eab308', label: '1x', weight: 30, deg: 60 },
-  { multiplier: '2x', color: '#22c55e', label: '2x', weight: 25, deg: 120 },
-  { multiplier: '5x', color: '#3b82f6', label: '5x', weight: 15, deg: 180 },
-  { multiplier: '10x', color: '#8b5cf6', label: '10x', weight: 7, deg: 240 },
-  { multiplier: '50x', color: '#c9a227', label: '50x', weight: 3, deg: 300 },
+  { multiplier: '0x', color: '#ef4444', label: '0x', weight: 40, deg: 0 },
+  { multiplier: '0.5x', color: '#f97316', label: '0.5x', weight: 20, deg: 60 },
+  { multiplier: '1x', color: '#eab308', label: '1x', weight: 20, deg: 120 },
+  { multiplier: '2x', color: '#22c55e', label: '2x', weight: 12, deg: 180 },
+  { multiplier: '3x', color: '#3b82f6', label: '3x', weight: 5, deg: 240 },
+  { multiplier: '5x', color: '#8b5cf6', label: '5x', weight: 3, deg: 300 },
 ];
 
 const SEGMENT_ANGLE = 360 / SEGMENTS.length; // 60 degrees each

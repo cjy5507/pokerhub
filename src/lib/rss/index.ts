@@ -26,7 +26,7 @@ const cache = new Map<string, CacheEntry>();
 const parser = new Parser({
   timeout: 10000,
   headers: {
-    'User-Agent': 'PokerHub/1.0 RSS Reader',
+    'User-Agent': 'OpenPoker/1.0 RSS Reader',
   },
 });
 

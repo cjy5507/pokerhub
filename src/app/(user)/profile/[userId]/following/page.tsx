@@ -18,7 +18,7 @@ export default async function FollowingPage({
 
   if (!result.success || !result.following) {
     return (
-      <div className="min-h-screen bg-ph-bg text-ph-text">
+      <div className="min-h-screen bg-op-bg text-op-text">
         <div className="max-w-4xl mx-auto px-4 py-8">
           <p className="text-red-400">{result.error || '팔로잉 목록을 불러올 수 없습니다'}</p>
         </div>
@@ -30,38 +30,38 @@ export default async function FollowingPage({
   const totalPages = Math.ceil((totalCount || 0) / 20);
 
   return (
-    <div className="min-h-screen bg-ph-bg text-ph-text">
+    <div className="min-h-screen bg-op-bg text-op-text">
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <Link
             href={`/profile/${userId}`}
-            className="text-ph-text-secondary hover:text-ph-text transition-colors"
+            className="text-op-text-secondary hover:text-op-text transition-colors"
           >
             <ArrowLeft className="w-6 h-6" />
           </Link>
           <div>
             <h1 className="text-3xl font-bold">팔로잉</h1>
-            <p className="text-ph-text-secondary mt-1">{totalCount}명</p>
+            <p className="text-op-text-secondary mt-1">{totalCount}명</p>
           </div>
         </div>
 
         {/* Following List */}
         {following.length === 0 ? (
-          <div className="bg-ph-surface border border-ph-border rounded-lg p-8 text-center">
-            <p className="text-ph-text-secondary">아직 팔로잉한 사용자가 없습니다</p>
+          <div className="bg-op-surface border border-op-border rounded-lg p-8 text-center">
+            <p className="text-op-text-secondary">아직 팔로잉한 사용자가 없습니다</p>
           </div>
         ) : (
           <div className="space-y-3">
             {following.map((user) => (
               <div
                 key={user.id}
-                className="bg-ph-surface border border-ph-border rounded-lg p-4 flex items-center justify-between hover:border-ph-gold transition-colors"
+                className="bg-op-surface border border-op-border rounded-lg p-4 flex items-center justify-between hover:border-op-gold transition-colors"
               >
                 <div className="flex items-center gap-4">
                   {/* Avatar */}
                   <Link href={`/profile/${user.id}`}>
-                    <div className="w-12 h-12 rounded-full bg-ph-elevated border border-ph-border flex items-center justify-center overflow-hidden">
+                    <div className="w-12 h-12 rounded-full bg-op-elevated border border-op-border flex items-center justify-center overflow-hidden">
                       {user.avatarUrl ? (
                         <img
                           src={user.avatarUrl}
@@ -69,7 +69,7 @@ export default async function FollowingPage({
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <User className="w-6 h-6 text-ph-text-muted" />
+                        <User className="w-6 h-6 text-op-text-muted" />
                       )}
                     </div>
                   </Link>
@@ -78,10 +78,10 @@ export default async function FollowingPage({
                   <div>
                     <Link
                       href={`/profile/${user.id}`}
-                      className="flex items-center gap-2 hover:text-ph-gold transition-colors"
+                      className="flex items-center gap-2 hover:text-op-gold transition-colors"
                     >
                       <span className="font-medium">{user.nickname}</span>
-                      <span className="text-xs bg-ph-elevated border border-ph-border px-2 py-0.5 rounded">
+                      <span className="text-xs bg-op-elevated border border-op-border px-2 py-0.5 rounded">
                         Lv.{user.level}
                       </span>
                     </Link>
@@ -101,7 +101,7 @@ export default async function FollowingPage({
             {currentPage > 1 && (
               <Link
                 href={`/profile/${userId}/following?page=${currentPage - 1}`}
-                className="px-4 py-2 bg-ph-surface border border-ph-border rounded hover:border-ph-gold transition-colors"
+                className="px-4 py-2 bg-op-surface border border-op-border rounded hover:border-op-gold transition-colors"
               >
                 이전
               </Link>
@@ -116,8 +116,8 @@ export default async function FollowingPage({
                     href={`/profile/${userId}/following?page=${page}`}
                     className={`px-4 py-2 rounded transition-colors ${
                       page === currentPage
-                        ? 'bg-ph-gold text-ph-bg font-medium'
-                        : 'bg-ph-surface border border-ph-border hover:border-ph-gold'
+                        ? 'bg-op-gold text-op-bg font-medium'
+                        : 'bg-op-surface border border-op-border hover:border-op-gold'
                     }`}
                   >
                     {page}
@@ -129,7 +129,7 @@ export default async function FollowingPage({
             {currentPage < totalPages && (
               <Link
                 href={`/profile/${userId}/following?page=${currentPage + 1}`}
-                className="px-4 py-2 bg-ph-surface border border-ph-border rounded hover:border-ph-gold transition-colors"
+                className="px-4 py-2 bg-op-surface border border-op-border rounded hover:border-op-gold transition-colors"
               >
                 다음
               </Link>

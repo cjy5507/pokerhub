@@ -101,22 +101,22 @@ export function PokerLobbyClient({ tables, myTableId }: PokerLobbyClientProps) {
       );
 
   return (
-    <div className="min-h-screen bg-ph-deep text-ph-text p-4 md:p-8">
+    <div className="min-h-screen bg-op-deep text-op-text p-4 md:p-8">
       {/* Header */}
       <div className="max-w-7xl mx-auto mb-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-ph-gold flex items-center gap-3 mb-2">
+            <h1 className="text-3xl md:text-4xl font-bold text-op-gold flex items-center gap-3 mb-2">
               <Coins className="w-8 h-8 md:w-10 md:h-10" />
               포인트 포커
             </h1>
-            <p className="text-ph-text-secondary text-sm md:text-base">
+            <p className="text-op-text-secondary text-sm md:text-base">
               실시간 텍사스 홀덤 - 포인트로 즐기는 진짜 포커
             </p>
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="bg-ph-gold hover:bg-ph-gold-hover text-black font-semibold px-6 py-3 rounded-lg flex items-center gap-2 transition-colors"
+            className="bg-op-gold hover:bg-op-gold-hover text-black font-semibold px-6 py-3 rounded-lg flex items-center gap-2 transition-colors"
           >
             <Plus className="w-5 h-5" />
             테이블 만들기
@@ -131,8 +131,8 @@ export function PokerLobbyClient({ tables, myTableId }: PokerLobbyClientProps) {
               onClick={() => setActiveFilter(filter)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 activeFilter.label === filter.label
-                  ? 'bg-ph-gold text-black'
-                  : 'bg-ph-surface text-ph-text-secondary border border-ph-border hover:border-ph-border-medium'
+                  ? 'bg-op-gold text-black'
+                  : 'bg-op-surface text-op-text-secondary border border-op-border hover:border-op-border-medium'
               }`}
             >
               {filter.label}
@@ -140,7 +140,7 @@ export function PokerLobbyClient({ tables, myTableId }: PokerLobbyClientProps) {
           ))}
           <button
             onClick={() => router.refresh()}
-            className="ml-auto px-3 py-2 rounded-lg text-sm text-ph-text-secondary bg-ph-surface border border-ph-border hover:border-ph-border-medium transition-colors flex items-center gap-1"
+            className="ml-auto px-3 py-2 rounded-lg text-sm text-op-text-secondary bg-op-surface border border-op-border hover:border-op-border-medium transition-colors flex items-center gap-1"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             새로고침
@@ -151,10 +151,10 @@ export function PokerLobbyClient({ tables, myTableId }: PokerLobbyClientProps) {
       {/* Table List */}
       <div className="max-w-7xl mx-auto">
         {filteredTables.length === 0 ? (
-          <div className="bg-ph-surface border border-ph-border rounded-lg p-12 text-center">
-            <Coins className="w-16 h-16 text-ph-gold mx-auto mb-4 opacity-50" />
-            <p className="text-ph-text-secondary text-lg mb-2">테이블이 없습니다</p>
-            <p className="text-ph-text-dim text-sm">첫 번째 테이블을 만들어보세요!</p>
+          <div className="bg-op-surface border border-op-border rounded-lg p-12 text-center">
+            <Coins className="w-16 h-16 text-op-gold mx-auto mb-4 opacity-50" />
+            <p className="text-op-text-secondary text-lg mb-2">테이블이 없습니다</p>
+            <p className="text-op-text-dim text-sm">첫 번째 테이블을 만들어보세요!</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -165,10 +165,10 @@ export function PokerLobbyClient({ tables, myTableId }: PokerLobbyClientProps) {
               return (
                 <div
                   key={table.id}
-                  className={`bg-ph-surface border rounded-lg p-6 transition-colors ${
+                  className={`bg-op-surface border rounded-lg p-6 transition-colors ${
                     isMyTable
                       ? 'ring-2 ring-yellow-400/50 border-yellow-400/30'
-                      : 'border-ph-border hover:border-ph-gold'
+                      : 'border-op-border hover:border-op-gold'
                   }`}
                 >
                   {/* My Table Badge */}
@@ -182,7 +182,7 @@ export function PokerLobbyClient({ tables, myTableId }: PokerLobbyClientProps) {
 
                   {/* Table Name + Status */}
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-bold text-ph-text">{table.name}</h3>
+                    <h3 className="text-xl font-bold text-op-text">{table.name}</h3>
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-semibold ${badge.color}`}
                     >
@@ -192,24 +192,24 @@ export function PokerLobbyClient({ tables, myTableId }: PokerLobbyClientProps) {
 
                   {/* Blinds */}
                   <div className="flex items-center gap-2 mb-3">
-                    <span className="text-ph-text-secondary text-sm">SB/BB:</span>
-                    <span className="text-ph-gold font-semibold">
+                    <span className="text-op-text-secondary text-sm">SB/BB:</span>
+                    <span className="text-op-gold font-semibold">
                       {table.smallBlind}/{table.bigBlind}
                     </span>
                   </div>
 
                   {/* Buy-in Range */}
                   <div className="flex items-center gap-2 mb-3">
-                    <span className="text-ph-text-secondary text-sm">바이인:</span>
-                    <span className="text-ph-text text-sm">
+                    <span className="text-op-text-secondary text-sm">바이인:</span>
+                    <span className="text-op-text text-sm">
                       {table.minBuyIn.toLocaleString()} - {table.maxBuyIn.toLocaleString()}P
                     </span>
                   </div>
 
                   {/* Seats + Dot Visualization */}
                   <div className="flex items-center gap-2 mb-3">
-                    <Users className="w-4 h-4 text-ph-text-secondary" />
-                    <span className="text-ph-text text-sm">
+                    <Users className="w-4 h-4 text-op-text-secondary" />
+                    <span className="text-op-text text-sm">
                       {table.activePlayers}/{table.maxSeats}
                     </span>
                     <div className="flex gap-1 ml-2">
@@ -225,7 +225,7 @@ export function PokerLobbyClient({ tables, myTableId }: PokerLobbyClientProps) {
                   </div>
 
                   {/* Hand Count */}
-                  <div className="flex items-center gap-1 text-ph-text-secondary text-sm mb-4">
+                  <div className="flex items-center gap-1 text-op-text-secondary text-sm mb-4">
                     <Hash className="w-4 h-4" />
                     <span>{table.handCount} 핸드</span>
                   </div>
@@ -236,7 +236,7 @@ export function PokerLobbyClient({ tables, myTableId }: PokerLobbyClientProps) {
                     className={`block w-full font-semibold py-2 rounded-lg text-center transition-colors ${
                       isMyTable
                         ? 'bg-yellow-500 hover:bg-yellow-600 text-black'
-                        : 'bg-ph-enter hover:bg-ph-enter-hover text-white'
+                        : 'bg-op-enter hover:bg-op-enter-hover text-white'
                     }`}
                   >
                     {isMyTable ? '돌아가기' : '입장'}
@@ -255,22 +255,22 @@ export function PokerLobbyClient({ tables, myTableId }: PokerLobbyClientProps) {
           onClick={() => setIsModalOpen(false)}
         >
           <div
-            className="bg-ph-surface border border-ph-border rounded-lg p-6 max-w-md w-full"
+            className="bg-op-surface border border-op-border rounded-lg p-6 max-w-md w-full"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="text-2xl font-bold text-ph-gold mb-6">테이블 만들기</h2>
+            <h2 className="text-2xl font-bold text-op-gold mb-6">테이블 만들기</h2>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Table Name */}
               <div>
-                <label className="block text-sm font-medium text-ph-text mb-2">
+                <label className="block text-sm font-medium text-op-text mb-2">
                   테이블 이름
                 </label>
                 <input
                   type="text"
                   value={tableName}
                   onChange={(e) => setTableName(e.target.value)}
-                  className="w-full bg-ph-deep border border-ph-border rounded-lg px-4 py-2 text-ph-text focus:border-ph-gold focus:outline-none"
+                  className="w-full bg-op-deep border border-op-border rounded-lg px-4 py-2 text-op-text focus:border-op-gold focus:outline-none"
                   placeholder="나의 포커테이블"
                   maxLength={20}
                 />
@@ -278,7 +278,7 @@ export function PokerLobbyClient({ tables, myTableId }: PokerLobbyClientProps) {
 
               {/* Blinds */}
               <div>
-                <label className="block text-sm font-medium text-ph-text mb-2">
+                <label className="block text-sm font-medium text-op-text mb-2">
                   블라인드
                 </label>
                 <select
@@ -287,7 +287,7 @@ export function PokerLobbyClient({ tables, myTableId }: PokerLobbyClientProps) {
                     const option = BLIND_OPTIONS.find((opt) => opt.label === e.target.value);
                     if (option) setSelectedBlinds(option);
                   }}
-                  className="w-full bg-ph-deep border border-ph-border rounded-lg px-4 py-2 text-ph-text focus:border-ph-gold focus:outline-none"
+                  className="w-full bg-op-deep border border-op-border rounded-lg px-4 py-2 text-op-text focus:border-op-gold focus:outline-none"
                 >
                   {BLIND_OPTIONS.map((option) => (
                     <option key={option.label} value={option.label}>
@@ -299,7 +299,7 @@ export function PokerLobbyClient({ tables, myTableId }: PokerLobbyClientProps) {
 
               {/* Max Seats */}
               <div>
-                <label className="block text-sm font-medium text-ph-text mb-2">
+                <label className="block text-sm font-medium text-op-text mb-2">
                   최대 인원
                 </label>
                 <div className="flex gap-4">
@@ -310,9 +310,9 @@ export function PokerLobbyClient({ tables, myTableId }: PokerLobbyClientProps) {
                       value={2}
                       checked={maxSeats === 2}
                       onChange={() => setMaxSeats(2 as 6 | 9)}
-                      className="w-4 h-4 text-ph-gold focus:ring-ph-gold"
+                      className="w-4 h-4 text-op-gold focus:ring-op-gold"
                     />
-                    <span className="text-ph-text">2명 (헤즈업)</span>
+                    <span className="text-op-text">2명 (헤즈업)</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -321,9 +321,9 @@ export function PokerLobbyClient({ tables, myTableId }: PokerLobbyClientProps) {
                       value={6}
                       checked={maxSeats === 6}
                       onChange={() => setMaxSeats(6)}
-                      className="w-4 h-4 text-ph-gold focus:ring-ph-gold"
+                      className="w-4 h-4 text-op-gold focus:ring-op-gold"
                     />
-                    <span className="text-ph-text">6명</span>
+                    <span className="text-op-text">6명</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -332,17 +332,17 @@ export function PokerLobbyClient({ tables, myTableId }: PokerLobbyClientProps) {
                       value={9}
                       checked={maxSeats === 9}
                       onChange={() => setMaxSeats(9)}
-                      className="w-4 h-4 text-ph-gold focus:ring-ph-gold"
+                      className="w-4 h-4 text-op-gold focus:ring-op-gold"
                     />
-                    <span className="text-ph-text">9명</span>
+                    <span className="text-op-text">9명</span>
                   </label>
                 </div>
               </div>
 
               {/* Buy-in Info */}
-              <div className="bg-ph-deep border border-ph-border rounded-lg p-4">
-                <p className="text-sm text-ph-text-secondary mb-1">바이인 범위:</p>
-                <p className="text-ph-gold font-semibold">
+              <div className="bg-op-deep border border-op-border rounded-lg p-4">
+                <p className="text-sm text-op-text-secondary mb-1">바이인 범위:</p>
+                <p className="text-op-gold font-semibold">
                   {calculateBuyInRange(selectedBlinds.bb)}
                 </p>
               </div>
@@ -359,14 +359,14 @@ export function PokerLobbyClient({ tables, myTableId }: PokerLobbyClientProps) {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 bg-ph-elevated hover:bg-ph-border-medium text-ph-text font-semibold py-2 rounded-lg transition-colors"
+                  className="flex-1 bg-op-elevated hover:bg-op-border-medium text-op-text font-semibold py-2 rounded-lg transition-colors"
                 >
                   취소
                 </button>
                 <button
                   type="submit"
                   disabled={isPending}
-                  className="flex-1 bg-ph-gold hover:bg-ph-gold-hover text-black font-semibold py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 bg-op-gold hover:bg-op-gold-hover text-black font-semibold py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isPending ? '생성 중...' : '만들기'}
                 </button>

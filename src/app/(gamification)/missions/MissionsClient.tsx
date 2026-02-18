@@ -50,24 +50,24 @@ export function MissionsClient({
     <div className="container max-w-2xl mx-auto px-4 py-6 lg:py-8">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl lg:text-3xl font-bold text-ph-text mb-2">
+        <h1 className="text-2xl lg:text-3xl font-bold text-op-text mb-2">
           일일 미션
         </h1>
-        <p className="text-sm text-ph-text-secondary">
+        <p className="text-sm text-op-text-secondary">
           미션을 완료하고 보상을 받아가세요
         </p>
       </div>
 
       {/* All-Clear Bonus Banner */}
       {allCompleted && (
-        <div className="bg-gradient-to-r from-ph-gold/20 to-ph-gold/20 border-2 border-ph-gold rounded-lg p-4 mb-6">
+        <div className="bg-gradient-to-r from-op-gold/20 to-op-gold/20 border-2 border-op-gold rounded-lg p-4 mb-6">
           <div className="flex items-center gap-3">
-            <Trophy className="w-8 h-8 text-ph-gold" />
+            <Trophy className="w-8 h-8 text-op-gold" />
             <div>
-              <div className="font-bold text-ph-text mb-1">
+              <div className="font-bold text-op-text mb-1">
                 일일 미션 전체 완료!
               </div>
-              <div className="text-sm text-ph-text-secondary">
+              <div className="text-sm text-op-text-secondary">
                 보너스 +200포인트, +25XP 획득
               </div>
             </div>
@@ -77,7 +77,7 @@ export function MissionsClient({
 
       {/* Daily Missions */}
       <div className="space-y-3 mb-8">
-        <h2 className="text-lg font-bold text-ph-text mb-3">
+        <h2 className="text-lg font-bold text-op-text mb-3">
           오늘의 미션 ({dailyMissions.filter((m) => m.status === 'claimed').length}/
           {dailyMissions.length})
         </h2>
@@ -98,19 +98,19 @@ export function MissionsClient({
       </div>
 
       {/* Info */}
-      <div className="bg-ph-surface rounded-lg p-4">
-        <h3 className="text-sm font-bold text-ph-text mb-3">미션 정보</h3>
-        <ul className="space-y-2 text-xs lg:text-sm text-ph-text-secondary">
+      <div className="bg-op-surface rounded-lg p-4">
+        <h3 className="text-sm font-bold text-op-text mb-3">미션 정보</h3>
+        <ul className="space-y-2 text-xs lg:text-sm text-op-text-secondary">
           <li className="flex items-start gap-2">
-            <span className="text-ph-gold">•</span>
+            <span className="text-op-gold">•</span>
             <span>일일 미션은 매일 자정(KST)에 초기화됩니다</span>
           </li>
           <li className="flex items-start gap-2">
-            <span className="text-ph-gold">•</span>
+            <span className="text-op-gold">•</span>
             <span>모든 일일 미션을 완료하면 보너스 보상을 받습니다</span>
           </li>
           <li className="flex items-start gap-2">
-            <span className="text-ph-gold">•</span>
+            <span className="text-op-gold">•</span>
             <span>미션은 사용자마다 무작위로 배정됩니다</span>
           </li>
         </ul>

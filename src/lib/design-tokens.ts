@@ -1,5 +1,5 @@
 /**
- * PokerHub Design System - Design Tokens
+ * Open Poker Design System - Design Tokens
  * Premium dark poker theme with gold accents
  * Mobile-first poker community
  */

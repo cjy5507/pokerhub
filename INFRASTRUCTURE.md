@@ -1,4 +1,4 @@
-# PokerHub Infrastructure Documentation
+# Open Poker Infrastructure Documentation
 
 ## 완료된 작업
 

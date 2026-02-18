@@ -90,17 +90,17 @@ export function MobileMenu({
       {/* Slide-in Menu */}
       <div
         className={cn(
-          'fixed top-0 left-0 bottom-0 w-[280px] bg-ph-surface z-50 transition-transform duration-300 lg:hidden',
+          'fixed top-0 left-0 bottom-0 w-[280px] bg-op-surface z-50 transition-transform duration-300 lg:hidden',
           'flex flex-col',
           isOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 h-14 border-b border-ph-border">
-          <span className="text-lg font-bold text-ph-gold">메뉴</span>
+        <div className="flex items-center justify-between px-4 h-14 border-b border-op-border">
+          <span className="text-lg font-bold text-op-gold">메뉴</span>
           <button
             onClick={onClose}
-            className="min-w-[44px] min-h-[44px] flex items-center justify-center text-ph-text-secondary hover:text-ph-text transition-colors"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center text-op-text-secondary hover:text-op-text transition-colors"
             aria-label="메뉴 닫기"
           >
             <X className="w-6 h-6" />
@@ -109,23 +109,23 @@ export function MobileMenu({
 
         {/* User Section */}
         {isLoggedIn && (
-          <div className="px-4 py-4 border-b border-ph-border">
+          <div className="px-4 py-4 border-b border-op-border">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-12 h-12 rounded-full bg-ph-gold flex items-center justify-center text-lg font-bold text-ph-text-inverse">
+              <div className="w-12 h-12 rounded-full bg-op-gold flex items-center justify-center text-lg font-bold text-op-text-inverse">
                 {userName?.[0]?.toUpperCase() || 'U'}
               </div>
               <div>
-                <p className="text-sm font-medium text-ph-text">
+                <p className="text-sm font-medium text-op-text">
                   {userName || '사용자'}
                 </p>
-                <p className="text-xs text-ph-text-secondary">
+                <p className="text-xs text-op-text-secondary">
                   Lv.{userLevel ?? 1}
                 </p>
               </div>
             </div>
-            <div className="px-3 py-2 bg-ph-elevated rounded-lg">
-              <p className="text-xs text-ph-text-secondary">보유 포인트</p>
-              <p className="text-sm font-bold text-ph-gold">
+            <div className="px-3 py-2 bg-op-elevated rounded-lg">
+              <p className="text-xs text-op-text-secondary">보유 포인트</p>
+              <p className="text-sm font-bold text-op-gold">
                 {userPoints.toLocaleString()}P
               </p>
             </div>
@@ -151,8 +151,8 @@ export function MobileMenu({
                   className={cn(
                     'block px-4 py-3 text-sm font-medium transition-colors',
                     groupActive
-                      ? 'text-ph-gold bg-ph-gold-dim'
-                      : 'text-ph-text hover:bg-ph-elevated hover:text-ph-gold'
+                      ? 'text-op-gold bg-op-gold-dim'
+                      : 'text-op-text hover:bg-op-elevated hover:text-op-gold'
                   )}
                 >
                   {group.label}
@@ -168,8 +168,8 @@ export function MobileMenu({
                   className={cn(
                     'w-full flex items-center justify-between px-4 py-3 text-sm font-medium transition-colors',
                     groupActive
-                      ? 'text-ph-gold bg-ph-gold-dim'
-                      : 'text-ph-text hover:bg-ph-elevated hover:text-ph-gold'
+                      ? 'text-op-gold bg-op-gold-dim'
+                      : 'text-op-text hover:bg-op-elevated hover:text-op-gold'
                   )}
                   aria-expanded={isExpanded}
                 >
@@ -197,8 +197,8 @@ export function MobileMenu({
                       className={cn(
                         'block pl-8 pr-4 py-2.5 text-sm transition-colors',
                         isItemActive(item.href)
-                          ? 'text-ph-gold font-medium'
-                          : 'text-ph-text-secondary hover:text-ph-gold hover:bg-ph-elevated'
+                          ? 'text-op-gold font-medium'
+                          : 'text-op-text-secondary hover:text-op-gold hover:bg-op-elevated'
                       )}
                     >
                       {item.label}
@@ -211,10 +211,10 @@ export function MobileMenu({
         </nav>
 
         {/* Theme Toggle */}
-        <div className="border-t border-ph-border px-4 py-3">
+        <div className="border-t border-op-border px-4 py-3">
           <button
             onClick={toggleTheme}
-            className="w-full flex items-center gap-3 px-2 py-2 text-sm text-ph-text hover:bg-ph-elevated rounded-lg transition-colors"
+            className="w-full flex items-center gap-3 px-2 py-2 text-sm text-op-text hover:bg-op-elevated rounded-lg transition-colors"
           >
             {theme === 'dark' ? (
               <Sun className="w-5 h-5" />
@@ -227,11 +227,11 @@ export function MobileMenu({
 
         {/* User Actions */}
         {isLoggedIn ? (
-          <div className="border-t border-ph-border py-2">
+          <div className="border-t border-op-border py-2">
             <Link
               href={userId ? `/profile/${userId}` : '/settings'}
               onClick={onClose}
-              className="flex items-center gap-3 px-4 py-3 text-sm text-ph-text hover:bg-ph-elevated transition-colors"
+              className="flex items-center gap-3 px-4 py-3 text-sm text-op-text hover:bg-op-elevated transition-colors"
             >
               <User className="w-5 h-5" />
               내 프로필
@@ -239,25 +239,25 @@ export function MobileMenu({
             <Link
               href="/settings"
               onClick={onClose}
-              className="flex items-center gap-3 px-4 py-3 text-sm text-ph-text hover:bg-ph-elevated transition-colors"
+              className="flex items-center gap-3 px-4 py-3 text-sm text-op-text hover:bg-op-elevated transition-colors"
             >
               <Settings className="w-5 h-5" />
               설정
             </Link>
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 text-sm text-ph-error hover:bg-ph-elevated transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-3 text-sm text-op-error hover:bg-op-elevated transition-colors"
             >
               <LogOut className="w-5 h-5" />
               로그아웃
             </button>
           </div>
         ) : (
-          <div className="border-t border-ph-border p-4">
+          <div className="border-t border-op-border p-4">
             <Link
               href="/login"
               onClick={onClose}
-              className="block w-full px-4 py-3 text-center text-sm font-medium bg-ph-gold hover:bg-ph-gold-hover text-ph-text-inverse rounded-lg transition-colors"
+              className="block w-full px-4 py-3 text-center text-sm font-medium bg-op-gold hover:bg-op-gold-hover text-op-text-inverse rounded-lg transition-colors"
             >
               로그인
             </Link>

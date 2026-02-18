@@ -28,16 +28,16 @@ function Swatch({
   return (
     <div className="flex items-center gap-3">
       <div
-        className="w-12 h-12 rounded-md border border-ph-border flex-shrink-0"
+        className="w-12 h-12 rounded-md border border-op-border flex-shrink-0"
         style={{ backgroundColor: hex }}
       />
       <div className="min-w-0">
-        <div className={`text-sm font-medium ${dark ? 'text-ph-text-inverse' : 'text-ph-text'}`}>
+        <div className={`text-sm font-medium ${dark ? 'text-op-text-inverse' : 'text-op-text'}`}>
           {name}
         </div>
-        <div className="text-xs text-ph-text-muted font-mono">{hex}</div>
+        <div className="text-xs text-op-text-muted font-mono">{hex}</div>
         {cssVar && (
-          <div className="text-xs text-ph-text-dim font-mono">{cssVar}</div>
+          <div className="text-xs text-op-text-dim font-mono">{cssVar}</div>
         )}
       </div>
     </div>
@@ -55,7 +55,7 @@ function TypographySample({
 }) {
   return (
     <div className="flex items-baseline gap-4">
-      <span className="w-16 text-xs text-ph-text-muted flex-shrink-0">{label}</span>
+      <span className="w-16 text-xs text-op-text-muted flex-shrink-0">{label}</span>
       <span className={className}>{text}</span>
     </div>
   );
@@ -76,112 +76,112 @@ export default function DesignSystemPage() {
   });
 
   return (
-    <div className="min-h-screen bg-ph-bg p-4 lg:p-8">
+    <div className="min-h-screen bg-op-bg p-4 lg:p-8">
       <div className="max-w-7xl mx-auto space-y-16">
         {/* ======== HEADER ======== */}
-        <header className="text-center py-10 border-b border-ph-border">
+        <header className="text-center py-10 border-b border-op-border">
           <div className="flex items-center justify-center gap-3 mb-3">
-            <Spade className="w-8 h-8 text-ph-gold" fill="currentColor" />
-            <h1 className="text-3xl lg:text-4xl font-bold text-ph-gold">
-              PokerHub Design System
+            <Spade className="w-8 h-8 text-op-gold" fill="currentColor" />
+            <h1 className="text-3xl lg:text-4xl font-bold text-op-gold">
+              Open Poker Design System
             </h1>
           </div>
-          <p className="text-ph-text-secondary text-lg">
+          <p className="text-op-text-secondary text-lg">
             Premium dark poker theme &mdash; design tokens, colors, typography & components
           </p>
         </header>
 
         {/* ======== 1. COLOR PALETTE ======== */}
         <section>
-          <h2 className="text-2xl font-bold text-ph-text mb-2">Colors</h2>
-          <p className="text-ph-text-secondary mb-6 text-sm">
-            All colors are available as Tailwind utilities (e.g. <code className="text-ph-gold">bg-ph-surface</code>, <code className="text-ph-gold">text-ph-gold</code>) and CSS variables (e.g. <code className="text-ph-gold">var(--color-ph-gold)</code>).
+          <h2 className="text-2xl font-bold text-op-text mb-2">Colors</h2>
+          <p className="text-op-text-secondary mb-6 text-sm">
+            All colors are available as Tailwind utilities (e.g. <code className="text-op-gold">bg-op-surface</code>, <code className="text-op-gold">text-op-gold</code>) and CSS variables (e.g. <code className="text-op-gold">var(--color-op-gold)</code>).
           </p>
 
           <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
             {/* Backgrounds */}
-            <div className="bg-ph-surface rounded-lg p-6 border border-ph-border">
-              <h3 className="text-sm font-semibold text-ph-text-secondary mb-4 uppercase tracking-wider">
+            <div className="bg-op-surface rounded-lg p-6 border border-op-border">
+              <h3 className="text-sm font-semibold text-op-text-secondary mb-4 uppercase tracking-wider">
                 Backgrounds
               </h3>
               <div className="space-y-3">
-                <Swatch name="Deep" hex="#0a0a0a" cssVar="--color-ph-deep" />
-                <Swatch name="Page" hex="#121212" cssVar="--color-ph-bg" />
-                <Swatch name="Header" hex="#1a1a1a" cssVar="--color-ph-header" />
-                <Swatch name="Surface / Card" hex="#1e1e1e" cssVar="--color-ph-surface" />
-                <Swatch name="Elevated" hex="#2a2a2a" cssVar="--color-ph-elevated" />
-                <Swatch name="Footer" hex="#0d0d0d" cssVar="--color-ph-footer" />
+                <Swatch name="Deep" hex="#0a0a0a" cssVar="--color-op-deep" />
+                <Swatch name="Page" hex="#121212" cssVar="--color-op-bg" />
+                <Swatch name="Header" hex="#1a1a1a" cssVar="--color-op-header" />
+                <Swatch name="Surface / Card" hex="#1e1e1e" cssVar="--color-op-surface" />
+                <Swatch name="Elevated" hex="#2a2a2a" cssVar="--color-op-elevated" />
+                <Swatch name="Footer" hex="#0d0d0d" cssVar="--color-op-footer" />
               </div>
             </div>
 
             {/* Text */}
-            <div className="bg-ph-surface rounded-lg p-6 border border-ph-border">
-              <h3 className="text-sm font-semibold text-ph-text-secondary mb-4 uppercase tracking-wider">
+            <div className="bg-op-surface rounded-lg p-6 border border-op-border">
+              <h3 className="text-sm font-semibold text-op-text-secondary mb-4 uppercase tracking-wider">
                 Text
               </h3>
               <div className="space-y-3">
-                <Swatch name="Primary" hex="#e0e0e0" cssVar="--color-ph-text" />
-                <Swatch name="Secondary" hex="#a0a0a0" cssVar="--color-ph-text-secondary" />
-                <Swatch name="Muted" hex="#888888" cssVar="--color-ph-text-muted" />
-                <Swatch name="Dim" hex="#666666" cssVar="--color-ph-text-dim" />
-                <Swatch name="Inverse" hex="#000000" cssVar="--color-ph-text-inverse" />
+                <Swatch name="Primary" hex="#e0e0e0" cssVar="--color-op-text" />
+                <Swatch name="Secondary" hex="#a0a0a0" cssVar="--color-op-text-secondary" />
+                <Swatch name="Muted" hex="#888888" cssVar="--color-op-text-muted" />
+                <Swatch name="Dim" hex="#666666" cssVar="--color-op-text-dim" />
+                <Swatch name="Inverse" hex="#000000" cssVar="--color-op-text-inverse" />
               </div>
             </div>
 
             {/* Brand Gold */}
-            <div className="bg-ph-surface rounded-lg p-6 border border-ph-border">
-              <h3 className="text-sm font-semibold text-ph-text-secondary mb-4 uppercase tracking-wider">
+            <div className="bg-op-surface rounded-lg p-6 border border-op-border">
+              <h3 className="text-sm font-semibold text-op-text-secondary mb-4 uppercase tracking-wider">
                 Brand Gold
               </h3>
               <div className="space-y-3">
-                <Swatch name="Gold" hex="#c9a227" cssVar="--color-ph-gold" />
-                <Swatch name="Gold Hover" hex="#d4af37" cssVar="--color-ph-gold-hover" />
-                <Swatch name="Gold Pressed" hex="#a68523" cssVar="--color-ph-gold-pressed" />
-                <Swatch name="Gold Light" hex="#f4e5b8" cssVar="--color-ph-gold-light" />
+                <Swatch name="Gold" hex="#c9a227" cssVar="--color-op-gold" />
+                <Swatch name="Gold Hover" hex="#d4af37" cssVar="--color-op-gold-hover" />
+                <Swatch name="Gold Pressed" hex="#a68523" cssVar="--color-op-gold-pressed" />
+                <Swatch name="Gold Light" hex="#f4e5b8" cssVar="--color-op-gold-light" />
               </div>
             </div>
 
             {/* Borders */}
-            <div className="bg-ph-surface rounded-lg p-6 border border-ph-border">
-              <h3 className="text-sm font-semibold text-ph-text-secondary mb-4 uppercase tracking-wider">
+            <div className="bg-op-surface rounded-lg p-6 border border-op-border">
+              <h3 className="text-sm font-semibold text-op-text-secondary mb-4 uppercase tracking-wider">
                 Borders
               </h3>
               <div className="space-y-3">
-                <Swatch name="Subtle" hex="#222222" cssVar="--color-ph-border-subtle" />
-                <Swatch name="Default" hex="#333333" cssVar="--color-ph-border" />
-                <Swatch name="Medium" hex="#444444" cssVar="--color-ph-border-medium" />
+                <Swatch name="Subtle" hex="#222222" cssVar="--color-op-border-subtle" />
+                <Swatch name="Default" hex="#333333" cssVar="--color-op-border" />
+                <Swatch name="Medium" hex="#444444" cssVar="--color-op-border-medium" />
               </div>
             </div>
 
             {/* Status */}
-            <div className="bg-ph-surface rounded-lg p-6 border border-ph-border">
-              <h3 className="text-sm font-semibold text-ph-text-secondary mb-4 uppercase tracking-wider">
+            <div className="bg-op-surface rounded-lg p-6 border border-op-border">
+              <h3 className="text-sm font-semibold text-op-text-secondary mb-4 uppercase tracking-wider">
                 Status
               </h3>
               <div className="space-y-3">
-                <Swatch name="Success" hex="#22c55e" cssVar="--color-ph-success" />
-                <Swatch name="Error / Danger" hex="#ef4444" cssVar="--color-ph-error" />
-                <Swatch name="Warning" hex="#eab308" cssVar="--color-ph-warning" />
-                <Swatch name="Info" hex="#3b82f6" cssVar="--color-ph-info" />
+                <Swatch name="Success" hex="#22c55e" cssVar="--color-op-success" />
+                <Swatch name="Error / Danger" hex="#ef4444" cssVar="--color-op-error" />
+                <Swatch name="Warning" hex="#eab308" cssVar="--color-op-warning" />
+                <Swatch name="Info" hex="#3b82f6" cssVar="--color-op-info" />
               </div>
             </div>
 
             {/* Poker Table */}
-            <div className="bg-ph-surface rounded-lg p-6 border border-ph-border">
-              <h3 className="text-sm font-semibold text-ph-text-secondary mb-4 uppercase tracking-wider">
+            <div className="bg-op-surface rounded-lg p-6 border border-op-border">
+              <h3 className="text-sm font-semibold text-op-text-secondary mb-4 uppercase tracking-wider">
                 Poker Table
               </h3>
               <div className="space-y-3">
-                <Swatch name="Felt" hex="#35654d" cssVar="--color-ph-felt" />
-                <Swatch name="Felt Dark" hex="#2d5542" cssVar="--color-ph-felt-dark" />
-                <Swatch name="Enter" hex="#0d7c50" cssVar="--color-ph-enter" />
-                <Swatch name="Card Red" hex="#dc2626" cssVar="--color-ph-card-red" />
+                <Swatch name="Felt" hex="#35654d" cssVar="--color-op-felt" />
+                <Swatch name="Felt Dark" hex="#2d5542" cssVar="--color-op-felt-dark" />
+                <Swatch name="Enter" hex="#0d7c50" cssVar="--color-op-enter" />
+                <Swatch name="Card Red" hex="#dc2626" cssVar="--color-op-card-red" />
               </div>
             </div>
 
             {/* Level Tiers */}
-            <div className="bg-ph-surface rounded-lg p-6 border border-ph-border md:col-span-2 xl:col-span-3">
-              <h3 className="text-sm font-semibold text-ph-text-secondary mb-4 uppercase tracking-wider">
+            <div className="bg-op-surface rounded-lg p-6 border border-op-border md:col-span-2 xl:col-span-3">
+              <h3 className="text-sm font-semibold text-op-text-secondary mb-4 uppercase tracking-wider">
                 Level Tiers
               </h3>
               <div className="flex flex-wrap gap-4">
@@ -210,24 +210,24 @@ export default function DesignSystemPage() {
 
         {/* ======== 2. TYPOGRAPHY ======== */}
         <section>
-          <h2 className="text-2xl font-bold text-ph-text mb-6">Typography</h2>
-          <div className="bg-ph-surface rounded-lg p-6 border border-ph-border space-y-4">
-            <TypographySample label="H1" className="text-3xl lg:text-4xl font-bold text-ph-text" text="Page Heading" />
-            <TypographySample label="H2" className="text-2xl lg:text-[28px] font-semibold text-ph-text" text="Section Title" />
-            <TypographySample label="H3" className="text-lg lg:text-[22px] font-semibold text-ph-text" text="Card Title" />
-            <TypographySample label="Body" className="text-[15px] lg:text-base text-ph-text" text="Body text for reading. 본문 텍스트입니다." />
-            <TypographySample label="Small" className="text-[13px] lg:text-sm text-ph-text-secondary" text="Secondary information and labels" />
-            <TypographySample label="Caption" className="text-[11px] text-ph-text-muted" text="Timestamps, metadata" />
+          <h2 className="text-2xl font-bold text-op-text mb-6">Typography</h2>
+          <div className="bg-op-surface rounded-lg p-6 border border-op-border space-y-4">
+            <TypographySample label="H1" className="text-3xl lg:text-4xl font-bold text-op-text" text="Page Heading" />
+            <TypographySample label="H2" className="text-2xl lg:text-[28px] font-semibold text-op-text" text="Section Title" />
+            <TypographySample label="H3" className="text-lg lg:text-[22px] font-semibold text-op-text" text="Card Title" />
+            <TypographySample label="Body" className="text-[15px] lg:text-base text-op-text" text="Body text for reading. 본문 텍스트입니다." />
+            <TypographySample label="Small" className="text-[13px] lg:text-sm text-op-text-secondary" text="Secondary information and labels" />
+            <TypographySample label="Caption" className="text-[11px] text-op-text-muted" text="Timestamps, metadata" />
           </div>
         </section>
 
         {/* ======== 3. SPACING & RADIUS ======== */}
         <section>
-          <h2 className="text-2xl font-bold text-ph-text mb-6">Spacing & Border Radius</h2>
+          <h2 className="text-2xl font-bold text-op-text mb-6">Spacing & Border Radius</h2>
           <div className="grid md:grid-cols-2 gap-6">
             {/* Spacing scale */}
-            <div className="bg-ph-surface rounded-lg p-6 border border-ph-border">
-              <h3 className="text-sm font-semibold text-ph-text-secondary mb-4 uppercase tracking-wider">
+            <div className="bg-op-surface rounded-lg p-6 border border-op-border">
+              <h3 className="text-sm font-semibold text-op-text-secondary mb-4 uppercase tracking-wider">
                 Spacing Scale (4px base)
               </h3>
               <div className="space-y-2">
@@ -240,9 +240,9 @@ export default function DesignSystemPage() {
                   { label: '8 (32px)', w: '128px' },
                 ].map((s) => (
                   <div key={s.label} className="flex items-center gap-3">
-                    <span className="text-xs text-ph-text-muted w-20">{s.label}</span>
+                    <span className="text-xs text-op-text-muted w-20">{s.label}</span>
                     <div
-                      className="h-3 bg-ph-gold rounded-sm"
+                      className="h-3 bg-op-gold rounded-sm"
                       style={{ width: s.w }}
                     />
                   </div>
@@ -251,8 +251,8 @@ export default function DesignSystemPage() {
             </div>
 
             {/* Border radius */}
-            <div className="bg-ph-surface rounded-lg p-6 border border-ph-border">
-              <h3 className="text-sm font-semibold text-ph-text-secondary mb-4 uppercase tracking-wider">
+            <div className="bg-op-surface rounded-lg p-6 border border-op-border">
+              <h3 className="text-sm font-semibold text-op-text-secondary mb-4 uppercase tracking-wider">
                 Border Radius
               </h3>
               <div className="flex flex-wrap gap-4">
@@ -266,10 +266,10 @@ export default function DesignSystemPage() {
                 ].map((r) => (
                   <div key={r.label} className="flex flex-col items-center gap-2">
                     <div
-                      className="w-16 h-16 bg-ph-elevated border border-ph-border"
+                      className="w-16 h-16 bg-op-elevated border border-op-border"
                       style={{ borderRadius: r.r }}
                     />
-                    <span className="text-xs text-ph-text-muted">{r.label}</span>
+                    <span className="text-xs text-op-text-muted">{r.label}</span>
                   </div>
                 ))}
               </div>
@@ -279,8 +279,8 @@ export default function DesignSystemPage() {
 
         {/* ======== 4. SHADOWS ======== */}
         <section>
-          <h2 className="text-2xl font-bold text-ph-text mb-6">Shadows & Glows</h2>
-          <div className="bg-ph-surface rounded-lg p-6 border border-ph-border">
+          <h2 className="text-2xl font-bold text-op-text mb-6">Shadows & Glows</h2>
+          <div className="bg-op-surface rounded-lg p-6 border border-op-border">
             <div className="flex flex-wrap gap-6">
               {[
                 { label: 'Card', shadow: '0 2px 4px rgba(0,0,0,0.3)' },
@@ -292,10 +292,10 @@ export default function DesignSystemPage() {
               ].map((s) => (
                 <div key={s.label} className="flex flex-col items-center gap-2">
                   <div
-                    className="w-20 h-20 bg-ph-elevated rounded-lg"
+                    className="w-20 h-20 bg-op-elevated rounded-lg"
                     style={{ boxShadow: s.shadow }}
                   />
-                  <span className="text-xs text-ph-text-muted">{s.label}</span>
+                  <span className="text-xs text-op-text-muted">{s.label}</span>
                 </div>
               ))}
             </div>
@@ -304,57 +304,57 @@ export default function DesignSystemPage() {
 
         {/* ======== 5. BUTTONS ======== */}
         <section>
-          <h2 className="text-2xl font-bold text-ph-text mb-6">Buttons</h2>
-          <div className="bg-ph-surface rounded-lg p-6 border border-ph-border space-y-6">
+          <h2 className="text-2xl font-bold text-op-text mb-6">Buttons</h2>
+          <div className="bg-op-surface rounded-lg p-6 border border-op-border space-y-6">
             <div>
-              <h3 className="text-sm text-ph-text-secondary mb-3">Primary (Gold)</h3>
+              <h3 className="text-sm text-op-text-secondary mb-3">Primary (Gold)</h3>
               <div className="flex flex-wrap gap-3">
-                <button className="px-6 py-2.5 bg-ph-gold hover:bg-ph-gold-hover text-ph-text-inverse font-semibold rounded-md transition-colors">
+                <button className="px-6 py-2.5 bg-op-gold hover:bg-op-gold-hover text-op-text-inverse font-semibold rounded-md transition-colors">
                   Primary
                 </button>
-                <button className="px-6 py-2.5 bg-ph-gold hover:bg-ph-gold-hover text-ph-text-inverse font-semibold rounded-md transition-colors opacity-50 cursor-not-allowed">
+                <button className="px-6 py-2.5 bg-op-gold hover:bg-op-gold-hover text-op-text-inverse font-semibold rounded-md transition-colors opacity-50 cursor-not-allowed">
                   Disabled
                 </button>
               </div>
             </div>
             <div>
-              <h3 className="text-sm text-ph-text-secondary mb-3">Secondary</h3>
+              <h3 className="text-sm text-op-text-secondary mb-3">Secondary</h3>
               <div className="flex flex-wrap gap-3">
-                <button className="px-6 py-2.5 bg-ph-elevated hover:bg-ph-border-medium text-ph-text font-semibold rounded-md transition-colors">
+                <button className="px-6 py-2.5 bg-op-elevated hover:bg-op-border-medium text-op-text font-semibold rounded-md transition-colors">
                   Secondary
                 </button>
-                <button className="px-6 py-2.5 border border-ph-border hover:border-ph-gold text-ph-text font-semibold rounded-md transition-colors">
+                <button className="px-6 py-2.5 border border-op-border hover:border-op-gold text-op-text font-semibold rounded-md transition-colors">
                   Outline
                 </button>
               </div>
             </div>
             <div>
-              <h3 className="text-sm text-ph-text-secondary mb-3">Poker Actions</h3>
+              <h3 className="text-sm text-op-text-secondary mb-3">Poker Actions</h3>
               <div className="flex flex-wrap gap-3">
-                <button className="px-6 py-2.5 bg-ph-enter hover:bg-ph-enter-hover text-white font-semibold rounded-md transition-colors">
+                <button className="px-6 py-2.5 bg-op-enter hover:bg-op-enter-hover text-white font-semibold rounded-md transition-colors">
                   Enter Table
                 </button>
-                <button className="px-6 py-2.5 bg-ph-error hover:opacity-90 text-white font-semibold rounded-md transition-colors">
+                <button className="px-6 py-2.5 bg-op-error hover:opacity-90 text-white font-semibold rounded-md transition-colors">
                   Danger
                 </button>
               </div>
             </div>
             <div>
-              <h3 className="text-sm text-ph-text-secondary mb-3">Pill / Tag</h3>
+              <h3 className="text-sm text-op-text-secondary mb-3">Pill / Tag</h3>
               <div className="flex flex-wrap gap-2">
-                <span className="px-3 py-1 bg-ph-gold-dim text-ph-gold text-xs font-medium rounded-full">
+                <span className="px-3 py-1 bg-op-gold-dim text-op-gold text-xs font-medium rounded-full">
                   Gold Tag
                 </span>
-                <span className="px-3 py-1 bg-ph-success-dim text-ph-success text-xs font-medium rounded-full">
+                <span className="px-3 py-1 bg-op-success-dim text-op-success text-xs font-medium rounded-full">
                   Success
                 </span>
-                <span className="px-3 py-1 bg-ph-error-dim text-ph-error text-xs font-medium rounded-full">
+                <span className="px-3 py-1 bg-op-error-dim text-op-error text-xs font-medium rounded-full">
                   Error
                 </span>
-                <span className="px-3 py-1 bg-ph-warning-dim text-ph-warning text-xs font-medium rounded-full">
+                <span className="px-3 py-1 bg-op-warning-dim text-op-warning text-xs font-medium rounded-full">
                   Warning
                 </span>
-                <span className="px-3 py-1 bg-ph-info-dim text-ph-info text-xs font-medium rounded-full">
+                <span className="px-3 py-1 bg-op-info-dim text-op-info text-xs font-medium rounded-full">
                   Info
                 </span>
               </div>
@@ -364,20 +364,20 @@ export default function DesignSystemPage() {
 
         {/* ======== 6. FORM ELEMENTS ======== */}
         <section>
-          <h2 className="text-2xl font-bold text-ph-text mb-6">Form Elements</h2>
-          <div className="bg-ph-surface rounded-lg p-6 border border-ph-border space-y-4 max-w-md">
+          <h2 className="text-2xl font-bold text-op-text mb-6">Form Elements</h2>
+          <div className="bg-op-surface rounded-lg p-6 border border-op-border space-y-4 max-w-md">
             <div>
-              <label className="block text-sm font-medium text-ph-text mb-2">Text Input</label>
+              <label className="block text-sm font-medium text-op-text mb-2">Text Input</label>
               <input
                 type="text"
                 placeholder="Placeholder text..."
-                className="w-full bg-ph-deep border border-ph-border rounded-md px-4 py-2 text-ph-text placeholder:text-ph-text-dim focus:border-ph-gold focus:outline-none transition-colors"
+                className="w-full bg-op-deep border border-op-border rounded-md px-4 py-2 text-op-text placeholder:text-op-text-dim focus:border-op-gold focus:outline-none transition-colors"
                 readOnly
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-ph-text mb-2">Select</label>
-              <select className="w-full bg-ph-deep border border-ph-border rounded-md px-4 py-2 text-ph-text focus:border-ph-gold focus:outline-none transition-colors">
+              <label className="block text-sm font-medium text-op-text mb-2">Select</label>
+              <select className="w-full bg-op-deep border border-op-border rounded-md px-4 py-2 text-op-text focus:border-op-gold focus:outline-none transition-colors">
                 <option>Option 1</option>
                 <option>Option 2</option>
               </select>
@@ -387,29 +387,29 @@ export default function DesignSystemPage() {
 
         {/* ======== 7. CARDS ======== */}
         <section>
-          <h2 className="text-2xl font-bold text-ph-text mb-6">Card Patterns</h2>
+          <h2 className="text-2xl font-bold text-op-text mb-6">Card Patterns</h2>
           <div className="grid md:grid-cols-3 gap-4">
-            <div className="bg-ph-surface border border-ph-border rounded-lg p-5">
-              <h3 className="text-sm font-semibold text-ph-text mb-2">Standard Card</h3>
-              <p className="text-xs text-ph-text-secondary">bg-ph-surface + border-ph-border</p>
+            <div className="bg-op-surface border border-op-border rounded-lg p-5">
+              <h3 className="text-sm font-semibold text-op-text mb-2">Standard Card</h3>
+              <p className="text-xs text-op-text-secondary">bg-op-surface + border-op-border</p>
             </div>
-            <div className="bg-ph-surface border border-ph-border rounded-lg p-5 hover:border-ph-gold transition-colors cursor-pointer">
-              <h3 className="text-sm font-semibold text-ph-text mb-2">Interactive Card</h3>
-              <p className="text-xs text-ph-text-secondary">hover:border-ph-gold</p>
+            <div className="bg-op-surface border border-op-border rounded-lg p-5 hover:border-op-gold transition-colors cursor-pointer">
+              <h3 className="text-sm font-semibold text-op-text mb-2">Interactive Card</h3>
+              <p className="text-xs text-op-text-secondary">hover:border-op-gold</p>
             </div>
-            <div className="bg-ph-surface border border-ph-border rounded-lg p-5" style={{ boxShadow: '0 0 12px rgba(201,162,39,0.4)' }}>
-              <h3 className="text-sm font-semibold text-ph-gold mb-2">Featured Card</h3>
-              <p className="text-xs text-ph-text-secondary">Gold glow shadow</p>
+            <div className="bg-op-surface border border-op-border rounded-lg p-5" style={{ boxShadow: '0 0 12px rgba(201,162,39,0.4)' }}>
+              <h3 className="text-sm font-semibold text-op-gold mb-2">Featured Card</h3>
+              <p className="text-xs text-op-text-secondary">Gold glow shadow</p>
             </div>
           </div>
         </section>
 
         {/* ======== 8. PLAYING CARDS ======== */}
         <section>
-          <h2 className="text-2xl font-bold text-ph-text mb-6">Playing Cards</h2>
-          <div className="bg-ph-surface rounded-lg p-6 border border-ph-border space-y-6">
+          <h2 className="text-2xl font-bold text-op-text mb-6">Playing Cards</h2>
+          <div className="bg-op-surface rounded-lg p-6 border border-op-border space-y-6">
             <div>
-              <h3 className="text-sm text-ph-text-secondary mb-3">Sizes</h3>
+              <h3 className="text-sm text-op-text-secondary mb-3">Sizes</h3>
               <div className="flex items-end gap-4">
                 <CardRenderer rank="A" suit="h" size="sm" />
                 <CardRenderer rank="K" suit="d" size="md" />
@@ -417,7 +417,7 @@ export default function DesignSystemPage() {
               </div>
             </div>
             <div>
-              <h3 className="text-sm text-ph-text-secondary mb-3">Suits</h3>
+              <h3 className="text-sm text-op-text-secondary mb-3">Suits</h3>
               <div className="flex items-center gap-2">
                 <CardRenderer rank="A" suit="h" size="md" />
                 <CardRenderer rank="A" suit="d" size="md" />
@@ -426,11 +426,11 @@ export default function DesignSystemPage() {
               </div>
             </div>
             <div>
-              <h3 className="text-sm text-ph-text-secondary mb-3">Inline Cards</h3>
+              <h3 className="text-sm text-op-text-secondary mb-3">Inline Cards</h3>
               <InlineCards notation="Ah Kd Qs Jc Ts" size="md" />
             </div>
             <div>
-              <h3 className="text-sm text-ph-text-secondary mb-3">Face Down</h3>
+              <h3 className="text-sm text-op-text-secondary mb-3">Face Down</h3>
               <CardRenderer rank="A" suit="h" size="md" faceDown />
             </div>
           </div>
@@ -438,8 +438,8 @@ export default function DesignSystemPage() {
 
         {/* ======== 9. POKER TABLE ======== */}
         <section>
-          <h2 className="text-2xl font-bold text-ph-text mb-6">Poker Table</h2>
-          <div className="bg-ph-surface rounded-lg p-6 border border-ph-border">
+          <h2 className="text-2xl font-bold text-op-text mb-6">Poker Table</h2>
+          <div className="bg-op-surface rounded-lg p-6 border border-op-border">
             <TableVisualizer
               seats={[
                 { position: 'BTN', stack: 500, isHero: true, isActive: true },
@@ -458,7 +458,7 @@ export default function DesignSystemPage() {
 
         {/* ======== 10. STREET NAVIGATOR ======== */}
         <section>
-          <h2 className="text-2xl font-bold text-ph-text mb-6">Street Navigator</h2>
+          <h2 className="text-2xl font-bold text-op-text mb-6">Street Navigator</h2>
           <StreetNavigator
             streets={[
               {
@@ -484,7 +484,7 @@ export default function DesignSystemPage() {
 
         {/* ======== 11. HAND CARDS ======== */}
         <section>
-          <h2 className="text-2xl font-bold text-ph-text mb-6">Hand Cards</h2>
+          <h2 className="text-2xl font-bold text-op-text mb-6">Hand Cards</h2>
           <div className="grid md:grid-cols-2 gap-4">
             <HandCard
               handId="1"
@@ -517,7 +517,7 @@ export default function DesignSystemPage() {
 
         {/* ======== 12. ATTENDANCE ======== */}
         <section>
-          <h2 className="text-2xl font-bold text-ph-text mb-6">Attendance Calendar</h2>
+          <h2 className="text-2xl font-bold text-op-text mb-6">Attendance Calendar</h2>
           <div className="max-w-md">
             <AttendanceCalendar
               year={today.getFullYear()}
@@ -531,7 +531,7 @@ export default function DesignSystemPage() {
 
         {/* ======== 13. MISSION CARDS ======== */}
         <section>
-          <h2 className="text-2xl font-bold text-ph-text mb-6">Mission Cards</h2>
+          <h2 className="text-2xl font-bold text-op-text mb-6">Mission Cards</h2>
           <div className="grid md:grid-cols-2 gap-4">
             <MissionCard
               id="m1"
@@ -568,8 +568,8 @@ export default function DesignSystemPage() {
 
         {/* ======== 14. AUTHOR BADGES ======== */}
         <section>
-          <h2 className="text-2xl font-bold text-ph-text mb-6">Author Badges</h2>
-          <div className="bg-ph-surface rounded-lg p-6 border border-ph-border space-y-4">
+          <h2 className="text-2xl font-bold text-op-text mb-6">Author Badges</h2>
+          <div className="bg-op-surface rounded-lg p-6 border border-op-border space-y-4">
             <div className="flex flex-wrap gap-4">
               <AuthorBadge userId="u1" nickname="Bronze" level={5} />
               <AuthorBadge userId="u2" nickname="Silver" level={15} />
@@ -585,8 +585,8 @@ export default function DesignSystemPage() {
 
         {/* ======== 15. POST ROWS ======== */}
         <section>
-          <h2 className="text-2xl font-bold text-ph-text mb-6">Post Rows</h2>
-          <div className="bg-ph-surface rounded-lg overflow-hidden divide-y divide-ph-border">
+          <h2 className="text-2xl font-bold text-op-text mb-6">Post Rows</h2>
+          <div className="bg-op-surface rounded-lg overflow-hidden divide-y divide-op-border">
             <PostRow
               postId="p1"
               boardSlug="general"
@@ -613,8 +613,8 @@ export default function DesignSystemPage() {
 
         {/* ======== 16. LIKE BUTTON ======== */}
         <section>
-          <h2 className="text-2xl font-bold text-ph-text mb-6">Like Button</h2>
-          <div className="bg-ph-surface rounded-lg p-6 border border-ph-border">
+          <h2 className="text-2xl font-bold text-op-text mb-6">Like Button</h2>
+          <div className="bg-op-surface rounded-lg p-6 border border-op-border">
             <div className="flex items-center gap-8">
               <LikeButton
                 targetId="demo"
@@ -640,50 +640,50 @@ export default function DesignSystemPage() {
         </section>
 
         {/* ======== 17. TOKEN USAGE GUIDE ======== */}
-        <section className="border-t border-ph-border pt-12">
-          <h2 className="text-2xl font-bold text-ph-text mb-6">Token Usage Guide</h2>
-          <div className="bg-ph-surface rounded-lg p-6 border border-ph-border">
+        <section className="border-t border-op-border pt-12">
+          <h2 className="text-2xl font-bold text-op-text mb-6">Token Usage Guide</h2>
+          <div className="bg-op-surface rounded-lg p-6 border border-op-border">
             <div className="space-y-6 text-sm">
               <div>
-                <h3 className="font-semibold text-ph-gold mb-2">Tailwind Classes (Recommended)</h3>
-                <pre className="bg-ph-deep rounded-md p-4 text-ph-text-secondary overflow-x-auto">
+                <h3 className="font-semibold text-op-gold mb-2">Tailwind Classes (Recommended)</h3>
+                <pre className="bg-op-deep rounded-md p-4 text-op-text-secondary overflow-x-auto">
 {`<!-- Backgrounds -->
-<div class="bg-ph-bg">        <!-- #121212 page bg -->
-<div class="bg-ph-surface">   <!-- #1e1e1e card bg -->
-<div class="bg-ph-elevated">  <!-- #2a2a2a hover bg -->
-<div class="bg-ph-deep">      <!-- #0a0a0a deep bg -->
+<div class="bg-op-bg">        <!-- #121212 page bg -->
+<div class="bg-op-surface">   <!-- #1e1e1e card bg -->
+<div class="bg-op-elevated">  <!-- #2a2a2a hover bg -->
+<div class="bg-op-deep">      <!-- #0a0a0a deep bg -->
 
 <!-- Text -->
-<p class="text-ph-text">          <!-- #e0e0e0 primary -->
-<p class="text-ph-text-secondary"> <!-- #a0a0a0 secondary -->
-<p class="text-ph-gold">          <!-- #c9a227 accent -->
+<p class="text-op-text">          <!-- #e0e0e0 primary -->
+<p class="text-op-text-secondary"> <!-- #a0a0a0 secondary -->
+<p class="text-op-gold">          <!-- #c9a227 accent -->
 
 <!-- Borders -->
-<div class="border-ph-border">  <!-- #333333 -->
+<div class="border-op-border">  <!-- #333333 -->
 
 <!-- Status -->
-<span class="text-ph-success">  <!-- #22c55e -->
-<span class="bg-ph-error-dim">  <!-- rgba(239,68,68,0.15) -->`}
+<span class="text-op-success">  <!-- #22c55e -->
+<span class="bg-op-error-dim">  <!-- rgba(239,68,68,0.15) -->`}
                 </pre>
               </div>
               <div>
-                <h3 className="font-semibold text-ph-gold mb-2">CSS Variables</h3>
-                <pre className="bg-ph-deep rounded-md p-4 text-ph-text-secondary overflow-x-auto">
+                <h3 className="font-semibold text-op-gold mb-2">CSS Variables</h3>
+                <pre className="bg-op-deep rounded-md p-4 text-op-text-secondary overflow-x-auto">
 {`/* Use in custom CSS or inline styles */
 .my-element {
-  background: var(--color-ph-surface);
-  color: var(--color-ph-text);
-  border: 1px solid var(--color-ph-border);
+  background: var(--color-op-surface);
+  color: var(--color-op-text);
+  border: 1px solid var(--color-op-border);
 }
 
 .my-button:hover {
-  background: var(--color-ph-gold-hover);
+  background: var(--color-op-gold-hover);
 }`}
                 </pre>
               </div>
               <div>
-                <h3 className="font-semibold text-ph-gold mb-2">TypeScript Import</h3>
-                <pre className="bg-ph-deep rounded-md p-4 text-ph-text-secondary overflow-x-auto">
+                <h3 className="font-semibold text-op-gold mb-2">TypeScript Import</h3>
+                <pre className="bg-op-deep rounded-md p-4 text-op-text-secondary overflow-x-auto">
 {`import { colors, shadows, animation } from '@/lib/design-tokens';
 
 // Use in JS/TS when CSS isn't possible

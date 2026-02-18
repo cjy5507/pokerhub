@@ -5,7 +5,7 @@ import { formatRelativeTime } from '@/lib/utils/time';
 import { cn } from '@/lib/utils';
 
 export const metadata = {
-  title: '채팅 - PokerHub',
+  title: '채팅 - Open Poker',
   description: '포커 커뮤니티 실시간 채팅',
 };
 
@@ -17,22 +17,22 @@ const typeLabels = {
 };
 
 const typeColors = {
-  general: 'bg-ph-elevated text-ph-text-secondary',
-  game: 'bg-ph-success-dim text-ph-success',
+  general: 'bg-op-elevated text-op-text-secondary',
+  game: 'bg-op-success-dim text-op-success',
   tournament: 'bg-purple-500/15 text-purple-400',
-  private: 'bg-ph-error-dim text-ph-error',
+  private: 'bg-op-error-dim text-op-error',
 };
 
 export default async function ChatPage() {
   const { rooms } = await getChatRooms();
 
   return (
-    <div className="min-h-screen bg-ph-bg pb-20 lg:pb-8">
+    <div className="min-h-screen bg-op-bg pb-20 lg:pb-8">
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-ph-text mb-2">채팅</h1>
-          <p className="text-sm text-ph-text-secondary">
+          <h1 className="text-2xl font-bold text-op-text mb-2">채팅</h1>
+          <p className="text-sm text-op-text-secondary">
             포커 애호가들과 실시간으로 소통하세요
           </p>
         </div>
@@ -44,8 +44,8 @@ export default async function ChatPage() {
               key={room.id}
               href={`/chat/${room.id}`}
               className={cn(
-                'block bg-ph-surface border border-ph-border rounded-lg p-4',
-                'hover:bg-ph-elevated transition-colors',
+                'block bg-op-surface border border-op-border rounded-lg p-4',
+                'hover:bg-op-elevated transition-colors',
                 'min-h-[88px]'
               )}
             >
@@ -53,8 +53,8 @@ export default async function ChatPage() {
                 <div className="flex-1 min-w-0">
                   {/* Room Name & Badge */}
                   <div className="flex items-center gap-2 mb-2">
-                    <MessageSquare className="w-5 h-5 text-ph-gold flex-shrink-0" />
-                    <h2 className="text-base font-semibold text-ph-text truncate">
+                    <MessageSquare className="w-5 h-5 text-op-gold flex-shrink-0" />
+                    <h2 className="text-base font-semibold text-op-text truncate">
                       {room.nameKo}
                     </h2>
                     <span
@@ -70,8 +70,8 @@ export default async function ChatPage() {
                   {/* Last Message */}
                   {room.lastMessage && (
                     <div className="mb-2">
-                      <p className="text-sm text-ph-text-secondary line-clamp-1">
-                        <span className="font-medium text-ph-gold">
+                      <p className="text-sm text-op-text-secondary line-clamp-1">
+                        <span className="font-medium text-op-gold">
                           {room.lastMessage.senderNickname}
                         </span>
                         : {room.lastMessage.content}
@@ -80,7 +80,7 @@ export default async function ChatPage() {
                   )}
 
                   {/* Footer Info */}
-                  <div className="flex items-center gap-3 text-xs text-ph-text-muted">
+                  <div className="flex items-center gap-3 text-xs text-op-text-muted">
                     <div className="flex items-center gap-1">
                       <Users className="w-3.5 h-3.5" />
                       <span>{room.participantCount}</span>
@@ -104,8 +104,8 @@ export default async function ChatPage() {
         {/* Empty State */}
         {rooms.length === 0 && (
           <div className="text-center py-12">
-            <MessageSquare className="w-12 h-12 text-ph-border mx-auto mb-3" />
-            <p className="text-ph-text-muted">채팅방이 없습니다</p>
+            <MessageSquare className="w-12 h-12 text-op-border mx-auto mb-3" />
+            <p className="text-op-text-muted">채팅방이 없습니다</p>
           </div>
         )}
       </div>

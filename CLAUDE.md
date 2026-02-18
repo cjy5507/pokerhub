@@ -1,7 +1,7 @@
-# PokerHub - Project Instructions
+# Open Poker - Project Instructions
 
 ## Overview
-PokerHub is a Korean-first bilingual poker community platform built with Next.js 16, Supabase (PostgreSQL), and Drizzle ORM.
+Open Poker is a Korean-first bilingual poker community platform built with Next.js 16, Supabase (PostgreSQL), and Drizzle ORM.
 
 ## Tech Stack
 - **Framework**: Next.js 16.1.6 (App Router)

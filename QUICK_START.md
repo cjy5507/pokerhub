@@ -1,4 +1,4 @@
-# PokerHub Design System - Quick Start
+# Open Poker Design System - Quick Start
 
 ## 🚀 Getting Started in 2 Minutes
 

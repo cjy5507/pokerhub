@@ -45,7 +45,7 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
   return (
     <nav
       className={cn(
-        'fixed bottom-0 left-0 right-0 z-50 bg-ph-surface border-t border-ph-border',
+        'fixed bottom-0 left-0 right-0 z-50 bg-op-surface border-t border-op-border',
         'lg:hidden',
         className
       )}
@@ -77,12 +77,12 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
                 <Icon
                   className={cn(
                     'w-6 h-6',
-                    isActive ? 'text-ph-gold' : 'text-ph-text-secondary'
+                    isActive ? 'text-op-gold' : 'text-op-text-secondary'
                   )}
                   strokeWidth={isActive ? 2.5 : 2}
                 />
                 {isActive && (
-                  <span className="text-[10px] font-medium text-ph-gold">
+                  <span className="text-[10px] font-medium text-op-gold">
                     {item.label}
                   </span>
                 )}
@@ -106,13 +106,13 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
                 <Icon
                   className={cn(
                     'w-6 h-6',
-                    isActive ? 'text-ph-gold' : 'text-ph-text-secondary'
+                    isActive ? 'text-op-gold' : 'text-op-text-secondary'
                   )}
                   strokeWidth={isActive ? 2.5 : 2}
                 />
               )}
               {isActive && (
-                <span className="text-[10px] font-medium text-ph-gold">
+                <span className="text-[10px] font-medium text-op-gold">
                   {item.label}
                 </span>
               )}

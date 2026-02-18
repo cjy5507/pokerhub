@@ -87,9 +87,9 @@ function ItemCard({ item }: { item: MarketItemWithSeller }) {
     : null;
 
   return (
-    <div className="group bg-ph-surface border border-ph-border rounded-xl overflow-hidden hover:border-ph-border-medium transition-all hover:shadow-lg hover:shadow-black/10">
+    <div className="group bg-op-surface border border-op-border rounded-xl overflow-hidden hover:border-op-border-medium transition-all hover:shadow-lg hover:shadow-black/10">
       {/* Image placeholder */}
-      <div className="relative aspect-[4/3] bg-ph-elevated flex items-center justify-center overflow-hidden">
+      <div className="relative aspect-[4/3] bg-op-elevated flex items-center justify-center overflow-hidden">
         {item.imageUrl ? (
           <img
             src={item.imageUrl}
@@ -97,11 +97,11 @@ function ItemCard({ item }: { item: MarketItemWithSeller }) {
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
-          <Package className="w-12 h-12 text-ph-text-muted" />
+          <Package className="w-12 h-12 text-op-text-muted" />
         )}
 
         {/* Category badge */}
-        <span className="absolute top-2 left-2 px-2 py-0.5 text-xs font-medium rounded-md bg-ph-info-dim text-ph-info">
+        <span className="absolute top-2 left-2 px-2 py-0.5 text-xs font-medium rounded-md bg-op-info-dim text-op-info">
           {CATEGORY_LABEL[item.category] ?? item.category}
         </span>
 
@@ -110,9 +110,9 @@ function ItemCard({ item }: { item: MarketItemWithSeller }) {
           <span
             className={cn(
               'absolute top-2 right-2 px-2 py-0.5 text-xs font-bold rounded-md',
-              item.status === 'funded' && 'bg-ph-success-dim text-ph-success',
-              item.status === 'closed' && 'bg-ph-elevated text-ph-text-muted',
-              item.status === 'cancelled' && 'bg-ph-error-dim text-ph-error',
+              item.status === 'funded' && 'bg-op-success-dim text-op-success',
+              item.status === 'closed' && 'bg-op-elevated text-op-text-muted',
+              item.status === 'cancelled' && 'bg-op-error-dim text-op-error',
             )}
           >
             {STATUS_LABEL[item.status]}
@@ -121,7 +121,7 @@ function ItemCard({ item }: { item: MarketItemWithSeller }) {
 
         {/* Discount badge */}
         {discountPercent && (
-          <span className="absolute bottom-2 left-2 px-2 py-0.5 text-xs font-bold rounded-md bg-ph-error text-white">
+          <span className="absolute bottom-2 left-2 px-2 py-0.5 text-xs font-bold rounded-md bg-op-error text-white">
             -{discountPercent}%
           </span>
         )}
@@ -130,17 +130,17 @@ function ItemCard({ item }: { item: MarketItemWithSeller }) {
       {/* Content */}
       <div className="p-3 space-y-2">
         {/* Title */}
-        <h3 className="text-sm font-semibold text-ph-text line-clamp-2 leading-snug min-h-[2.5rem]">
+        <h3 className="text-sm font-semibold text-op-text line-clamp-2 leading-snug min-h-[2.5rem]">
           {item.title}
         </h3>
 
         {/* Price */}
         <div className="flex items-baseline gap-2">
-          <span className="text-lg font-bold text-ph-gold">
+          <span className="text-lg font-bold text-op-gold">
             {formatPrice(item.price)}P
           </span>
           {hasDiscount && (
-            <span className="text-sm text-ph-text-muted line-through">
+            <span className="text-sm text-op-text-muted line-through">
               {formatPrice(item.originalPrice!)}P
             </span>
           )}
@@ -149,21 +149,21 @@ function ItemCard({ item }: { item: MarketItemWithSeller }) {
         {/* Group buy progress */}
         {item.isGroupBuy && item.targetCount && (
           <div className="space-y-1">
-            <div className="h-2 bg-ph-elevated rounded-full overflow-hidden">
+            <div className="h-2 bg-op-elevated rounded-full overflow-hidden">
               <div
-                className="h-full bg-ph-gold rounded-full transition-all duration-500"
+                className="h-full bg-op-gold rounded-full transition-all duration-500"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
             <div className="flex items-center justify-between text-xs">
-              <span className="text-ph-text-secondary">
+              <span className="text-op-text-secondary">
                 {item.currentCount}/{item.targetCount}명
               </span>
               {daysRemaining !== null && (
                 <span
                   className={cn(
                     'font-medium',
-                    daysRemaining <= 3 ? 'text-ph-error' : 'text-ph-text-secondary',
+                    daysRemaining <= 3 ? 'text-op-error' : 'text-op-text-secondary',
                   )}
                 >
                   <Clock className="inline w-3 h-3 mr-0.5 -mt-px" />
@@ -175,7 +175,7 @@ function ItemCard({ item }: { item: MarketItemWithSeller }) {
         )}
 
         {/* Stats row */}
-        <div className="flex items-center gap-3 text-xs text-ph-text-muted pt-1 border-t border-ph-border">
+        <div className="flex items-center gap-3 text-xs text-op-text-muted pt-1 border-t border-op-border">
           <span className="flex items-center gap-1">
             <Heart className="w-3.5 h-3.5" />
             {item.likeCount}
@@ -184,7 +184,7 @@ function ItemCard({ item }: { item: MarketItemWithSeller }) {
             <Eye className="w-3.5 h-3.5" />
             {item.viewCount}
           </span>
-          <span className="ml-auto text-ph-text-muted truncate max-w-[80px]">
+          <span className="ml-auto text-op-text-muted truncate max-w-[80px]">
             {item.seller.nickname}
           </span>
         </div>
@@ -236,19 +236,19 @@ export function MarketClient({
   }, [initialItems, category, sort]);
 
   return (
-    <div className="min-h-screen bg-ph-bg text-ph-text pb-20">
+    <div className="min-h-screen bg-op-bg text-op-text pb-20">
       {/* Hero */}
-      <div className="border-b border-ph-border bg-ph-surface">
+      <div className="border-b border-op-border bg-op-surface">
         <div className="max-w-6xl mx-auto px-4 py-6">
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-3 bg-gradient-to-br from-ph-gold to-ph-gold-hover rounded-xl shadow-lg shadow-ph-gold/20">
+            <div className="p-3 bg-gradient-to-br from-op-gold to-op-gold-hover rounded-xl shadow-lg shadow-op-gold/20">
               <Store size={28} className="text-black" />
             </div>
             <div>
-              <h1 className="text-3xl font-black tracking-tight text-ph-text">
+              <h1 className="text-3xl font-black tracking-tight text-op-text">
                 마켓
               </h1>
-              <p className="text-sm text-ph-text-secondary">
+              <p className="text-sm text-op-text-secondary">
                 포커 용품, 디지털 상품, 공동구매
               </p>
             </div>
@@ -269,8 +269,8 @@ export function MarketClient({
                 className={cn(
                   'flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors',
                   isActive
-                    ? 'bg-ph-gold text-black'
-                    : 'bg-ph-surface border border-ph-border text-ph-text-secondary hover:text-ph-text hover:border-ph-border-medium',
+                    ? 'bg-op-gold text-black'
+                    : 'bg-op-surface border border-op-border text-op-text-secondary hover:text-op-text hover:border-op-border-medium',
                 )}
               >
                 <Icon className="w-4 h-4" />
@@ -283,8 +283,8 @@ export function MarketClient({
         {/* Filter bar */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
-            <SlidersHorizontal className="w-4 h-4 text-ph-text-muted" />
-            <div className="flex items-center gap-1 bg-ph-surface border border-ph-border rounded-lg p-0.5">
+            <SlidersHorizontal className="w-4 h-4 text-op-text-muted" />
+            <div className="flex items-center gap-1 bg-op-surface border border-op-border rounded-lg p-0.5">
               {SORT_OPTIONS.map((opt) => (
                 <button
                   key={opt.key}
@@ -292,8 +292,8 @@ export function MarketClient({
                   className={cn(
                     'px-3 py-1.5 text-xs font-medium rounded-md transition-colors',
                     sort === opt.key
-                      ? 'bg-ph-elevated text-ph-text'
-                      : 'text-ph-text-muted hover:text-ph-text',
+                      ? 'bg-op-elevated text-op-text'
+                      : 'text-op-text-muted hover:text-op-text',
                   )}
                 >
                   {opt.label}
@@ -305,7 +305,7 @@ export function MarketClient({
           {/* Write button */}
           <Link
             href="/login"
-            className="flex items-center gap-1.5 px-4 py-2 bg-ph-gold hover:bg-ph-gold-hover text-black text-sm font-bold rounded-lg transition-colors"
+            className="flex items-center gap-1.5 px-4 py-2 bg-op-gold hover:bg-op-gold-hover text-black text-sm font-bold rounded-lg transition-colors"
           >
             <Plus className="w-4 h-4" />
             상품 등록
@@ -314,7 +314,7 @@ export function MarketClient({
 
         {/* Item Grid */}
         {items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-ph-text-muted">
+          <div className="flex flex-col items-center justify-center py-20 text-op-text-muted">
             <Gamepad2 className="w-16 h-16 mb-4 opacity-30" />
             <p className="text-lg font-medium">등록된 상품이 없습니다</p>
             <p className="text-sm mt-1">첫 번째 상품을 등록해보세요!</p>

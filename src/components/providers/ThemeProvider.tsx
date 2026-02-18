@@ -22,7 +22,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     setMounted(true);
-    const stored = localStorage.getItem('pokerhub-theme') as Theme | null;
+    const stored = localStorage.getItem('openpoker-theme') as Theme | null;
     if (stored) {
       setTheme(stored);
     } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
@@ -38,7 +38,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     } else {
       root.classList.remove('dark');
     }
-    localStorage.setItem('pokerhub-theme', theme);
+    localStorage.setItem('openpoker-theme', theme);
   }, [theme, mounted]);
 
   const toggleTheme = () => {

@@ -117,25 +117,25 @@ export default function ShareHandPage() {
   ].join(' ');
 
   return (
-    <div className="min-h-screen bg-ph-bg text-ph-text">
+    <div className="min-h-screen bg-op-bg text-op-text">
       {/* Header */}
-      <div className="sticky top-0 z-50 bg-ph-surface border-b border-ph-border">
+      <div className="sticky top-0 z-50 bg-op-surface border-b border-op-border">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
           <button
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-ph-text-secondary hover:text-ph-text transition-colors"
+            className="flex items-center gap-2 text-op-text-secondary hover:text-op-text transition-colors"
           >
             <ChevronLeft className="w-5 h-5" />
             <span>취소</span>
           </button>
-          <h1 className="text-lg font-bold text-ph-gold">핸드 공유하기</h1>
+          <h1 className="text-lg font-bold text-op-gold">핸드 공유하기</h1>
           <div className="w-16" />
         </div>
 
         {/* Progress bar */}
-        <div className="h-1 bg-ph-elevated">
+        <div className="h-1 bg-op-elevated">
           <div
-            className="h-full bg-ph-gold transition-all duration-300"
+            className="h-full bg-op-gold transition-all duration-300"
             style={{ width: `${(step / 7) * 100}%` }}
           />
         </div>
@@ -151,15 +151,15 @@ export default function ShareHandPage() {
                 <h2 className="text-xl font-bold">게임 정보</h2>
 
                 <div>
-                  <label className="block text-sm text-ph-text-secondary mb-2">게임 타입</label>
+                  <label className="block text-sm text-op-text-secondary mb-2">게임 타입</label>
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       onClick={() => setGameType('cash')}
                       className={cn(
                         'py-3 rounded-lg font-medium transition-all',
                         gameType === 'cash'
-                          ? 'bg-ph-gold text-black'
-                          : 'bg-ph-elevated text-ph-text-secondary hover:bg-ph-elevated'
+                          ? 'bg-op-gold text-black'
+                          : 'bg-op-elevated text-op-text-secondary hover:bg-op-elevated'
                       )}
                     >
                       캐시 게임
@@ -169,8 +169,8 @@ export default function ShareHandPage() {
                       className={cn(
                         'py-3 rounded-lg font-medium transition-all',
                         gameType === 'tournament'
-                          ? 'bg-ph-gold text-black'
-                          : 'bg-ph-elevated text-ph-text-secondary hover:bg-ph-elevated'
+                          ? 'bg-op-gold text-black'
+                          : 'bg-op-elevated text-op-text-secondary hover:bg-op-elevated'
                       )}
                     >
                       토너먼트
@@ -179,15 +179,15 @@ export default function ShareHandPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm text-ph-text-secondary mb-2">테이블 사이즈</label>
+                  <label className="block text-sm text-op-text-secondary mb-2">테이블 사이즈</label>
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       onClick={() => setTableSize('6max')}
                       className={cn(
                         'py-3 rounded-lg font-medium transition-all',
                         tableSize === '6max'
-                          ? 'bg-ph-gold text-black'
-                          : 'bg-ph-elevated text-ph-text-secondary hover:bg-ph-elevated'
+                          ? 'bg-op-gold text-black'
+                          : 'bg-op-elevated text-op-text-secondary hover:bg-op-elevated'
                       )}
                     >
                       6-Max
@@ -197,8 +197,8 @@ export default function ShareHandPage() {
                       className={cn(
                         'py-3 rounded-lg font-medium transition-all',
                         tableSize === '9max'
-                          ? 'bg-ph-gold text-black'
-                          : 'bg-ph-elevated text-ph-text-secondary hover:bg-ph-elevated'
+                          ? 'bg-op-gold text-black'
+                          : 'bg-op-elevated text-op-text-secondary hover:bg-op-elevated'
                       )}
                     >
                       9-Max
@@ -207,13 +207,13 @@ export default function ShareHandPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm text-ph-text-secondary mb-2">스테이크</label>
+                  <label className="block text-sm text-op-text-secondary mb-2">스테이크</label>
                   <input
                     type="text"
                     value={stakes}
                     onChange={(e) => setStakes(e.target.value)}
                     placeholder="예: 1/2, 2/5, 5/10"
-                    className="w-full px-4 py-3 bg-ph-elevated border border-ph-border rounded-lg text-ph-text placeholder:text-ph-text-muted focus:border-ph-gold focus:outline-none"
+                    className="w-full px-4 py-3 bg-op-elevated border border-op-border rounded-lg text-op-text placeholder:text-op-text-muted focus:border-op-gold focus:outline-none"
                   />
                 </div>
               </div>
@@ -223,7 +223,7 @@ export default function ShareHandPage() {
             {step === 2 && (
               <div className="space-y-4">
                 <h2 className="text-xl font-bold">히어로 포지션 선택</h2>
-                <p className="text-sm text-ph-text-secondary">당신이 앉은 위치를 선택하세요</p>
+                <p className="text-sm text-op-text-secondary">당신이 앉은 위치를 선택하세요</p>
 
                 <div className="grid grid-cols-3 gap-2">
                   {positions.map((pos) => (
@@ -233,8 +233,8 @@ export default function ShareHandPage() {
                       className={cn(
                         'py-4 rounded-lg font-bold transition-all',
                         heroPosition === pos
-                          ? 'bg-ph-gold text-black shadow-[0_0_12px_rgba(201,162,39,0.4)]'
-                          : 'bg-ph-elevated text-ph-text-secondary hover:bg-ph-elevated'
+                          ? 'bg-op-gold text-black shadow-[0_0_12px_rgba(201,162,39,0.4)]'
+                          : 'bg-op-elevated text-op-text-secondary hover:bg-op-elevated'
                       )}
                     >
                       {pos}
@@ -248,7 +248,7 @@ export default function ShareHandPage() {
             {step === 3 && (
               <div className="space-y-4">
                 <h2 className="text-xl font-bold">히어로 카드</h2>
-                <p className="text-sm text-ph-text-secondary">당신의 홀 카드 2장을 선택하세요</p>
+                <p className="text-sm text-op-text-secondary">당신의 홀 카드 2장을 선택하세요</p>
 
                 {heroCards.length > 0 && (
                   <div className="flex justify-center">
@@ -272,7 +272,7 @@ export default function ShareHandPage() {
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm text-ph-text-secondary mb-2">플랍 (3장)</label>
+                    <label className="block text-sm text-op-text-secondary mb-2">플랍 (3장)</label>
                     {flopCards.length > 0 && (
                       <div className="flex justify-center mb-2">
                         <InlineCards notation={flopCards.join(' ')} size="md" />
@@ -288,7 +288,7 @@ export default function ShareHandPage() {
 
                   {flopCards.length === 3 && (
                     <div>
-                      <label className="block text-sm text-ph-text-secondary mb-2">턴 (1장)</label>
+                      <label className="block text-sm text-op-text-secondary mb-2">턴 (1장)</label>
                       {turnCard.length > 0 && (
                         <div className="flex justify-center mb-2">
                           <InlineCards notation={turnCard.join(' ')} size="md" />
@@ -305,7 +305,7 @@ export default function ShareHandPage() {
 
                   {turnCard.length === 1 && (
                     <div>
-                      <label className="block text-sm text-ph-text-secondary mb-2">리버 (1장)</label>
+                      <label className="block text-sm text-op-text-secondary mb-2">리버 (1장)</label>
                       {riverCard.length > 0 && (
                         <div className="flex justify-center mb-2">
                           <InlineCards notation={riverCard.join(' ')} size="md" />
@@ -327,9 +327,9 @@ export default function ShareHandPage() {
             {step === 5 && (
               <div className="space-y-4">
                 <h2 className="text-xl font-bold">액션 추가 (선택사항)</h2>
-                <p className="text-sm text-ph-text-secondary">각 스트릿별로 액션을 기록하세요</p>
+                <p className="text-sm text-op-text-secondary">각 스트릿별로 액션을 기록하세요</p>
 
-                <div className="text-sm text-ph-text-muted bg-ph-elevated p-3 rounded-lg">
+                <div className="text-sm text-op-text-muted bg-op-elevated p-3 rounded-lg">
                   나중에 추가 예정 - 현재는 건너뛸 수 있습니다
                 </div>
               </div>
@@ -339,7 +339,7 @@ export default function ShareHandPage() {
             {step === 6 && (
               <div className="space-y-4">
                 <h2 className="text-xl font-bold">분석 노트</h2>
-                <p className="text-sm text-ph-text-secondary">
+                <p className="text-sm text-op-text-secondary">
                   이 핸드에서 궁금한 점이나 생각을 적어주세요
                 </p>
 
@@ -348,7 +348,7 @@ export default function ShareHandPage() {
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="예: 플랍에서 체크레이즈가 맞을까요? 턴에서 폴드해야 했을까요?"
                   rows={6}
-                  className="w-full px-4 py-3 bg-ph-elevated border border-ph-border rounded-lg text-ph-text placeholder:text-ph-text-muted focus:border-ph-gold focus:outline-none resize-none"
+                  className="w-full px-4 py-3 bg-op-elevated border border-op-border rounded-lg text-op-text placeholder:text-op-text-muted focus:border-op-gold focus:outline-none resize-none"
                 />
               </div>
             )}
@@ -357,7 +357,7 @@ export default function ShareHandPage() {
             {step === 7 && (
               <div className="space-y-4">
                 <h2 className="text-xl font-bold">태그 선택</h2>
-                <p className="text-sm text-ph-text-secondary">이 핸드와 관련된 태그를 선택하세요</p>
+                <p className="text-sm text-op-text-secondary">이 핸드와 관련된 태그를 선택하세요</p>
 
                 <div className="flex flex-wrap gap-2">
                   {TAGS.map((tag) => {
@@ -375,8 +375,8 @@ export default function ShareHandPage() {
                         className={cn(
                           'px-4 py-2 rounded-full text-sm font-medium transition-all',
                           isSelected
-                            ? 'bg-ph-gold text-black'
-                            : 'bg-ph-elevated text-ph-text-secondary hover:bg-ph-elevated border border-ph-border'
+                            ? 'bg-op-gold text-black'
+                            : 'bg-op-elevated text-op-text-secondary hover:bg-op-elevated border border-op-border'
                         )}
                       >
                         #{tag}
@@ -390,8 +390,8 @@ export default function ShareHandPage() {
 
           {/* Preview Section */}
           <div className="lg:sticky lg:top-20 h-fit">
-            <div className="bg-ph-surface rounded-lg p-4 border border-ph-border">
-              <h3 className="text-sm font-bold text-ph-text-secondary mb-4">미리보기</h3>
+            <div className="bg-op-surface rounded-lg p-4 border border-op-border">
+              <h3 className="text-sm font-bold text-op-text-secondary mb-4">미리보기</h3>
 
               {heroPosition && (
                 <TableVisualizer
@@ -404,7 +404,7 @@ export default function ShareHandPage() {
               {heroCards.length === 2 && (
                 <div className="mt-4 flex justify-center">
                   <div className="text-center">
-                    <div className="text-xs text-ph-text-secondary mb-1">히어로 카드</div>
+                    <div className="text-xs text-op-text-secondary mb-1">히어로 카드</div>
                     <InlineCards notation={heroCards.join(' ')} size="md" />
                   </div>
                 </div>
@@ -415,7 +415,7 @@ export default function ShareHandPage() {
       </div>
 
       {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-ph-surface border-t border-ph-border p-4">
+      <div className="fixed bottom-0 left-0 right-0 bg-op-surface border-t border-op-border p-4">
         <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
           <button
             onClick={() => setStep(Math.max(1, step - 1))}
@@ -423,15 +423,15 @@ export default function ShareHandPage() {
             className={cn(
               'px-6 py-3 rounded-lg font-medium transition-all flex items-center gap-2',
               step === 1
-                ? 'bg-ph-elevated text-ph-text-muted cursor-not-allowed'
-                : 'bg-ph-elevated text-ph-text hover:bg-ph-elevated'
+                ? 'bg-op-elevated text-op-text-muted cursor-not-allowed'
+                : 'bg-op-elevated text-op-text hover:bg-op-elevated'
             )}
           >
             <ChevronLeft className="w-5 h-5" />
             이전
           </button>
 
-          <div className="text-sm text-ph-text-secondary">
+          <div className="text-sm text-op-text-secondary">
             {step} / 7
           </div>
 
@@ -442,8 +442,8 @@ export default function ShareHandPage() {
               className={cn(
                 'px-6 py-3 rounded-lg font-medium transition-all flex items-center gap-2',
                 canProceed()
-                  ? 'bg-ph-gold text-black hover:bg-ph-gold-hover'
-                  : 'bg-ph-elevated text-ph-text-muted cursor-not-allowed'
+                  ? 'bg-op-gold text-black hover:bg-op-gold-hover'
+                  : 'bg-op-elevated text-op-text-muted cursor-not-allowed'
               )}
             >
               다음
@@ -456,8 +456,8 @@ export default function ShareHandPage() {
               className={cn(
                 'px-6 py-3 rounded-lg font-medium transition-all flex items-center gap-2',
                 canProceed() && !isSubmitting
-                  ? 'bg-ph-gold text-black hover:bg-ph-gold-hover'
-                  : 'bg-ph-elevated text-ph-text-muted cursor-not-allowed'
+                  ? 'bg-op-gold text-black hover:bg-op-gold-hover'
+                  : 'bg-op-elevated text-op-text-muted cursor-not-allowed'
               )}
             >
               {isSubmitting ? '저장 중...' : '핸드 공유'}

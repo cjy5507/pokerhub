@@ -9,7 +9,7 @@ export default async function ThreadsPage() {
   return (
     <div className="mx-auto max-w-[600px] px-4 py-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-ph-text">쓰레드</h1>
+        <h1 className="text-2xl font-bold text-op-text">쓰레드</h1>
       </div>
 
       <ThreadsFeedClient

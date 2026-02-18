@@ -4,7 +4,7 @@ import { desc, eq } from 'drizzle-orm';
 import { MarketClient } from './MarketClient';
 
 export const metadata = {
-  title: '마켓 - PokerHub',
+  title: '마켓 - Open Poker',
   description: '포커 용품, 디지털 상품, 공동구매를 만나보세요.',
 };
 

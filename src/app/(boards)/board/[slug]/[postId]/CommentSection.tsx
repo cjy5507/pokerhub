@@ -81,23 +81,23 @@ export function CommentSection({ postId, comments, currentUserId }: CommentSecti
   };
 
   return (
-    <div className="bg-ph-surface rounded-lg overflow-hidden">
+    <div className="bg-op-surface rounded-lg overflow-hidden">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-ph-border">
-        <h2 className="text-lg font-bold text-ph-text">
+      <div className="px-6 py-4 border-b border-op-border">
+        <h2 className="text-lg font-bold text-op-text">
           댓글 {comments.reduce((acc, c) => acc + 1 + (c.replies?.length || 0), 0)}개
         </h2>
       </div>
 
       {/* Comment form */}
-      <div className="p-6 border-b border-ph-border">
+      <div className="p-6 border-b border-op-border">
         {currentUserId ? (
           <form onSubmit={handleSubmitComment}>
             <textarea
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
               placeholder="댓글을 입력하세요"
-              className="w-full px-4 py-3 bg-ph-bg border border-ph-border rounded-lg text-ph-text placeholder:text-ph-text-muted focus:outline-none focus:border-ph-gold resize-none"
+              className="w-full px-4 py-3 bg-op-bg border border-op-border rounded-lg text-op-text placeholder:text-op-text-muted focus:outline-none focus:border-op-gold resize-none"
               rows={3}
               disabled={isPending}
             />
@@ -105,23 +105,23 @@ export function CommentSection({ postId, comments, currentUserId }: CommentSecti
               <button
                 type="submit"
                 disabled={isPending || !commentText.trim()}
-                className="px-6 py-2 bg-ph-gold hover:bg-ph-gold-hover disabled:bg-ph-text-dim disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
+                className="px-6 py-2 bg-op-gold hover:bg-op-gold-hover disabled:bg-op-text-dim disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
               >
                 {isPending ? '작성 중...' : '댓글 작성'}
               </button>
             </div>
           </form>
         ) : (
-          <div className="text-center py-4 text-ph-text-secondary">
+          <div className="text-center py-4 text-op-text-secondary">
             로그인이 필요합니다
           </div>
         )}
       </div>
 
       {/* Comments list */}
-      <div className="divide-y divide-ph-border">
+      <div className="divide-y divide-op-border">
         {comments.length === 0 ? (
-          <div className="py-12 text-center text-ph-text-muted">
+          <div className="py-12 text-center text-op-text-muted">
             첫 댓글을 작성해보세요
           </div>
         ) : (
@@ -143,7 +143,7 @@ export function CommentSection({ postId, comments, currentUserId }: CommentSecti
               />
               {/* Replies */}
               {comment.replies && comment.replies.length > 0 && (
-                <div className="ml-12 border-l-2 border-ph-border">
+                <div className="ml-12 border-l-2 border-op-border">
                   {comment.replies.map((reply) => (
                     <CommentItem
                       key={reply.id}
@@ -226,11 +226,11 @@ function CommentItem({
           level={comment.author?.level || 1}
           compact
         />
-        <span className="text-xs text-ph-text-muted">{timeAgo}</span>
+        <span className="text-xs text-op-text-muted">{timeAgo}</span>
       </div>
 
       {/* Content */}
-      <div className="text-ph-text mb-3 whitespace-pre-wrap">
+      <div className="text-op-text mb-3 whitespace-pre-wrap">
         {comment.content}
       </div>
 
@@ -241,7 +241,7 @@ function CommentItem({
           disabled={!currentUserId || isLikePending}
           className={cn(
             'flex items-center gap-1.5 text-sm transition-colors disabled:opacity-50',
-            localLiked ? 'text-ph-error' : 'text-ph-text-secondary hover:text-ph-text'
+            localLiked ? 'text-op-error' : 'text-op-text-secondary hover:text-op-text'
           )}
         >
           <Heart
@@ -253,7 +253,7 @@ function CommentItem({
         {!isReply && currentUserId && onReply && (
           <button
             onClick={() => onReply(comment.id)}
-            className="text-sm text-ph-text-secondary hover:text-ph-text transition-colors"
+            className="text-sm text-op-text-secondary hover:text-op-text transition-colors"
           >
             답글
           </button>
@@ -267,7 +267,7 @@ function CommentItem({
             value={replyText}
             onChange={(e) => setReplyText?.(e.target.value)}
             placeholder="답글을 입력하세요"
-            className="w-full px-4 py-3 bg-ph-bg border border-ph-border rounded-lg text-ph-text placeholder:text-ph-text-muted focus:outline-none focus:border-ph-gold resize-none"
+            className="w-full px-4 py-3 bg-op-bg border border-op-border rounded-lg text-op-text placeholder:text-op-text-muted focus:outline-none focus:border-op-gold resize-none"
             rows={2}
             disabled={isPending}
           />
@@ -275,7 +275,7 @@ function CommentItem({
             <button
               type="button"
               onClick={onCancelReply}
-              className="px-4 py-1.5 text-sm text-ph-text-secondary hover:text-ph-text transition-colors"
+              className="px-4 py-1.5 text-sm text-op-text-secondary hover:text-op-text transition-colors"
             >
               취소
             </button>
@@ -283,7 +283,7 @@ function CommentItem({
               type="button"
               onClick={onSubmitReply}
               disabled={isPending || !replyText?.trim()}
-              className="px-4 py-1.5 text-sm bg-ph-gold hover:bg-ph-gold-hover disabled:bg-ph-text-dim disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
+              className="px-4 py-1.5 text-sm bg-op-gold hover:bg-op-gold-hover disabled:bg-op-text-dim disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
             >
               답글 작성
             </button>

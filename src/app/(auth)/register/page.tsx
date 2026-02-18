@@ -80,7 +80,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-2">회원가입</h1>
-          <p className="text-muted-foreground">PokerHub에 오신 것을 환영합니다</p>
+          <p className="text-muted-foreground">Open Poker에 오신 것을 환영합니다</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

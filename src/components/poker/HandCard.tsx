@@ -47,9 +47,9 @@ export function HandCard({
     <Link
       href={`/hands/${handId}`}
       className={cn(
-        'block bg-ph-surface rounded p-4 lg:p-5 hover:bg-ph-elevated transition-colors',
+        'block bg-op-surface rounded p-4 lg:p-5 hover:bg-op-elevated transition-colors',
         'border-l-2',
-        result === 'won' ? 'border-ph-gold' : 'border-transparent',
+        result === 'won' ? 'border-op-gold' : 'border-transparent',
         className
       )}
     >
@@ -61,7 +61,7 @@ export function HandCard({
         {/* Board cards */}
         {boardCards && (
           <>
-            <div className="text-ph-text-muted text-lg mx-1">vs</div>
+            <div className="text-op-text-muted text-lg mx-1">vs</div>
             <InlineCards notation={boardCards} size="sm" />
           </>
         )}
@@ -70,12 +70,12 @@ export function HandCard({
       {/* Badges */}
       <div className="flex flex-wrap items-center gap-2 mb-3">
         {/* Stakes badge */}
-        <span className="px-2.5 py-1 text-xs font-semibold bg-ph-elevated text-ph-text-secondary rounded-full">
+        <span className="px-2.5 py-1 text-xs font-semibold bg-op-elevated text-op-text-secondary rounded-full">
           {stakes}
         </span>
 
         {/* Position badge */}
-        <span className="px-2.5 py-1 text-xs font-semibold bg-ph-felt/30 text-ph-felt border border-ph-felt/30 rounded-full">
+        <span className="px-2.5 py-1 text-xs font-semibold bg-op-felt/30 text-op-felt border border-op-felt/30 rounded-full">
           {heroPosition}
         </span>
 
@@ -83,10 +83,10 @@ export function HandCard({
         <span className={cn(
           'px-2.5 py-1 text-xs font-bold rounded-full',
           result === 'won'
-            ? 'bg-ph-success/20 text-ph-success border border-ph-success/30'
+            ? 'bg-op-success/20 text-op-success border border-op-success/30'
             : result === 'lost'
-            ? 'bg-ph-error/20 text-ph-error border border-ph-error/30'
-            : 'bg-ph-warning/20 text-ph-warning border border-ph-warning/30'
+            ? 'bg-op-error/20 text-op-error border border-op-error/30'
+            : 'bg-op-warning/20 text-op-warning border border-op-warning/30'
         )}>
           {result === 'won' ? `+$${winAmount?.toLocaleString() || 0}` : result === 'lost' ? '패배' : '스플릿'}
         </span>
@@ -101,19 +101,19 @@ export function HandCard({
             nickname={author.nickname}
             level={author.level}
           />
-          <span className="text-ph-text-muted">·</span>
-          <span className="text-ph-text-muted">{timeAgo}</span>
+          <span className="text-op-text-muted">·</span>
+          <span className="text-op-text-muted">{timeAgo}</span>
         </div>
 
         {/* Engagement stats */}
-        <div className="flex items-center gap-4 text-sm text-ph-text-secondary">
+        <div className="flex items-center gap-4 text-sm text-op-text-secondary">
           <div className="flex items-center gap-1">
             <Eye className="w-4 h-4" />
             <span>{formatNumber(likes * 10)}</span>
           </div>
           <div className={cn(
             'flex items-center gap-1',
-            isLiked && 'text-ph-error'
+            isLiked && 'text-op-error'
           )}>
             <Heart className={cn('w-4 h-4', isLiked && 'fill-current')} />
             <span>{formatNumber(likes)}</span>

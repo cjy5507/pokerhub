@@ -22,10 +22,10 @@ const suitSymbols = {
 } as const;
 
 const suitColors = {
-  h: 'text-ph-error',
-  d: 'text-ph-error',
-  s: 'text-ph-text',
-  c: 'text-ph-text',
+  h: 'text-op-error',
+  d: 'text-op-error',
+  s: 'text-op-text',
+  c: 'text-op-text',
 } as const;
 
 export function CardSelector({
@@ -80,11 +80,11 @@ export function CardSelector({
                       'transition-all duration-150 touch-manipulation',
                       'border-2',
                       // Selected state
-                      isSelected && 'bg-ph-gold/20 border-ph-gold shadow-[0_0_8px_rgba(201,162,39,0.4)]',
+                      isSelected && 'bg-op-gold/20 border-op-gold shadow-[0_0_8px_rgba(201,162,39,0.4)]',
                       // Normal state
-                      !isSelected && !isDisabled && 'bg-ph-elevated border-ph-border hover:bg-ph-elevated hover:border-ph-border-medium',
+                      !isSelected && !isDisabled && 'bg-op-elevated border-op-border hover:bg-op-elevated hover:border-op-border-medium',
                       // Disabled state
-                      isDisabled && 'bg-ph-surface border-ph-border-subtle opacity-30 cursor-not-allowed',
+                      isDisabled && 'bg-op-surface border-op-border-subtle opacity-30 cursor-not-allowed',
                       // Active state
                       !isDisabled && 'active:scale-95'
                     )}
@@ -92,15 +92,15 @@ export function CardSelector({
                   >
                     <span className={cn(
                       'text-sm font-bold leading-none',
-                      isSelected ? 'text-ph-gold' : suitColors[suit],
-                      isDisabled && 'text-ph-text-muted'
+                      isSelected ? 'text-op-gold' : suitColors[suit],
+                      isDisabled && 'text-op-text-muted'
                     )}>
                       {rank}
                     </span>
                     <span className={cn(
                       'text-xs leading-none mt-0.5',
-                      isSelected ? 'text-ph-gold' : suitColors[suit],
-                      isDisabled && 'text-ph-text-muted'
+                      isSelected ? 'text-op-gold' : suitColors[suit],
+                      isDisabled && 'text-op-text-muted'
                     )}>
                       {suitSymbols[suit]}
                     </span>
@@ -113,7 +113,7 @@ export function CardSelector({
       </div>
 
       {/* Selection indicator */}
-      <div className="mt-3 text-xs text-ph-text-secondary text-center">
+      <div className="mt-3 text-xs text-op-text-secondary text-center">
         {selectedCards.length} / {maxSelect} 선택됨
       </div>
     </div>

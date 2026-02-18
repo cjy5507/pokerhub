@@ -4,12 +4,12 @@ import { getUserNewsBookmarkIds } from './actions';
 import { NewsClient } from './NewsClient';
 
 export const metadata: Metadata = {
-  title: '포커 뉴스 - PokerHub',
+  title: '포커 뉴스 - Open Poker',
   description:
     '해외 포커 뉴스, 대회 정보, 전략 아티클을 실시간으로 확인하세요. Upswing Poker, PokerNews 등 해외 주요 소스의 뉴스를 한국어로 번역하여 제공합니다.',
   keywords: ['포커 뉴스', '포커 전략', '홀덤', '텍사스 홀덤', 'poker news', 'poker strategy'],
   openGraph: {
-    title: '포커 뉴스 - PokerHub',
+    title: '포커 뉴스 - Open Poker',
     description: '해외 포커 뉴스, 대회 정보, 전략 아티클을 실시간으로 확인하세요.',
     type: 'website',
   },

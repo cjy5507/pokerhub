@@ -56,10 +56,10 @@ export function ThreadsFeedClient({
       {currentUserId && <ThreadCompose onThreadCreated={handleThreadCreated} />}
 
       {threads.length === 0 ? (
-        <div className="bg-ph-surface border border-ph-border rounded-lg py-16 text-center">
+        <div className="bg-op-surface border border-op-border rounded-lg py-16 text-center">
           <div className="text-4xl mb-4">💬</div>
-          <p className="text-ph-text-secondary text-sm mb-1">아직 쓰레드가 없습니다</p>
-          <p className="text-ph-text-muted text-xs">
+          <p className="text-op-text-secondary text-sm mb-1">아직 쓰레드가 없습니다</p>
+          <p className="text-op-text-muted text-xs">
             {currentUserId ? '첫 번째 쓰레드를 작성해보세요!' : '로그인 후 쓰레드를 작성할 수 있습니다.'}
           </p>
         </div>
@@ -80,7 +80,7 @@ export function ThreadsFeedClient({
         <button
           onClick={handleLoadMore}
           disabled={isLoading}
-          className="w-full py-3 bg-ph-surface border border-ph-border hover:border-ph-gold rounded-lg text-sm text-ph-text transition-colors disabled:opacity-50"
+          className="w-full py-3 bg-op-surface border border-op-border hover:border-op-gold rounded-lg text-sm text-op-text transition-colors disabled:opacity-50"
         >
           {isLoading ? '로딩 중...' : '더 보기'}
         </button>

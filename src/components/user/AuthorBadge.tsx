@@ -80,7 +80,7 @@ export function AuthorBadge({
 
       {/* Nickname */}
       <span className={cn(
-        'font-medium text-ph-text',
+        'font-medium text-op-text',
         compact ? 'text-xs' : 'text-sm'
       )}>
         {nickname}

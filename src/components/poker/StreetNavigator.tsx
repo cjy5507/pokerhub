@@ -31,12 +31,12 @@ const streetLabels: Record<Street, string> = {
 };
 
 const actionColors: Record<ActionType, string> = {
-  fold: 'text-ph-text-muted line-through',
-  check: 'text-ph-success',
-  call: 'text-ph-info',
-  bet: 'text-ph-warning',
-  raise: 'text-ph-warning font-semibold',
-  'all-in': 'text-ph-error font-bold',
+  fold: 'text-op-text-muted line-through',
+  check: 'text-op-success',
+  call: 'text-op-info',
+  bet: 'text-op-warning',
+  raise: 'text-op-warning font-semibold',
+  'all-in': 'text-op-error font-bold',
 };
 
 const positionColors: Record<string, string> = {
@@ -57,11 +57,11 @@ export function StreetNavigator({ streets, className, sticky = true }: StreetNav
   const currentStreetData = streets.find(s => s.street === activeStreet);
 
   return (
-    <div className={cn('w-full bg-ph-surface', className)}>
+    <div className={cn('w-full bg-op-surface', className)}>
       {/* Tab bar */}
       <div className={cn(
-        'flex border-b border-ph-border',
-        sticky && 'sticky top-14 lg:top-16 z-40 bg-ph-surface'
+        'flex border-b border-op-border',
+        sticky && 'sticky top-14 lg:top-16 z-40 bg-op-surface'
       )}>
         {(['preflop', 'flop', 'turn', 'river'] as Street[]).map((street) => {
           const streetExists = streets.some(s => s.street === street);
@@ -75,9 +75,9 @@ export function StreetNavigator({ streets, className, sticky = true }: StreetNav
               className={cn(
                 'flex-1 py-3 px-4 text-sm lg:text-base font-medium transition-all duration-200',
                 'border-b-3 min-h-[44px] touch-manipulation',
-                isActive && 'border-ph-gold text-ph-gold',
-                !isActive && streetExists && 'border-transparent text-ph-text-secondary hover:text-ph-text',
-                !streetExists && 'opacity-30 cursor-not-allowed text-ph-text-muted'
+                isActive && 'border-op-gold text-op-gold',
+                !isActive && streetExists && 'border-transparent text-op-text-secondary hover:text-op-text',
+                !streetExists && 'opacity-30 cursor-not-allowed text-op-text-muted'
               )}
               aria-label={`${streetLabels[street]} 탭`}
               aria-current={isActive ? 'page' : undefined}
@@ -93,7 +93,7 @@ export function StreetNavigator({ streets, className, sticky = true }: StreetNav
         {currentStreetData?.actions.map((action, index) => (
           <div
             key={`${action.position}-${index}`}
-            className="flex items-center gap-3 py-2 px-3 rounded bg-ph-elevated hover:bg-ph-elevated transition-colors"
+            className="flex items-center gap-3 py-2 px-3 rounded bg-op-elevated hover:bg-op-elevated transition-colors"
           >
             {/* Position chip */}
             <div className={cn(
@@ -119,7 +119,7 @@ export function StreetNavigator({ streets, className, sticky = true }: StreetNav
         ))}
 
         {(!currentStreetData || currentStreetData.actions.length === 0) && (
-          <div className="flex items-center justify-center py-12 text-ph-text-muted text-sm">
+          <div className="flex items-center justify-center py-12 text-op-text-muted text-sm">
             이 스트릿에는 액션이 없습니다
           </div>
         )}

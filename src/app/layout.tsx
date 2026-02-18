@@ -18,8 +18,46 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "PokerHub - 포커 커뮤니티",
-  description: "포커를 배우고, 공유하고, 성장하세요",
+  title: {
+    default: "Open Poker - 포커 커뮤니티",
+    template: "%s - Open Poker",
+  },
+  description:
+    "포커를 배우고, 공유하고, 성장하세요. 전략 공유, 핸드 분석, 실시간 포인트 포커, 커뮤니티를 한곳에서.",
+  keywords: [
+    "포커",
+    "텍사스 홀덤",
+    "포커 커뮤니티",
+    "포커 전략",
+    "핸드 분석",
+    "포커 뉴스",
+    "홀덤",
+    "poker",
+    "texas holdem",
+    "poker community",
+  ],
+  authors: [{ name: "Open Poker" }],
+  creator: "Open Poker",
+  metadataBase: new URL("https://pokerhub-eight.vercel.app"),
+  openGraph: {
+    type: "website",
+    locale: "ko_KR",
+    url: "https://pokerhub-eight.vercel.app",
+    siteName: "Open Poker",
+    title: "Open Poker - 포커 커뮤니티",
+    description:
+      "포커를 배우고, 공유하고, 성장하세요. 전략 공유, 핸드 분석, 실시간 포인트 포커, 커뮤니티를 한곳에서.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Open Poker - 포커 커뮤니티",
+    description:
+      "포커를 배우고, 공유하고, 성장하세요. 전략 공유, 핸드 분석, 실시간 포인트 포커.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default async function RootLayout({
@@ -35,7 +73,7 @@ export default async function RootLayout({
         <script dangerouslySetInnerHTML={{
           __html: `
             (function() {
-              var t = localStorage.getItem('pokerhub-theme');
+              var t = localStorage.getItem('openpoker-theme');
               if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
                 document.documentElement.classList.add('dark');
               }
@@ -43,7 +81,7 @@ export default async function RootLayout({
           `,
         }} />
       </head>
-      <body className={`${inter.variable} antialiased bg-ph-bg text-ph-text min-h-screen flex flex-col`}>
+      <body className={`${inter.variable} antialiased bg-op-bg text-op-text min-h-screen flex flex-col`}>
         <SessionProvider session={session}>
           <ThemeProvider>
             <ChatProvider>

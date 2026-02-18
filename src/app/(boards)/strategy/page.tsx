@@ -5,7 +5,7 @@ import { getSession } from '@/lib/auth/session';
 import { StrategyClient } from './StrategyClient';
 
 export const metadata = {
-  title: '전략 허브 - PokerHub',
+  title: '전략 허브 - Open Poker',
   description: '포커 전략, 교육 콘텐츠, 프리플랍/포스트플랍 전략을 한눈에',
 };
 
@@ -48,9 +48,9 @@ export default async function StrategyHubPage({
   if (!db) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="bg-ph-surface rounded-lg p-8 text-center">
-          <h1 className="text-2xl font-bold text-ph-text mb-4">데이터베이스 연결 필요</h1>
-          <p className="text-ph-text-secondary">
+        <div className="bg-op-surface rounded-lg p-8 text-center">
+          <h1 className="text-2xl font-bold text-op-text mb-4">데이터베이스 연결 필요</h1>
+          <p className="text-op-text-secondary">
             전략 허브를 불러올 수 없습니다. 데이터베이스 연결을 확인해주세요.
           </p>
         </div>
@@ -66,9 +66,9 @@ export default async function StrategyHubPage({
   if (!strategyBoard) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="bg-ph-surface rounded-lg p-8 text-center">
-          <h1 className="text-2xl font-bold text-ph-text mb-4">전략 허브</h1>
-          <p className="text-ph-text-secondary">
+        <div className="bg-op-surface rounded-lg p-8 text-center">
+          <h1 className="text-2xl font-bold text-op-text mb-4">전략 허브</h1>
+          <p className="text-op-text-secondary">
             전략 게시판이 아직 생성되지 않았습니다.
           </p>
         </div>

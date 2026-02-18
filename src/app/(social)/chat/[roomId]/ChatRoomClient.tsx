@@ -96,22 +96,22 @@ export default function ChatRoomClient({ room, initialMessages }: ChatRoomClient
   };
 
   return (
-    <div className="flex flex-col h-screen bg-ph-bg">
+    <div className="flex flex-col h-screen bg-op-bg">
       {/* Header */}
-      <div className="bg-ph-surface border-b border-ph-border px-4 py-3 flex items-center gap-3">
+      <div className="bg-op-surface border-b border-op-border px-4 py-3 flex items-center gap-3">
         <button
           onClick={() => router.back()}
-          className="min-w-[44px] min-h-[44px] flex items-center justify-center -ml-2 text-ph-text hover:text-ph-gold transition-colors"
+          className="min-w-[44px] min-h-[44px] flex items-center justify-center -ml-2 text-op-text hover:text-op-gold transition-colors"
           aria-label="뒤로 가기"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
 
         <div className="flex-1 min-w-0">
-          <h1 className="text-base font-semibold text-ph-text truncate">
+          <h1 className="text-base font-semibold text-op-text truncate">
             {room.nameKo}
           </h1>
-          <div className="flex items-center gap-1 text-xs text-ph-text-muted">
+          <div className="flex items-center gap-1 text-xs text-op-text-muted">
             <Users className="w-3 h-3" />
             <span>{room.participantCount}명</span>
           </div>
@@ -133,7 +133,7 @@ export default function ChatRoomClient({ room, initialMessages }: ChatRoomClient
             >
               {/* Avatar */}
               {!isOwn && (
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-ph-gold flex items-center justify-center text-sm font-bold text-black">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-op-gold flex items-center justify-center text-sm font-bold text-black">
                   {message.sender.nickname[0]}
                 </div>
               )}
@@ -143,10 +143,10 @@ export default function ChatRoomClient({ room, initialMessages }: ChatRoomClient
                 {/* Sender Info (for other users) */}
                 {!isOwn && (
                   <div className="flex items-center gap-2 mb-1 px-3">
-                    <span className="text-sm font-medium text-ph-text">
+                    <span className="text-sm font-medium text-op-text">
                       {message.sender.nickname}
                     </span>
-                    <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-ph-elevated text-ph-gold">
+                    <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-op-elevated text-op-gold">
                       Lv.{message.sender.level}
                     </span>
                   </div>
@@ -157,8 +157,8 @@ export default function ChatRoomClient({ room, initialMessages }: ChatRoomClient
                   className={cn(
                     'max-w-[75%] sm:max-w-md rounded-2xl px-4 py-2.5',
                     isOwn
-                      ? 'bg-ph-elevated text-ph-text'
-                      : 'bg-ph-surface text-ph-text'
+                      ? 'bg-op-elevated text-op-text'
+                      : 'bg-op-surface text-op-text'
                   )}
                 >
                   <p className="text-sm whitespace-pre-wrap break-words">
@@ -168,7 +168,7 @@ export default function ChatRoomClient({ room, initialMessages }: ChatRoomClient
 
                 {/* Timestamp */}
                 <div className={cn('mt-1 px-3', isOwn ? 'text-right' : 'text-left')}>
-                  <span className="text-xs text-ph-text-muted">
+                  <span className="text-xs text-op-text-muted">
                     {formatRelativeTime(message.createdAt)}
                   </span>
                 </div>
@@ -183,7 +183,7 @@ export default function ChatRoomClient({ room, initialMessages }: ChatRoomClient
       </div>
 
       {/* Input Bar */}
-      <div className="bg-ph-surface border-t border-ph-border px-4 py-3">
+      <div className="bg-op-surface border-t border-op-border px-4 py-3">
         {session ? (
           <>
             <div className="flex items-end gap-2">
@@ -194,9 +194,9 @@ export default function ChatRoomClient({ room, initialMessages }: ChatRoomClient
                 onKeyDown={handleKeyDown}
                 placeholder="메시지를 입력하세요..."
                 className={cn(
-                  'flex-1 bg-ph-elevated text-ph-text rounded-lg px-4 py-3',
-                  'placeholder:text-ph-text-muted border border-ph-border',
-                  'focus:outline-none focus:border-ph-gold focus:ring-1 focus:ring-ph-gold',
+                  'flex-1 bg-op-elevated text-op-text rounded-lg px-4 py-3',
+                  'placeholder:text-op-text-muted border border-op-border',
+                  'focus:outline-none focus:border-op-gold focus:ring-1 focus:ring-op-gold',
                   'resize-none min-h-[44px] max-h-32',
                   'text-sm'
                 )}
@@ -211,21 +211,21 @@ export default function ChatRoomClient({ room, initialMessages }: ChatRoomClient
                   'flex-shrink-0 w-11 h-11 rounded-lg flex items-center justify-center',
                   'transition-colors',
                   input.trim() && !isSending
-                    ? 'bg-ph-gold hover:bg-ph-gold-hover text-black'
-                    : 'bg-ph-border text-ph-text-muted cursor-not-allowed'
+                    ? 'bg-op-gold hover:bg-op-gold-hover text-black'
+                    : 'bg-op-border text-op-text-muted cursor-not-allowed'
                 )}
                 aria-label="전송"
               >
                 <Send className="w-5 h-5" />
               </button>
             </div>
-            <div className="mt-1 text-xs text-ph-text-muted text-right">
+            <div className="mt-1 text-xs text-op-text-muted text-right">
               {input.length}/500
             </div>
           </>
         ) : (
           <div className="text-center py-3">
-            <a href="/login" className="text-sm text-ph-gold hover:underline">
+            <a href="/login" className="text-sm text-op-gold hover:underline">
               로그인 후 채팅하기
             </a>
           </div>

@@ -146,14 +146,14 @@ export function StrategyClient({
       {/* ----------------------------------------------------------------- */}
       <div className="mb-8 text-center lg:text-left">
         <div className="flex items-center justify-center lg:justify-start gap-3 mb-3">
-          <div className="p-2.5 rounded-xl bg-ph-gold/10">
-            <BookOpen className="w-7 h-7 text-ph-gold" />
+          <div className="p-2.5 rounded-xl bg-op-gold/10">
+            <BookOpen className="w-7 h-7 text-op-gold" />
           </div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-ph-text">
+          <h1 className="text-2xl lg:text-3xl font-bold text-op-text">
             포커 전략 허브
           </h1>
         </div>
-        <p className="text-ph-text-secondary text-sm lg:text-base max-w-2xl mx-auto lg:mx-0">
+        <p className="text-op-text-secondary text-sm lg:text-base max-w-2xl mx-auto lg:mx-0">
           프리플랍부터 리버까지, 초보자 가이드부터 고급 전략까지.
           커뮤니티의 검증된 전략 콘텐츠를 만나보세요.
         </p>
@@ -170,8 +170,8 @@ export function StrategyClient({
               onClick={() => handleCategoryChange(cat.key)}
               className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
                 currentCategory === cat.key
-                  ? 'bg-ph-gold text-black'
-                  : 'bg-ph-elevated text-ph-text-secondary hover:bg-ph-border hover:text-ph-text'
+                  ? 'bg-op-gold text-black'
+                  : 'bg-op-elevated text-op-text-secondary hover:bg-op-border hover:text-op-text'
               }`}
             >
               {cat.label}
@@ -182,7 +182,7 @@ export function StrategyClient({
         {isLoggedIn && (
           <Link
             href={`/board/${boardSlug}/write`}
-            className="flex items-center justify-center gap-2 px-4 py-2 bg-ph-gold hover:bg-ph-gold-hover text-black rounded-lg transition-colors font-medium text-sm shrink-0"
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-op-gold hover:bg-op-gold-hover text-black rounded-lg transition-colors font-medium text-sm shrink-0"
           >
             <PenSquare className="w-4 h-4" />
             전략글 작성
@@ -197,20 +197,20 @@ export function StrategyClient({
         {/* Post Grid */}
         <div className="flex-1 min-w-0">
           {posts.length === 0 ? (
-            <div className="bg-ph-surface border border-ph-border rounded-lg p-12 text-center">
-              <BookOpen className="w-12 h-12 text-ph-text-muted mx-auto mb-4" />
-              <p className="text-ph-text-secondary text-lg mb-2">
+            <div className="bg-op-surface border border-op-border rounded-lg p-12 text-center">
+              <BookOpen className="w-12 h-12 text-op-text-muted mx-auto mb-4" />
+              <p className="text-op-text-secondary text-lg mb-2">
                 {currentCategory !== 'all'
                   ? '해당 카테고리의 전략글이 없습니다'
                   : '아직 전략글이 없습니다'}
               </p>
-              <p className="text-ph-text-muted text-sm mb-4">
+              <p className="text-op-text-muted text-sm mb-4">
                 첫 번째 전략글의 주인공이 되어보세요!
               </p>
               {isLoggedIn && (
                 <Link
                   href={`/board/${boardSlug}/write`}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-ph-gold hover:bg-ph-gold-hover text-black rounded-lg transition-colors font-medium text-sm"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-op-gold hover:bg-op-gold-hover text-black rounded-lg transition-colors font-medium text-sm"
                 >
                   <PenSquare className="w-4 h-4" />
                   전략글 작성하기
@@ -235,7 +235,7 @@ export function StrategyClient({
                   <button
                     onClick={() => handlePageChange(pagination.page - 1)}
                     disabled={pagination.page <= 1}
-                    className="p-2 rounded-lg bg-ph-elevated text-ph-text-secondary hover:bg-ph-border disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    className="p-2 rounded-lg bg-op-elevated text-op-text-secondary hover:bg-op-border disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     aria-label="이전 페이지"
                   >
                     <ChevronLeft className="w-5 h-5" />
@@ -246,7 +246,7 @@ export function StrategyClient({
                       p === '...' ? (
                         <span
                           key={`ellipsis-${idx}`}
-                          className="px-2 text-ph-text-muted"
+                          className="px-2 text-op-text-muted"
                         >
                           ...
                         </span>
@@ -256,8 +256,8 @@ export function StrategyClient({
                           onClick={() => handlePageChange(p as number)}
                           className={`min-w-[36px] h-9 rounded-lg text-sm font-medium transition-colors ${
                             p === pagination.page
-                              ? 'bg-ph-gold text-black'
-                              : 'bg-ph-elevated text-ph-text-secondary hover:bg-ph-border'
+                              ? 'bg-op-gold text-black'
+                              : 'bg-op-elevated text-op-text-secondary hover:bg-op-border'
                           }`}
                         >
                           {p}
@@ -268,7 +268,7 @@ export function StrategyClient({
                   <button
                     onClick={() => handlePageChange(pagination.page + 1)}
                     disabled={pagination.page >= pagination.totalPages}
-                    className="p-2 rounded-lg bg-ph-elevated text-ph-text-secondary hover:bg-ph-border disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    className="p-2 rounded-lg bg-op-elevated text-op-text-secondary hover:bg-op-border disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     aria-label="다음 페이지"
                   >
                     <ChevronRight className="w-5 h-5" />
@@ -281,44 +281,44 @@ export function StrategyClient({
 
         {/* Sidebar: Popular Posts */}
         <aside className="lg:w-80 shrink-0">
-          <div className="bg-ph-surface border border-ph-border rounded-lg overflow-hidden sticky top-20">
-            <div className="flex items-center gap-2 px-4 py-3 border-b border-ph-border bg-ph-elevated">
-              <Trophy className="w-4 h-4 text-ph-gold" />
-              <h2 className="text-sm font-semibold text-ph-text">
+          <div className="bg-op-surface border border-op-border rounded-lg overflow-hidden sticky top-20">
+            <div className="flex items-center gap-2 px-4 py-3 border-b border-op-border bg-op-elevated">
+              <Trophy className="w-4 h-4 text-op-gold" />
+              <h2 className="text-sm font-semibold text-op-text">
                 인기 전략글
               </h2>
             </div>
 
             {popularPosts.length === 0 ? (
-              <div className="p-4 text-center text-sm text-ph-text-muted">
+              <div className="p-4 text-center text-sm text-op-text-muted">
                 아직 인기 전략글이 없습니다
               </div>
             ) : (
-              <div className="divide-y divide-ph-border">
+              <div className="divide-y divide-op-border">
                 {popularPosts.map((post, idx) => (
                   <Link
                     key={post.id}
                     href={`/board/${boardSlug}/${post.id}`}
-                    className="flex gap-3 px-4 py-3 hover:bg-ph-elevated transition-colors group"
+                    className="flex gap-3 px-4 py-3 hover:bg-op-elevated transition-colors group"
                   >
                     <span
                       className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
                         idx === 0
-                          ? 'bg-ph-gold/20 text-ph-gold'
+                          ? 'bg-op-gold/20 text-op-gold'
                           : idx === 1
-                            ? 'bg-ph-silver/20 text-ph-silver'
+                            ? 'bg-op-silver/20 text-op-silver'
                             : idx === 2
-                              ? 'bg-ph-bronze/20 text-ph-bronze'
-                              : 'bg-ph-border text-ph-text-muted'
+                              ? 'bg-op-bronze/20 text-op-bronze'
+                              : 'bg-op-border text-op-text-muted'
                       }`}
                     >
                       {idx + 1}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm text-ph-text group-hover:text-ph-gold transition-colors line-clamp-1 font-medium">
+                      <p className="text-sm text-op-text group-hover:text-op-gold transition-colors line-clamp-1 font-medium">
                         {post.title}
                       </p>
-                      <div className="flex items-center gap-3 mt-1 text-xs text-ph-text-muted">
+                      <div className="flex items-center gap-3 mt-1 text-xs text-op-text-muted">
                         <span>{post.author.nickname}</span>
                         <span className="flex items-center gap-0.5">
                           <Heart className="w-3 h-3" />
@@ -335,10 +335,10 @@ export function StrategyClient({
               </div>
             )}
 
-            <div className="px-4 py-3 border-t border-ph-border">
+            <div className="px-4 py-3 border-t border-op-border">
               <Link
                 href={`/board/${boardSlug}`}
-                className="flex items-center justify-center gap-1 text-xs text-ph-text-secondary hover:text-ph-gold transition-colors"
+                className="flex items-center justify-center gap-1 text-xs text-op-text-secondary hover:text-op-gold transition-colors"
               >
                 <TrendingUp className="w-3 h-3" />
                 전략게시판 전체보기
@@ -367,7 +367,7 @@ function StrategyCard({
   return (
     <Link
       href={`/board/${boardSlug}/${post.id}`}
-      className="block bg-ph-surface border border-ph-border rounded-lg hover:bg-ph-elevated hover:border-ph-gold/30 transition-all group"
+      className="block bg-op-surface border border-op-border rounded-lg hover:bg-op-elevated hover:border-op-gold/30 transition-all group"
     >
       <div className="p-4">
         {/* Tags */}
@@ -376,7 +376,7 @@ function StrategyCard({
             {post.tags.slice(0, 3).map((tag) => (
               <span
                 key={tag}
-                className="px-2 py-0.5 rounded text-xs font-medium bg-ph-gold/10 text-ph-gold"
+                className="px-2 py-0.5 rounded text-xs font-medium bg-op-gold/10 text-op-gold"
               >
                 {tag}
               </span>
@@ -385,19 +385,19 @@ function StrategyCard({
         )}
 
         {/* Title */}
-        <h3 className="text-base font-semibold text-ph-text group-hover:text-ph-gold transition-colors line-clamp-2 mb-2">
+        <h3 className="text-base font-semibold text-op-text group-hover:text-op-gold transition-colors line-clamp-2 mb-2">
           {post.title}
         </h3>
 
         {/* Excerpt */}
-        <p className="text-sm text-ph-text-secondary line-clamp-3 mb-4 leading-relaxed">
+        <p className="text-sm text-op-text-secondary line-clamp-3 mb-4 leading-relaxed">
           {excerpt || '내용 미리보기 없음'}
         </p>
 
         {/* Author + Stats */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 min-w-0">
-            <div className="w-6 h-6 rounded-full bg-ph-border flex items-center justify-center text-xs font-bold text-ph-gold shrink-0 overflow-hidden">
+            <div className="w-6 h-6 rounded-full bg-op-border flex items-center justify-center text-xs font-bold text-op-gold shrink-0 overflow-hidden">
               {post.author.avatarUrl ? (
                 <img
                   src={post.author.avatarUrl}
@@ -408,15 +408,15 @@ function StrategyCard({
                 post.author.nickname.charAt(0).toUpperCase()
               )}
             </div>
-            <span className="text-xs text-ph-text-secondary truncate">
+            <span className="text-xs text-op-text-secondary truncate">
               {post.author.nickname}
             </span>
-            <span className="text-xs text-ph-text-muted">
+            <span className="text-xs text-op-text-muted">
               Lv.{post.author.level}
             </span>
           </div>
 
-          <div className="flex items-center gap-3 text-xs text-ph-text-muted shrink-0">
+          <div className="flex items-center gap-3 text-xs text-op-text-muted shrink-0">
             <span className="flex items-center gap-0.5">
               <Eye className="w-3 h-3" />
               {formatNumber(post.viewCount)}
@@ -433,7 +433,7 @@ function StrategyCard({
         </div>
 
         {/* Date */}
-        <div className="mt-3 pt-3 border-t border-ph-border/50 text-xs text-ph-text-muted">
+        <div className="mt-3 pt-3 border-t border-op-border/50 text-xs text-op-text-muted">
           {formatDate(post.createdAt)}
         </div>
       </div>

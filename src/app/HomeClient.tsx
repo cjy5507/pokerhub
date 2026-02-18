@@ -28,16 +28,16 @@ function NoticeBanner({ notices }: { notices: PostData[] }) {
   return (
     <Link
       href={`/board/notice/${latest.id}`}
-      className="flex items-center gap-3 bg-ph-surface border border-ph-border rounded-lg px-4 py-2.5 hover:bg-ph-elevated transition-colors"
+      className="flex items-center gap-3 bg-op-surface border border-op-border rounded-lg px-4 py-2.5 hover:bg-op-elevated transition-colors"
     >
-      <span className="shrink-0 inline-flex items-center gap-1 rounded bg-ph-gold-dim px-2 py-0.5 text-xs font-bold text-ph-gold">
+      <span className="shrink-0 inline-flex items-center gap-1 rounded bg-op-gold-dim px-2 py-0.5 text-xs font-bold text-op-gold">
         <Megaphone className="w-3 h-3" />
         공지
       </span>
-      <span className="flex-1 text-sm text-ph-text truncate">
+      <span className="flex-1 text-sm text-op-text truncate">
         {latest.title}
       </span>
-      <ChevronRight className="w-4 h-4 shrink-0 text-ph-text-muted" />
+      <ChevronRight className="w-4 h-4 shrink-0 text-op-text-muted" />
     </Link>
   );
 }
@@ -62,18 +62,18 @@ function NewsHero({ items }: { items: NewsItem[] }) {
           href={featured.link}
           target="_blank"
           rel="noopener noreferrer"
-          className="lg:col-span-2 bg-ph-surface border border-ph-border rounded-lg p-4 hover:bg-ph-elevated transition-colors group"
+          className="lg:col-span-2 bg-op-surface border border-op-border rounded-lg p-4 hover:bg-op-elevated transition-colors group"
         >
           <div className="flex items-center gap-2 mb-2">
             <SourceBadge source={featured.source} />
-            <span className="text-xs text-ph-text-muted">
+            <span className="text-xs text-op-text-muted">
               {formatRelativeTime(featured.pubDate)}
             </span>
           </div>
-          <h3 className="text-base font-semibold text-ph-text group-hover:text-ph-gold transition-colors line-clamp-2 mb-1.5">
+          <h3 className="text-base font-semibold text-op-text group-hover:text-op-gold transition-colors line-clamp-2 mb-1.5">
             {featured.titleKo}
           </h3>
-          <p className="text-sm text-ph-text-secondary line-clamp-2">
+          <p className="text-sm text-op-text-secondary line-clamp-2">
             {featured.descriptionKo}
           </p>
         </a>
@@ -86,15 +86,15 @@ function NewsHero({ items }: { items: NewsItem[] }) {
               href={item.link}
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-ph-surface border border-ph-border rounded-lg px-3 py-2.5 hover:bg-ph-elevated transition-colors group flex-1"
+              className="bg-op-surface border border-op-border rounded-lg px-3 py-2.5 hover:bg-op-elevated transition-colors group flex-1"
             >
               <div className="flex items-center gap-2 mb-1">
                 <SourceBadge source={item.source} />
-                <span className="text-xs text-ph-text-muted">
+                <span className="text-xs text-op-text-muted">
                   {formatRelativeTime(item.pubDate)}
                 </span>
               </div>
-              <h4 className="text-sm text-ph-text group-hover:text-ph-gold transition-colors line-clamp-2">
+              <h4 className="text-sm text-op-text group-hover:text-op-gold transition-colors line-clamp-2">
                 {item.titleKo}
               </h4>
             </a>
@@ -133,21 +133,21 @@ function BoardPreview({
   icon?: React.ReactNode;
 }) {
   return (
-    <div className="bg-ph-surface border border-ph-border rounded-lg overflow-hidden">
+    <div className="bg-op-surface border border-op-border rounded-lg overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-ph-border">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-op-border">
         <div className="flex items-center gap-2">
           {icon}
-          <h2 className="text-sm font-bold text-ph-text">{title}</h2>
+          <h2 className="text-sm font-bold text-op-text">{title}</h2>
           {posts.length > 0 && (
-            <span className="text-[10px] font-medium text-ph-gold bg-ph-gold-dim rounded-full px-1.5 py-0.5">
+            <span className="text-[10px] font-medium text-op-gold bg-op-gold-dim rounded-full px-1.5 py-0.5">
               {posts.length}
             </span>
           )}
         </div>
         <Link
           href={href}
-          className="flex items-center gap-0.5 text-xs text-ph-text-muted hover:text-ph-gold transition-colors"
+          className="flex items-center gap-0.5 text-xs text-op-text-muted hover:text-op-gold transition-colors"
         >
           더 보기
           <ChevronRight className="w-3 h-3" />
@@ -155,9 +155,9 @@ function BoardPreview({
       </div>
 
       {/* Post rows */}
-      <div className="divide-y divide-ph-border-subtle">
+      <div className="divide-y divide-op-border-subtle">
         {posts.length === 0 && (
-          <div className="px-3 py-6 text-center text-sm text-ph-text-muted">
+          <div className="px-3 py-6 text-center text-sm text-op-text-muted">
             아직 게시글이 없습니다
           </div>
         )}
@@ -165,25 +165,25 @@ function BoardPreview({
           <Link
             key={post.id}
             href={`/board/${post.boardSlug}/${post.id}`}
-            className="flex items-center gap-2 px-3 py-1.5 hover:bg-ph-elevated transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 hover:bg-op-elevated transition-colors"
           >
             {/* Title + comment count */}
-            <span className="flex-1 text-sm text-ph-text truncate">
+            <span className="flex-1 text-sm text-op-text truncate">
               {post.title}
               {post.commentCount > 0 && (
-                <span className="ml-1 text-xs text-ph-gold font-medium">
+                <span className="ml-1 text-xs text-op-gold font-medium">
                   [{post.commentCount}]
                 </span>
               )}
             </span>
 
             {/* Author */}
-            <span className="hidden sm:inline-block shrink-0 text-xs text-ph-text-muted w-16 text-right truncate">
+            <span className="hidden sm:inline-block shrink-0 text-xs text-op-text-muted w-16 text-right truncate">
               {post.author}
             </span>
 
             {/* Date */}
-            <span className="shrink-0 text-xs text-ph-text-dim w-14 text-right">
+            <span className="shrink-0 text-xs text-op-text-dim w-14 text-right">
               {formatRelativeTime(post.createdAt)}
             </span>
           </Link>
@@ -209,13 +209,13 @@ function SectionHeader({
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-2">
-        {icon && <span className="text-ph-gold">{icon}</span>}
-        <h2 className="text-sm font-bold text-ph-text">{title}</h2>
+        {icon && <span className="text-op-gold">{icon}</span>}
+        <h2 className="text-sm font-bold text-op-text">{title}</h2>
       </div>
       {href && (
         <Link
           href={href}
-          className="flex items-center gap-0.5 text-xs text-ph-text-muted hover:text-ph-gold transition-colors"
+          className="flex items-center gap-0.5 text-xs text-op-text-muted hover:text-op-gold transition-colors"
         >
           더 보기
           <ChevronRight className="w-3 h-3" />
@@ -266,7 +266,7 @@ export function HomeClient({
           title="HOT 인기글"
           posts={hotPosts}
           href="/board/free"
-          icon={<Flame className="w-4 h-4 text-ph-error" />}
+          icon={<Flame className="w-4 h-4 text-op-error" />}
         />
       </div>
     </div>

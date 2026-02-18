@@ -22,7 +22,7 @@ export function RichTextEditor({ content, onChange, placeholder, disabled }: Ric
       Image.configure({ inline: true, allowBase64: false }),
       Link.configure({
         openOnClick: false,
-        HTMLAttributes: { class: 'text-ph-gold underline' }
+        HTMLAttributes: { class: 'text-op-gold underline' }
       }),
       Placeholder.configure({ placeholder: placeholder || '내용을 입력하세요' }),
     ],
@@ -39,7 +39,7 @@ export function RichTextEditor({ content, onChange, placeholder, disabled }: Ric
   });
 
   return (
-    <div className="border border-ph-border rounded-lg overflow-hidden bg-ph-bg">
+    <div className="border border-op-border rounded-lg overflow-hidden bg-op-bg">
       <EditorToolbar editor={editor} />
       <EditorContent editor={editor} />
     </div>

@@ -72,7 +72,7 @@ function LoginForm() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-2">로그인</h1>
-          <p className="text-muted-foreground">PokerHub 계정으로 로그인하세요</p>
+          <p className="text-muted-foreground">Open Poker 계정으로 로그인하세요</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

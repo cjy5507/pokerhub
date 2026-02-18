@@ -216,20 +216,20 @@ export default function SettingsClient() {
   ];
 
   return (
-    <div className="min-h-screen bg-ph-bg text-ph-text">
+    <div className="min-h-screen bg-op-bg text-op-text">
       <div className="max-w-4xl mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8">설정</h1>
 
         {/* Tabs */}
-        <div className="flex gap-2 mb-8 border-b border-ph-border overflow-x-auto">
+        <div className="flex gap-2 mb-8 border-b border-op-border overflow-x-auto">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`px-6 py-3 font-medium transition-colors whitespace-nowrap ${
                 activeTab === tab.id
-                  ? 'text-ph-gold border-b-2 border-ph-gold'
-                  : 'text-ph-text-secondary hover:text-ph-text'
+                  ? 'text-op-gold border-b-2 border-op-gold'
+                  : 'text-op-text-secondary hover:text-op-text'
               }`}
             >
               {tab.label}
@@ -253,7 +253,7 @@ export default function SettingsClient() {
         {/* Profile Tab */}
         {activeTab === 'profile' && (
           <div className="space-y-6">
-            <div className="bg-ph-surface border border-ph-border rounded-lg p-6">
+            <div className="bg-op-surface border border-op-border rounded-lg p-6">
               <h2 className="text-xl font-bold mb-4">프로필 정보</h2>
 
               <div className="space-y-4">
@@ -263,9 +263,9 @@ export default function SettingsClient() {
                     type="text"
                     value="현재닉네임"
                     disabled
-                    className="w-full bg-ph-bg border border-ph-border rounded px-4 py-2 text-ph-text-secondary cursor-not-allowed"
+                    className="w-full bg-op-bg border border-op-border rounded px-4 py-2 text-op-text-secondary cursor-not-allowed"
                   />
-                  <p className="text-xs text-ph-text-secondary mt-1">
+                  <p className="text-xs text-op-text-secondary mt-1">
                     닉네임 변경은 관리자에게 문의하세요
                   </p>
                 </div>
@@ -279,7 +279,7 @@ export default function SettingsClient() {
                     onChange={(e) => setBio(e.target.value.slice(0, 200))}
                     placeholder="자기소개를 입력하세요"
                     rows={4}
-                    className="w-full bg-ph-bg border border-ph-border rounded px-4 py-2 text-ph-text focus:border-ph-gold outline-none resize-none"
+                    className="w-full bg-op-bg border border-op-border rounded px-4 py-2 text-op-text focus:border-op-gold outline-none resize-none"
                   />
                 </div>
 
@@ -290,14 +290,14 @@ export default function SettingsClient() {
                     value={avatarUrl}
                     onChange={(e) => setAvatarUrl(e.target.value)}
                     placeholder="https://example.com/avatar.jpg"
-                    className="w-full bg-ph-bg border border-ph-border rounded px-4 py-2 text-ph-text focus:border-ph-gold outline-none"
+                    className="w-full bg-op-bg border border-op-border rounded px-4 py-2 text-op-text focus:border-op-gold outline-none"
                   />
                   {avatarUrl && (
                     <div className="mt-2">
                       <img
                         src={avatarUrl}
                         alt="Avatar preview"
-                        className="w-20 h-20 rounded-full object-cover border border-ph-border"
+                        className="w-20 h-20 rounded-full object-cover border border-op-border"
                         onError={(e) => {
                           e.currentTarget.style.display = 'none';
                         }}
@@ -313,14 +313,14 @@ export default function SettingsClient() {
                     value={bannerUrl}
                     onChange={(e) => setBannerUrl(e.target.value)}
                     placeholder="https://example.com/banner.jpg"
-                    className="w-full bg-ph-bg border border-ph-border rounded px-4 py-2 text-ph-text focus:border-ph-gold outline-none"
+                    className="w-full bg-op-bg border border-op-border rounded px-4 py-2 text-op-text focus:border-op-gold outline-none"
                   />
                   {bannerUrl && (
                     <div className="mt-2">
                       <img
                         src={bannerUrl}
                         alt="Banner preview"
-                        className="w-full h-32 rounded object-cover border border-ph-border"
+                        className="w-full h-32 rounded object-cover border border-op-border"
                         onError={(e) => {
                           e.currentTarget.style.display = 'none';
                         }}
@@ -333,7 +333,7 @@ export default function SettingsClient() {
               <button
                 onClick={handleProfileSave}
                 disabled={loading}
-                className="mt-6 bg-ph-gold hover:bg-ph-gold-hover disabled:bg-ph-elevated disabled:text-ph-text-muted text-ph-bg font-medium px-6 py-2 rounded flex items-center gap-2 transition-colors"
+                className="mt-6 bg-op-gold hover:bg-op-gold-hover disabled:bg-op-elevated disabled:text-op-text-muted text-op-bg font-medium px-6 py-2 rounded flex items-center gap-2 transition-colors"
               >
                 {loading ? (
                   <>
@@ -354,7 +354,7 @@ export default function SettingsClient() {
         {/* Notifications Tab */}
         {activeTab === 'notifications' && (
           <div className="space-y-6">
-            <div className="bg-ph-surface border border-ph-border rounded-lg p-6">
+            <div className="bg-op-surface border border-op-border rounded-lg p-6">
               <h2 className="text-xl font-bold mb-4">알림 설정</h2>
 
               <div className="space-y-4">
@@ -393,7 +393,7 @@ export default function SettingsClient() {
               <button
                 onClick={handleNotificationsSave}
                 disabled={loading}
-                className="mt-6 bg-ph-gold hover:bg-ph-gold-hover disabled:bg-ph-elevated disabled:text-ph-text-muted text-ph-bg font-medium px-6 py-2 rounded flex items-center gap-2 transition-colors"
+                className="mt-6 bg-op-gold hover:bg-op-gold-hover disabled:bg-op-elevated disabled:text-op-text-muted text-op-bg font-medium px-6 py-2 rounded flex items-center gap-2 transition-colors"
               >
                 {loading ? (
                   <>
@@ -415,22 +415,22 @@ export default function SettingsClient() {
         {activeTab === 'shop' && (
           <div className="space-y-6">
             {/* Points display */}
-            <div className="bg-ph-surface border border-ph-gold/30 rounded-lg p-4 flex items-center justify-between">
-              <span className="text-ph-text-secondary">보유 포인트</span>
-              <span className="text-2xl font-bold text-ph-gold">{shopPoints.toLocaleString()}P</span>
+            <div className="bg-op-surface border border-op-gold/30 rounded-lg p-4 flex items-center justify-between">
+              <span className="text-op-text-secondary">보유 포인트</span>
+              <span className="text-2xl font-bold text-op-gold">{shopPoints.toLocaleString()}P</span>
             </div>
 
             {/* Custom Title Section */}
-            <div className="bg-ph-surface border border-ph-border rounded-lg p-6">
+            <div className="bg-op-surface border border-op-border rounded-lg p-6">
               <div className="flex items-center gap-2 mb-4">
-                <Type className="w-5 h-5 text-ph-gold" />
+                <Type className="w-5 h-5 text-op-gold" />
                 <h2 className="text-xl font-bold">커스텀 타이틀</h2>
               </div>
 
               {currentTitle && (
-                <div className="mb-4 p-3 bg-ph-bg rounded border border-ph-border">
-                  <span className="text-sm text-ph-text-secondary">현재 타이틀: </span>
-                  <span className="text-ph-gold font-medium">{currentTitle}</span>
+                <div className="mb-4 p-3 bg-op-bg rounded border border-op-border">
+                  <span className="text-sm text-op-text-secondary">현재 타이틀: </span>
+                  <span className="text-op-gold font-medium">{currentTitle}</span>
                 </div>
               )}
 
@@ -440,25 +440,25 @@ export default function SettingsClient() {
                   value={customTitle}
                   onChange={(e) => setCustomTitle(e.target.value.slice(0, 20))}
                   placeholder="새 타이틀 입력 (2~20자)"
-                  className="flex-1 bg-ph-bg border border-ph-border rounded px-4 py-2 text-ph-text focus:border-ph-gold outline-none"
+                  className="flex-1 bg-op-bg border border-op-border rounded px-4 py-2 text-op-text focus:border-op-gold outline-none"
                 />
                 <button
                   onClick={handleTitlePurchase}
                   disabled={loading || customTitle.trim().length < 2}
-                  className="bg-ph-gold hover:bg-ph-gold-hover disabled:bg-ph-elevated disabled:text-ph-text-muted text-ph-bg font-medium px-4 py-2 rounded whitespace-nowrap transition-colors"
+                  className="bg-op-gold hover:bg-op-gold-hover disabled:bg-op-elevated disabled:text-op-text-muted text-op-bg font-medium px-4 py-2 rounded whitespace-nowrap transition-colors"
                 >
                   {loading ? '처리 중...' : '500P로 변경'}
                 </button>
               </div>
-              <p className="text-xs text-ph-text-secondary mt-2">
+              <p className="text-xs text-op-text-secondary mt-2">
                 커스텀 타이틀은 프로필에 표시됩니다. 변경 시 500P가 차감됩니다.
               </p>
             </div>
 
             {/* Badge Shop Section */}
-            <div className="bg-ph-surface border border-ph-border rounded-lg p-6">
+            <div className="bg-op-surface border border-op-border rounded-lg p-6">
               <div className="flex items-center gap-2 mb-4">
-                <Award className="w-5 h-5 text-ph-gold" />
+                <Award className="w-5 h-5 text-op-gold" />
                 <h2 className="text-xl font-bold">뱃지 상점</h2>
               </div>
 
@@ -470,8 +470,8 @@ export default function SettingsClient() {
                     onClick={() => setActiveCategory(cat)}
                     className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
                       activeCategory === cat
-                        ? 'bg-ph-gold text-ph-bg'
-                        : 'bg-ph-elevated text-ph-text-secondary hover:bg-ph-border'
+                        ? 'bg-op-gold text-op-bg'
+                        : 'bg-op-elevated text-op-text-secondary hover:bg-op-border'
                     }`}
                   >
                     {cat === 'all' ? '전체' : CATEGORY_LABELS[cat] || cat}
@@ -481,10 +481,10 @@ export default function SettingsClient() {
 
               {shopLoading ? (
                 <div className="flex justify-center py-12">
-                  <Loader2 className="w-8 h-8 animate-spin text-ph-gold" />
+                  <Loader2 className="w-8 h-8 animate-spin text-op-gold" />
                 </div>
               ) : filteredBadges.length === 0 ? (
-                <div className="text-center py-12 text-ph-text-secondary">
+                <div className="text-center py-12 text-op-text-secondary">
                   이 카테고리에 뱃지가 없습니다
                 </div>
               ) : (
@@ -492,10 +492,10 @@ export default function SettingsClient() {
                   {filteredBadges.map((badge) => (
                     <div
                       key={badge.id}
-                      className={`border rounded-lg p-4 ${RARITY_COLORS[badge.rarity] || 'border-ph-border'} bg-ph-bg`}
+                      className={`border rounded-lg p-4 ${RARITY_COLORS[badge.rarity] || 'border-op-border'} bg-op-bg`}
                     >
                       <div className="flex items-start gap-3">
-                        <div className="w-12 h-12 rounded-lg bg-ph-elevated flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden">
+                        <div className="w-12 h-12 rounded-lg bg-op-elevated flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden">
                           <img
                             src={badge.iconUrl}
                             alt={badge.nameKo}
@@ -514,12 +514,12 @@ export default function SettingsClient() {
                             </span>
                           </div>
                           {badge.descriptionKo && (
-                            <p className="text-sm text-ph-text-secondary mt-1 line-clamp-2">
+                            <p className="text-sm text-op-text-secondary mt-1 line-clamp-2">
                               {badge.descriptionKo}
                             </p>
                           )}
                           <div className="flex items-center justify-between mt-3">
-                            <span className="text-ph-gold font-medium text-sm">
+                            <span className="text-op-gold font-medium text-sm">
                               {badge.price.toLocaleString()}P
                             </span>
                             {badge.owned ? (
@@ -530,7 +530,7 @@ export default function SettingsClient() {
                               <button
                                 onClick={() => handleBadgePurchase(badge.id)}
                                 disabled={loading || shopPoints < badge.price}
-                                className="bg-ph-gold hover:bg-ph-gold-hover disabled:bg-ph-elevated disabled:text-ph-text-muted text-ph-bg text-sm font-medium px-3 py-1 rounded transition-colors"
+                                className="bg-op-gold hover:bg-op-gold-hover disabled:bg-op-elevated disabled:text-op-text-muted text-op-bg text-sm font-medium px-3 py-1 rounded transition-colors"
                               >
                                 구매
                               </button>
@@ -549,7 +549,7 @@ export default function SettingsClient() {
         {/* Account Tab */}
         {activeTab === 'account' && (
           <div className="space-y-6">
-            <div className="bg-ph-surface border border-ph-border rounded-lg p-6">
+            <div className="bg-op-surface border border-op-border rounded-lg p-6">
               <h2 className="text-xl font-bold mb-4">비밀번호 변경</h2>
 
               <div className="space-y-4">
@@ -559,7 +559,7 @@ export default function SettingsClient() {
                     type="password"
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
-                    className="w-full bg-ph-bg border border-ph-border rounded px-4 py-2 text-ph-text focus:border-ph-gold outline-none"
+                    className="w-full bg-op-bg border border-op-border rounded px-4 py-2 text-op-text focus:border-op-gold outline-none"
                   />
                 </div>
 
@@ -569,7 +569,7 @@ export default function SettingsClient() {
                     type="password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full bg-ph-bg border border-ph-border rounded px-4 py-2 text-ph-text focus:border-ph-gold outline-none"
+                    className="w-full bg-op-bg border border-op-border rounded px-4 py-2 text-op-text focus:border-op-gold outline-none"
                   />
                 </div>
 
@@ -579,7 +579,7 @@ export default function SettingsClient() {
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full bg-ph-bg border border-ph-border rounded px-4 py-2 text-ph-text focus:border-ph-gold outline-none"
+                    className="w-full bg-op-bg border border-op-border rounded px-4 py-2 text-op-text focus:border-op-gold outline-none"
                   />
                 </div>
               </div>
@@ -587,15 +587,15 @@ export default function SettingsClient() {
               <button
                 onClick={handlePasswordChange}
                 disabled={loading || !currentPassword || !newPassword || !confirmPassword}
-                className="mt-6 bg-ph-gold hover:bg-ph-gold-hover disabled:bg-ph-elevated disabled:text-ph-text-muted text-ph-bg font-medium px-6 py-2 rounded transition-colors"
+                className="mt-6 bg-op-gold hover:bg-op-gold-hover disabled:bg-op-elevated disabled:text-op-text-muted text-op-bg font-medium px-6 py-2 rounded transition-colors"
               >
                 {loading ? '변경 중...' : '비밀번호 변경'}
               </button>
             </div>
 
-            <div className="bg-ph-surface border border-red-700 rounded-lg p-6">
+            <div className="bg-op-surface border border-red-700 rounded-lg p-6">
               <h2 className="text-xl font-bold mb-2 text-red-400">위험 구역</h2>
-              <p className="text-sm text-ph-text-secondary mb-4">
+              <p className="text-sm text-op-text-secondary mb-4">
                 회원탈퇴 시 모든 데이터가 삭제되며 복구할 수 없습니다.
               </p>
               <button
@@ -628,15 +628,15 @@ function ToggleSwitch({
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <div className="flex items-center justify-between py-3 border-b border-ph-border last:border-0">
+    <div className="flex items-center justify-between py-3 border-b border-op-border last:border-0">
       <div className="flex-1">
         <div className="font-medium">{label}</div>
-        <div className="text-sm text-ph-text-secondary mt-1">{description}</div>
+        <div className="text-sm text-op-text-secondary mt-1">{description}</div>
       </div>
       <button
         onClick={() => onChange(!checked)}
         className={`relative w-12 h-6 rounded-full transition-colors ${
-          checked ? 'bg-ph-gold' : 'bg-ph-border'
+          checked ? 'bg-op-gold' : 'bg-op-border'
         }`}
       >
         <div

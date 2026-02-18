@@ -1,4 +1,4 @@
-# PokerHub Component Index
+# Open Poker Component Index
 
 Quick reference for all design system components.
 

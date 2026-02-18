@@ -3,7 +3,7 @@ import { getSession } from '@/lib/auth/session';
 import SettingsClient from './SettingsClient';
 
 export const metadata = {
-  title: '설정 - PokerHub',
+  title: '설정 - Open Poker',
 };
 
 export default async function SettingsPage() {

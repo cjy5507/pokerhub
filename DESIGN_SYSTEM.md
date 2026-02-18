@@ -1,4 +1,4 @@
-# PokerHub Design System
+# Open Poker Design System
 
 A comprehensive mobile-first design system for the Korean Texas Hold'em poker community platform.
 
@@ -534,4 +534,4 @@ When adding new components:
 
 ## License
 
-Proprietary - PokerHub 2024
+Proprietary - Open Poker 2024

@@ -32,12 +32,12 @@ export default async function BoardPage({ params, searchParams }: BoardPageProps
       // Likely a DB connection issue
       return (
         <div className="max-w-6xl mx-auto px-4 py-6">
-          <div className="bg-ph-surface rounded-lg p-8 text-center">
-            <h1 className="text-2xl font-bold text-ph-text mb-4">데이터베이스 연결 필요</h1>
-            <p className="text-ph-text-secondary mb-2">
+          <div className="bg-op-surface rounded-lg p-8 text-center">
+            <h1 className="text-2xl font-bold text-op-text mb-4">데이터베이스 연결 필요</h1>
+            <p className="text-op-text-secondary mb-2">
               게시판을 불러올 수 없습니다. 데이터베이스 연결을 확인해주세요.
             </p>
-            <p className="text-sm text-ph-text-muted">
+            <p className="text-sm text-op-text-muted">
               .env 파일에 DATABASE_URL이 올바르게 설정되어 있는지 확인하세요.
             </p>
           </div>
@@ -72,12 +72,12 @@ export default async function BoardPage({ params, searchParams }: BoardPageProps
     <div className="max-w-6xl mx-auto px-4 py-6">
       {/* Board Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-ph-text mb-2">{board.nameKo}</h1>
+        <h1 className="text-2xl font-bold text-op-text mb-2">{board.nameKo}</h1>
         {board.description && (
-          <p className="text-sm text-ph-text-secondary">{board.description}</p>
+          <p className="text-sm text-op-text-secondary">{board.description}</p>
         )}
-        <div className="mt-2 text-sm text-ph-text-muted">
-          전체 게시글 <span className="text-ph-text font-medium">{pagination.total}</span>개
+        <div className="mt-2 text-sm text-op-text-muted">
+          전체 게시글 <span className="text-op-text font-medium">{pagination.total}</span>개
         </div>
       </div>
 
@@ -100,7 +100,7 @@ export default async function BoardPage({ params, searchParams }: BoardPageProps
         {session && (
           <Link
             href={`/board/${slug}/write`}
-            className="flex items-center justify-center gap-2 px-4 py-2 bg-ph-info hover:bg-ph-info text-white rounded-lg transition-colors font-medium min-h-[44px]"
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-op-info hover:bg-op-info text-white rounded-lg transition-colors font-medium min-h-[44px]"
           >
             <PenSquare className="w-5 h-5" />
             <span className="hidden sm:inline">글쓰기</span>
@@ -109,24 +109,24 @@ export default async function BoardPage({ params, searchParams }: BoardPageProps
       </div>
 
       {/* Post List */}
-      <div className="bg-ph-surface rounded-lg overflow-hidden">
+      <div className="bg-op-surface rounded-lg overflow-hidden">
         {/* Desktop: Table header */}
-        <div className="hidden lg:grid lg:grid-cols-[auto_1fr_150px_100px_80px_80px] gap-4 items-center px-4 py-3 border-b border-ph-border bg-ph-elevated">
+        <div className="hidden lg:grid lg:grid-cols-[auto_1fr_150px_100px_80px_80px] gap-4 items-center px-4 py-3 border-b border-op-border bg-op-elevated">
           <div className="w-6"></div>
-          <div className="text-sm font-medium text-ph-text-secondary">제목</div>
-          <div className="text-sm font-medium text-ph-text-secondary">작성자</div>
-          <div className="text-sm font-medium text-ph-text-secondary">날짜</div>
-          <div className="text-sm font-medium text-ph-text-secondary">조회</div>
-          <div className="text-sm font-medium text-ph-text-secondary">좋아요</div>
+          <div className="text-sm font-medium text-op-text-secondary">제목</div>
+          <div className="text-sm font-medium text-op-text-secondary">작성자</div>
+          <div className="text-sm font-medium text-op-text-secondary">날짜</div>
+          <div className="text-sm font-medium text-op-text-secondary">조회</div>
+          <div className="text-sm font-medium text-op-text-secondary">좋아요</div>
         </div>
 
         {/* Posts */}
         {posts.length === 0 ? (
-          <div className="py-16 text-center text-ph-text-muted">
+          <div className="py-16 text-center text-op-text-muted">
             {searchQuery ? '검색 결과가 없습니다' : '게시글이 없습니다'}
           </div>
         ) : (
-          <div className="lg:divide-y lg:divide-ph-border flex flex-col gap-3 lg:gap-0 p-3 lg:p-0">
+          <div className="lg:divide-y lg:divide-op-border flex flex-col gap-3 lg:gap-0 p-3 lg:p-0">
             {posts.map((post: any) => (
               <PostRow
                 key={post.id}

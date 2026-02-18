@@ -62,11 +62,11 @@ export function ThreadCard({ thread, currentUserId, onDelete }: ThreadCardProps)
   };
 
   return (
-    <div className="bg-ph-surface border border-ph-border rounded-lg p-4 space-y-3">
+    <div className="bg-op-surface border border-op-border rounded-lg p-4 space-y-3">
       {/* Author row */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-ph-elevated flex items-center justify-center">
+          <div className="w-10 h-10 rounded-full bg-op-elevated flex items-center justify-center">
             {thread.author.avatarUrl ? (
               <img
                 src={thread.author.avatarUrl}
@@ -74,19 +74,19 @@ export function ThreadCard({ thread, currentUserId, onDelete }: ThreadCardProps)
                 className="w-full h-full rounded-full object-cover"
               />
             ) : (
-              <User className="w-5 h-5 text-ph-text-muted" />
+              <User className="w-5 h-5 text-op-text-muted" />
             )}
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-ph-text">
+              <span className="text-sm font-medium text-op-text">
                 {thread.author.nickname}
               </span>
-              <span className="text-xs bg-ph-elevated border border-ph-border px-1.5 py-0.5 rounded text-ph-text-secondary">
+              <span className="text-xs bg-op-elevated border border-op-border px-1.5 py-0.5 rounded text-op-text-secondary">
                 Lv.{thread.author.level}
               </span>
             </div>
-            <span className="text-xs text-ph-text-muted">
+            <span className="text-xs text-op-text-muted">
               {formatRelativeTime(thread.createdAt)}
             </span>
           </div>
@@ -95,7 +95,7 @@ export function ThreadCard({ thread, currentUserId, onDelete }: ThreadCardProps)
         {isAuthor && onDelete && (
           <button
             onClick={onDelete}
-            className="p-2 text-ph-text-muted hover:text-ph-error transition-colors"
+            className="p-2 text-op-text-muted hover:text-op-error transition-colors"
             aria-label="삭제"
           >
             <Trash2 className="w-4 h-4" />
@@ -104,7 +104,7 @@ export function ThreadCard({ thread, currentUserId, onDelete }: ThreadCardProps)
       </div>
 
       {/* Content */}
-      <div className="text-ph-text whitespace-pre-wrap text-sm">
+      <div className="text-op-text whitespace-pre-wrap text-sm">
         {thread.content}
       </div>
 
@@ -125,7 +125,7 @@ export function ThreadCard({ thread, currentUserId, onDelete }: ThreadCardProps)
           onClick={handleLikeToggle}
           disabled={isTogglingLike || !currentUserId}
           className={`flex items-center gap-1.5 transition-colors ${
-            isLiked ? 'text-ph-error' : 'text-ph-text-secondary hover:text-ph-error'
+            isLiked ? 'text-op-error' : 'text-op-text-secondary hover:text-op-error'
           } disabled:opacity-50`}
         >
           <Heart className="w-5 h-5" fill={isLiked ? 'currentColor' : 'none'} />
@@ -140,14 +140,14 @@ export function ThreadCard({ thread, currentUserId, onDelete }: ThreadCardProps)
               loadReplies();
             }
           }}
-          className="flex items-center gap-1.5 text-ph-text-secondary hover:text-ph-gold transition-colors"
+          className="flex items-center gap-1.5 text-op-text-secondary hover:text-op-gold transition-colors"
         >
           <MessageCircle className="w-5 h-5" />
           <span className="text-sm">{thread.repliesCount}</span>
         </button>
 
         <button
-          className="flex items-center gap-1.5 text-ph-text-secondary hover:text-ph-gold transition-colors"
+          className="flex items-center gap-1.5 text-op-text-secondary hover:text-op-gold transition-colors"
           aria-label="공유"
         >
           <Share2 className="w-5 h-5" />
@@ -156,21 +156,21 @@ export function ThreadCard({ thread, currentUserId, onDelete }: ThreadCardProps)
 
       {/* Reply section */}
       {showReplies && (
-        <div className="mt-3 pt-3 border-t border-ph-border space-y-3">
+        <div className="mt-3 pt-3 border-t border-op-border space-y-3">
           {/* Loading indicator */}
           {isLoadingReplies && (
             <div className="text-center py-3">
-              <span className="text-xs text-ph-text-muted">댓글 불러오는 중...</span>
+              <span className="text-xs text-op-text-muted">댓글 불러오는 중...</span>
             </div>
           )}
 
           {/* Reply list */}
           {replies.length > 0 && (
-            <div className="space-y-2 bg-ph-surface rounded-lg p-3">
+            <div className="space-y-2 bg-op-surface rounded-lg p-3">
               {replies.map((reply) => (
                 <div key={reply.id} className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-full bg-ph-elevated flex items-center justify-center">
+                    <div className="w-6 h-6 rounded-full bg-op-elevated flex items-center justify-center">
                       {reply.author.avatarUrl ? (
                         <img
                           src={reply.author.avatarUrl}
@@ -178,20 +178,20 @@ export function ThreadCard({ thread, currentUserId, onDelete }: ThreadCardProps)
                           className="w-full h-full rounded-full object-cover"
                         />
                       ) : (
-                        <User className="w-3 h-3 text-ph-text-muted" />
+                        <User className="w-3 h-3 text-op-text-muted" />
                       )}
                     </div>
-                    <span className="text-xs font-medium text-ph-text">
+                    <span className="text-xs font-medium text-op-text">
                       {reply.author.nickname}
                     </span>
-                    <span className="text-xs text-ph-text-muted">
+                    <span className="text-xs text-op-text-muted">
                       Lv.{reply.author.level}
                     </span>
-                    <span className="text-xs text-ph-text-muted">
+                    <span className="text-xs text-op-text-muted">
                       {formatRelativeTime(reply.createdAt)}
                     </span>
                   </div>
-                  <p className="text-sm text-ph-text-secondary pl-8">{reply.content}</p>
+                  <p className="text-sm text-op-text-secondary pl-8">{reply.content}</p>
                 </div>
               ))}
             </div>
@@ -199,7 +199,7 @@ export function ThreadCard({ thread, currentUserId, onDelete }: ThreadCardProps)
 
           {/* Empty state */}
           {!isLoadingReplies && replies.length === 0 && (
-            <p className="text-xs text-ph-text-muted text-center py-2">아직 댓글이 없습니다</p>
+            <p className="text-xs text-op-text-muted text-center py-2">아직 댓글이 없습니다</p>
           )}
 
           {/* Reply input */}
@@ -210,13 +210,13 @@ export function ThreadCard({ thread, currentUserId, onDelete }: ThreadCardProps)
                 value={replyContent}
                 onChange={(e) => setReplyContent(e.target.value)}
                 placeholder="댓글을 입력하세요..."
-                className="flex-1 bg-ph-elevated border border-ph-border rounded-lg px-3 py-2 text-sm text-ph-text placeholder:text-ph-text-muted focus:outline-none focus:border-ph-gold"
+                className="flex-1 bg-op-elevated border border-op-border rounded-lg px-3 py-2 text-sm text-op-text placeholder:text-op-text-muted focus:outline-none focus:border-op-gold"
                 maxLength={300}
               />
               <button
                 onClick={handleReplySubmit}
                 disabled={!replyContent.trim() || isSubmitting}
-                className="px-4 py-2 bg-ph-gold hover:bg-ph-gold-hover text-black rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-op-gold hover:bg-op-gold-hover text-black rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Send className="w-4 h-4" />
               </button>

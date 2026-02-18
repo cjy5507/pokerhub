@@ -28,7 +28,7 @@ async function seed() {
 
   const [testUser] = await sql`
     INSERT INTO users (email, nickname, password_hash, level, xp, points, role, bio)
-    VALUES ('test@pokerhub.kr', '포커마스터', ${passwordHash}, 5, 1500, 5000, 'user', '포커를 사랑하는 테스트 유저입니다.')
+    VALUES ('test@openpoker.kr', '포커마스터', ${passwordHash}, 5, 1500, 5000, 'user', '포커를 사랑하는 테스트 유저입니다.')
     ON CONFLICT (email) DO UPDATE SET nickname = EXCLUDED.nickname
     RETURNING id
   `;
@@ -38,7 +38,7 @@ async function seed() {
   console.log('👤 Creating second test user...');
   const [testUser2] = await sql`
     INSERT INTO users (email, nickname, password_hash, level, xp, points, role, bio)
-    VALUES ('test2@pokerhub.kr', '초보포커러', ${passwordHash}, 2, 300, 2000, 'user', '포커 배우는 중입니다!')
+    VALUES ('test2@openpoker.kr', '초보포커러', ${passwordHash}, 2, 300, 2000, 'user', '포커 배우는 중입니다!')
     ON CONFLICT (email) DO UPDATE SET nickname = EXCLUDED.nickname
     RETURNING id
   `;
@@ -122,8 +122,8 @@ async function seed() {
 
   console.log('🎉 Seeding complete!\n');
   console.log('📌 Test accounts:');
-  console.log('   Email: test@pokerhub.kr / Password: test1234');
-  console.log('   Email: test2@pokerhub.kr / Password: test1234');
+  console.log('   Email: test@openpoker.kr / Password: test1234');
+  console.log('   Email: test2@openpoker.kr / Password: test1234');
 
   await sql.end();
   process.exit(0);

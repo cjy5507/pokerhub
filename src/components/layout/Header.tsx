@@ -107,8 +107,8 @@ function NavDropdown({
         className={cn(
           'px-3 py-2 text-sm font-medium transition-colors rounded',
           isActive
-            ? 'text-ph-gold font-semibold border-b-2 border-ph-gold'
-            : 'text-ph-text hover:text-ph-gold hover:bg-ph-elevated'
+            ? 'text-op-gold font-semibold border-b-2 border-op-gold'
+            : 'text-op-text hover:text-op-gold hover:bg-op-elevated'
         )}
       >
         {group.label}
@@ -127,8 +127,8 @@ function NavDropdown({
         className={cn(
           'flex items-center gap-1 px-3 py-2 text-sm font-medium transition-colors rounded',
           isActive
-            ? 'text-ph-gold font-semibold border-b-2 border-ph-gold'
-            : 'text-ph-text hover:text-ph-gold hover:bg-ph-elevated'
+            ? 'text-op-gold font-semibold border-b-2 border-op-gold'
+            : 'text-op-text hover:text-op-gold hover:bg-op-elevated'
         )}
       >
         {group.label}
@@ -143,7 +143,7 @@ function NavDropdown({
       {/* Dropdown panel */}
       <div
         className={cn(
-          'absolute top-full left-0 mt-1 min-w-[160px] bg-ph-surface border border-ph-border rounded-lg shadow-lg overflow-hidden transition-all',
+          'absolute top-full left-0 mt-1 min-w-[160px] bg-op-surface border border-op-border rounded-lg shadow-lg overflow-hidden transition-all',
           open
             ? 'opacity-100 translate-y-0 pointer-events-auto'
             : 'opacity-0 -translate-y-1 pointer-events-none'
@@ -153,7 +153,7 @@ function NavDropdown({
           <Link
             key={item.href}
             href={item.href}
-            className="block px-4 py-2.5 text-sm text-ph-text hover:bg-ph-elevated hover:text-ph-gold transition-colors"
+            className="block px-4 py-2.5 text-sm text-op-text hover:bg-op-elevated hover:text-op-gold transition-colors"
           >
             {item.label}
           </Link>
@@ -200,16 +200,16 @@ export default function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-ph-header border-b border-ph-border">
+      <header className="sticky top-0 z-40 bg-op-header border-b border-op-border">
         <div className="mx-auto max-w-[1560px] px-4">
           <div className="flex h-14 lg:h-16 items-center justify-between gap-4">
             {/* Left: Logo */}
             <Link
               href="/"
-              className="flex items-center gap-2 font-bold text-lg lg:text-xl text-ph-gold hover:text-ph-gold-hover transition-colors"
+              className="flex items-center gap-2 font-bold text-lg lg:text-xl text-op-gold hover:text-op-gold-hover transition-colors"
             >
               <Spade className="w-6 h-6" fill="currentColor" />
-              <span>PokerHub</span>
+              <span>Open Poker</span>
             </Link>
 
             {/* Center: Desktop Navigation */}
@@ -228,7 +228,7 @@ export default function Header() {
               {/* Theme Toggle */}
               <button
                 onClick={toggleTheme}
-                className="min-w-[44px] min-h-[44px] flex items-center justify-center text-ph-text-secondary hover:text-ph-gold transition-colors"
+                className="min-w-[44px] min-h-[44px] flex items-center justify-center text-op-text-secondary hover:text-op-gold transition-colors"
                 aria-label="테마 변경"
               >
                 {theme === 'dark' ? (
@@ -241,7 +241,7 @@ export default function Header() {
               {/* Search Button */}
               <button
                 onClick={() => setSearchOpen(true)}
-                className="min-w-[44px] min-h-[44px] flex items-center justify-center text-ph-text-secondary hover:text-ph-gold transition-colors"
+                className="min-w-[44px] min-h-[44px] flex items-center justify-center text-op-text-secondary hover:text-op-gold transition-colors"
                 aria-label="검색"
               >
                 <Search className="w-5 h-5" />
@@ -252,45 +252,45 @@ export default function Header() {
                   {/* Notification Bell */}
                   <Link
                     href="/notifications"
-                    className="relative min-w-[44px] min-h-[44px] flex items-center justify-center text-ph-text-secondary hover:text-ph-gold transition-colors"
+                    className="relative min-w-[44px] min-h-[44px] flex items-center justify-center text-op-text-secondary hover:text-op-gold transition-colors"
                     aria-label="알림"
                   >
                     <Bell className="w-5 h-5" />
-                    <span className="absolute top-2 right-2 w-2 h-2 bg-ph-error rounded-full" />
+                    <span className="absolute top-2 right-2 w-2 h-2 bg-op-error rounded-full" />
                   </Link>
 
                   {/* User Avatar Dropdown */}
                   <div className="relative hidden lg:block">
                     <button
                       onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                      className="min-w-[44px] min-h-[44px] flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-ph-elevated transition-colors"
+                      className="min-w-[44px] min-h-[44px] flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-op-elevated transition-colors"
                       aria-label="사용자 메뉴"
                       aria-expanded={isUserMenuOpen}
                     >
-                      <div className="w-8 h-8 rounded-full bg-ph-gold flex items-center justify-center text-sm font-bold text-ph-text-inverse">
+                      <div className="w-8 h-8 rounded-full bg-op-gold flex items-center justify-center text-sm font-bold text-op-text-inverse">
                         {session?.nickname[0].toUpperCase() || 'U'}
                       </div>
                     </button>
 
                     {isUserMenuOpen && (
-                      <div className="absolute right-0 mt-2 w-48 bg-ph-surface border border-ph-border rounded-lg shadow-lg overflow-hidden">
-                        <div className="px-4 py-3 border-b border-ph-border">
-                          <p className="text-sm font-medium text-ph-text">
+                      <div className="absolute right-0 mt-2 w-48 bg-op-surface border border-op-border rounded-lg shadow-lg overflow-hidden">
+                        <div className="px-4 py-3 border-b border-op-border">
+                          <p className="text-sm font-medium text-op-text">
                             {session?.nickname}
                           </p>
-                          <p className="text-xs text-ph-text-secondary mt-1">
+                          <p className="text-xs text-op-text-secondary mt-1">
                             {session?.email}
                           </p>
                         </div>
                         <Link
                           href={`/profile/${session?.userId}`}
-                          className="block px-4 py-2 text-sm text-ph-text hover:bg-ph-elevated transition-colors"
+                          className="block px-4 py-2 text-sm text-op-text hover:bg-op-elevated transition-colors"
                         >
                           내 프로필
                         </Link>
                         <Link
                           href="/settings"
-                          className="block px-4 py-2 text-sm text-ph-text hover:bg-ph-elevated transition-colors"
+                          className="block px-4 py-2 text-sm text-op-text hover:bg-op-elevated transition-colors"
                         >
                           설정
                         </Link>
@@ -300,7 +300,7 @@ export default function Header() {
                             router.push('/login');
                             router.refresh();
                           }}
-                          className="w-full text-left px-4 py-2 text-sm text-ph-error hover:bg-ph-elevated transition-colors"
+                          className="w-full text-left px-4 py-2 text-sm text-op-error hover:bg-op-elevated transition-colors"
                         >
                           로그아웃
                         </button>
@@ -311,7 +311,7 @@ export default function Header() {
               ) : (
                 <Link
                   href="/login"
-                  className="hidden lg:block px-4 py-2 text-sm font-medium bg-ph-gold hover:bg-ph-gold-hover text-ph-text-inverse rounded-md transition-colors"
+                  className="hidden lg:block px-4 py-2 text-sm font-medium bg-op-gold hover:bg-op-gold-hover text-op-text-inverse rounded-md transition-colors"
                 >
                   로그인
                 </Link>
@@ -320,7 +320,7 @@ export default function Header() {
               {/* Mobile Menu Button */}
               <button
                 onClick={() => setIsMobileMenuOpen(true)}
-                className="lg:hidden min-w-[44px] min-h-[44px] flex items-center justify-center text-ph-text hover:text-ph-gold transition-colors"
+                className="lg:hidden min-w-[44px] min-h-[44px] flex items-center justify-center text-op-text hover:text-op-gold transition-colors"
                 aria-label="메뉴 열기"
               >
                 <Menu className="w-6 h-6" />

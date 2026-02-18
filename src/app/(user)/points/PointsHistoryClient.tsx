@@ -54,25 +54,25 @@ export function PointsHistoryClient({
     <div className="container max-w-4xl mx-auto px-4 py-6 lg:py-8">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl lg:text-3xl font-bold text-ph-text mb-2">
+        <h1 className="text-2xl lg:text-3xl font-bold text-op-text mb-2">
           포인트 내역
         </h1>
-        <p className="text-sm text-ph-text-secondary">
+        <p className="text-sm text-op-text-secondary">
           포인트 획득 및 사용 내역을 확인하세요
         </p>
       </div>
 
       {/* Current Balance */}
-      <div className="bg-gradient-to-br from-ph-gold/20 to-ph-gold/10 border-2 border-ph-gold rounded-lg p-6 mb-6">
+      <div className="bg-gradient-to-br from-op-gold/20 to-op-gold/10 border-2 border-op-gold rounded-lg p-6 mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-sm text-ph-text-secondary mb-2">현재 보유 포인트</div>
+            <div className="text-sm text-op-text-secondary mb-2">현재 보유 포인트</div>
             <div className="flex items-center gap-2">
-              <Coins className="w-8 h-8 text-ph-gold" />
-              <span className="text-3xl font-bold text-ph-gold">
+              <Coins className="w-8 h-8 text-op-gold" />
+              <span className="text-3xl font-bold text-op-gold">
                 {balance.toLocaleString()}
               </span>
-              <span className="text-xl text-ph-text-secondary">P</span>
+              <span className="text-xl text-op-text-secondary">P</span>
             </div>
           </div>
         </div>
@@ -80,30 +80,30 @@ export function PointsHistoryClient({
 
       {/* Summary Stats */}
       <div className="grid grid-cols-2 gap-3 mb-6">
-        <div className="bg-ph-surface border border-ph-border rounded-lg p-4">
+        <div className="bg-op-surface border border-op-border rounded-lg p-4">
           <div className="flex items-center gap-2 mb-1">
-            <ArrowUpRight className="w-4 h-4 text-ph-success" />
-            <span className="text-xs text-ph-text-secondary">이 페이지 총 획득</span>
+            <ArrowUpRight className="w-4 h-4 text-op-success" />
+            <span className="text-xs text-op-text-secondary">이 페이지 총 획득</span>
           </div>
-          <div className="text-lg font-bold text-ph-success">
+          <div className="text-lg font-bold text-op-success">
             +{totalEarned.toLocaleString()} P
           </div>
         </div>
-        <div className="bg-ph-surface border border-ph-border rounded-lg p-4">
+        <div className="bg-op-surface border border-op-border rounded-lg p-4">
           <div className="flex items-center gap-2 mb-1">
-            <ArrowDownRight className="w-4 h-4 text-ph-error" />
-            <span className="text-xs text-ph-text-secondary">이 페이지 총 사용</span>
+            <ArrowDownRight className="w-4 h-4 text-op-error" />
+            <span className="text-xs text-op-text-secondary">이 페이지 총 사용</span>
           </div>
-          <div className="text-lg font-bold text-ph-error">
+          <div className="text-lg font-bold text-op-error">
             -{totalSpent.toLocaleString()} P
           </div>
         </div>
       </div>
 
       {/* Transactions Table */}
-      <div className="bg-ph-surface rounded-lg overflow-hidden">
+      <div className="bg-op-surface rounded-lg overflow-hidden">
         {/* Table Header */}
-        <div className="hidden lg:grid grid-cols-12 gap-4 px-6 py-3 bg-ph-elevated text-sm font-semibold text-ph-text-secondary border-b border-ph-border">
+        <div className="hidden lg:grid grid-cols-12 gap-4 px-6 py-3 bg-op-elevated text-sm font-semibold text-op-text-secondary border-b border-op-border">
           <div className="col-span-3">날짜</div>
           <div className="col-span-4">내역</div>
           <div className="col-span-2 text-right">변동</div>
@@ -111,24 +111,24 @@ export function PointsHistoryClient({
         </div>
 
         {/* Transaction Rows */}
-        <div className="divide-y divide-ph-border">
+        <div className="divide-y divide-op-border">
           {transactions.map((tx) => (
             <div
               key={tx.id}
-              className="grid grid-cols-1 lg:grid-cols-12 gap-2 lg:gap-4 px-4 lg:px-6 py-4 hover:bg-ph-elevated transition-colors"
+              className="grid grid-cols-1 lg:grid-cols-12 gap-2 lg:gap-4 px-4 lg:px-6 py-4 hover:bg-op-elevated transition-colors"
             >
               {/* Date */}
-              <div className="lg:col-span-3 text-xs lg:text-sm text-ph-text-secondary">
+              <div className="lg:col-span-3 text-xs lg:text-sm text-op-text-secondary">
                 {formatDate(tx.createdAt)}
               </div>
 
               {/* Description */}
               <div className="lg:col-span-4">
-                <div className="text-sm lg:text-base text-ph-text font-medium">
+                <div className="text-sm lg:text-base text-op-text font-medium">
                   {TYPE_LABELS[tx.type] || tx.type}
                 </div>
                 {tx.description && (
-                  <div className="text-xs text-ph-text-muted mt-1">
+                  <div className="text-xs text-op-text-muted mt-1">
                     {tx.description}
                   </div>
                 )}
@@ -139,7 +139,7 @@ export function PointsHistoryClient({
                 <div
                   className={cn(
                     'inline-flex items-center gap-1 text-sm lg:text-base font-bold',
-                    tx.amount > 0 ? 'text-ph-success' : 'text-ph-error'
+                    tx.amount > 0 ? 'text-op-success' : 'text-op-error'
                   )}
                 >
                   {tx.amount > 0 ? (
@@ -157,7 +157,7 @@ export function PointsHistoryClient({
               </div>
 
               {/* Balance After */}
-              <div className="lg:col-span-3 lg:text-right text-sm lg:text-base text-ph-text-secondary">
+              <div className="lg:col-span-3 lg:text-right text-sm lg:text-base text-op-text-secondary">
                 {tx.balanceAfter.toLocaleString()} P
               </div>
             </div>
@@ -166,7 +166,7 @@ export function PointsHistoryClient({
 
         {/* Empty State */}
         {transactions.length === 0 && (
-          <div className="py-12 text-center text-ph-text-muted">
+          <div className="py-12 text-center text-op-text-muted">
             <Coins className="w-12 h-12 mx-auto mb-3 opacity-30" />
             <p className="text-sm">포인트 내역이 없습니다</p>
           </div>
@@ -179,20 +179,20 @@ export function PointsHistoryClient({
           {pagination.page > 1 && (
             <Link
               href={`/points?page=${pagination.page - 1}`}
-              className="px-4 py-2 bg-ph-elevated text-ph-text rounded hover:bg-ph-border transition-colors"
+              className="px-4 py-2 bg-op-elevated text-op-text rounded hover:bg-op-border transition-colors"
             >
               이전
             </Link>
           )}
 
-          <div className="px-4 py-2 text-sm text-ph-text-secondary">
+          <div className="px-4 py-2 text-sm text-op-text-secondary">
             {pagination.page} / {pagination.totalPages}
           </div>
 
           {pagination.page < pagination.totalPages && (
             <Link
               href={`/points?page=${pagination.page + 1}`}
-              className="px-4 py-2 bg-ph-elevated text-ph-text rounded hover:bg-ph-border transition-colors"
+              className="px-4 py-2 bg-op-elevated text-op-text rounded hover:bg-op-border transition-colors"
             >
               다음
             </Link>

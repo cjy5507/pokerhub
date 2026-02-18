@@ -167,7 +167,7 @@ function BuyInModal({
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-[200]" onClick={onCancel}>
       <div
-        className="bg-ph-elevated border border-white/10 rounded-xl p-5 max-w-sm w-full"
+        className="bg-op-elevated border border-white/10 rounded-xl p-5 max-w-sm w-full"
         onClick={(e) => e.stopPropagation()}
       >
         <h3 className="text-base font-bold text-white mb-4">좌석 {seatNumber + 1} 착석</h3>
@@ -200,7 +200,7 @@ function BuyInModal({
                 className={cn(
                   'flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors',
                   buyIn === preset
-                    ? 'bg-ph-enter text-white'
+                    ? 'bg-op-enter text-white'
                     : 'bg-white/8 text-white/50 hover:bg-white/12'
                 )}
               >
@@ -212,13 +212,13 @@ function BuyInModal({
           <div className="flex gap-3 mt-4">
             <button
               onClick={onCancel}
-              className="flex-1 bg-ph-elevated hover:bg-ph-border text-white font-semibold py-3 rounded-lg transition-colors"
+              className="flex-1 bg-op-elevated hover:bg-op-border text-white font-semibold py-3 rounded-lg transition-colors"
             >
               취소
             </button>
             <button
               onClick={() => onConfirm(buyIn)}
-              className="flex-1 bg-ph-enter hover:bg-ph-enter-hover text-white font-semibold py-3 rounded-lg transition-colors"
+              className="flex-1 bg-op-enter hover:bg-op-enter-hover text-white font-semibold py-3 rounded-lg transition-colors"
             >
               착석
             </button>
@@ -323,7 +323,7 @@ function SeatDisplay({
         <div
           className={cn(
             'rounded-lg px-2 py-1 text-center min-w-[72px] md:min-w-[84px] relative transition-all duration-200',
-            isCurrent && !seat.isFolded && 'ring-2 ring-ph-success/60',
+            isCurrent && !seat.isFolded && 'ring-2 ring-op-success/60',
           )}
           style={{
             background: 'rgba(74,140,92,0.25)',
@@ -336,7 +336,7 @@ function SeatDisplay({
                 className="h-full transition-all duration-1000 linear"
                 style={{
                   width: `${Math.max(0, Math.min(100, (timeLeft / 30) * 100))}%`,
-                  background: timeLeft > 10 ? 'var(--ph-success)' : timeLeft > 5 ? 'var(--ph-warning)' : 'var(--ph-error)',
+                  background: timeLeft > 10 ? 'var(--op-success)' : timeLeft > 5 ? 'var(--op-warning)' : 'var(--op-error)',
                 }}
               />
             </div>
@@ -381,7 +381,7 @@ function SeatDisplay({
         className={cn(
           'rounded-lg px-2 py-1.5 md:px-2.5 md:py-2 text-center min-w-[72px] md:min-w-[84px] relative transition-all duration-200',
           isCurrent && !seat.isFolded && 'ring-2 ring-white/40',
-          seat.isAllIn && !seat.isFolded && 'ring-2 ring-ph-error/60',
+          seat.isAllIn && !seat.isFolded && 'ring-2 ring-op-error/60',
         )}
         style={{
           background: 'rgba(0,0,0,0.50)',
@@ -395,7 +395,7 @@ function SeatDisplay({
               className="h-full transition-all duration-1000 linear"
               style={{
                 width: `${Math.max(0, Math.min(100, (timeLeft / 30) * 100))}%`,
-                background: timeLeft > 10 ? 'var(--ph-success)' : timeLeft > 5 ? 'var(--ph-warning)' : 'var(--ph-error)',
+                background: timeLeft > 10 ? 'var(--op-success)' : timeLeft > 5 ? 'var(--op-warning)' : 'var(--op-error)',
               }}
             />
           </div>
@@ -413,7 +413,7 @@ function SeatDisplay({
 
         {/* All-in badge */}
         {seat.isAllIn && !seat.isFolded && (
-          <div className="text-[8px] font-bold text-ph-error uppercase tracking-wider">
+          <div className="text-[8px] font-bold text-op-error uppercase tracking-wider">
             ALL IN
           </div>
         )}
@@ -469,7 +469,7 @@ function WinOverlay({ winnerName, amount }: { winnerName: string; amount: number
         <p className="text-lg md:text-xl font-bold text-white">
           {winnerName}
         </p>
-        <p className="text-sm md:text-base font-bold text-ph-enter">
+        <p className="text-sm md:text-base font-bold text-op-enter">
           +{amount.toLocaleString()}
         </p>
       </div>
@@ -539,7 +539,7 @@ function HandHistorySheet({
       {/* Sheet */}
       <div
         className={cn(
-          'absolute bottom-0 left-0 right-0 bg-ph-elevated rounded-t-2xl transition-transform duration-300 max-h-[60vh] flex flex-col',
+          'absolute bottom-0 left-0 right-0 bg-op-elevated rounded-t-2xl transition-transform duration-300 max-h-[60vh] flex flex-col',
           isOpen ? 'translate-y-0' : 'translate-y-full'
         )}
         style={{
@@ -569,7 +569,7 @@ function HandHistorySheet({
               disabled={isSaving}
               className={cn(
                 'w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all active:scale-[0.97]',
-                'bg-ph-gold hover:opacity-90 text-ph-text-inverse',
+                'bg-op-gold hover:opacity-90 text-op-text-inverse',
                 isSaving && 'opacity-60 cursor-not-allowed'
               )}
             >
@@ -1046,7 +1046,7 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
   // ─── Render ───────────────────────────────────────────────────
 
   return (
-    <div className="h-[100dvh] w-[100dvw] bg-ph-elevated flex flex-col overflow-hidden select-none">
+    <div className="h-[100dvh] w-[100dvw] bg-op-elevated flex flex-col overflow-hidden select-none">
 
       {/* ═══════════════════════════════════════════════════════════
           TOP BAR - PokerNow style, compact
@@ -1054,7 +1054,7 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
       <header
         className="flex-shrink-0 h-9 flex items-center justify-between px-2 z-30"
         style={{
-          background: 'var(--ph-elevated)',
+          background: 'var(--op-elevated)',
           borderBottom: '1px solid rgba(255,255,255,0.08)',
         }}
       >
@@ -1102,7 +1102,7 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
               disabled={isLeaving}
               className={cn(
                 'flex items-center gap-1 px-2 py-1 rounded text-[9px] font-semibold transition-all active:scale-[0.92]',
-                'text-ph-error/60 hover:text-ph-error',
+                'text-op-error/60 hover:text-op-error',
                 isLeaving && 'opacity-40 cursor-not-allowed'
               )}
             >
@@ -1276,7 +1276,7 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
       <div
         className="flex-shrink-0"
         style={{
-          background: 'var(--ph-surface)',
+          background: 'var(--op-surface)',
           borderTop: '1px solid rgba(255,255,255,0.08)',
           paddingBottom: 'env(safe-area-inset-bottom)',
         }}
@@ -1294,16 +1294,16 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
                       className={cn(
                         'font-bold tabular-nums',
                         turnTimeLeft > 10
-                          ? 'text-ph-success'
+                          ? 'text-op-success'
                           : turnTimeLeft > 5
-                            ? 'text-ph-warning'
-                            : 'text-ph-error animate-pulse'
+                            ? 'text-op-warning'
+                            : 'text-op-error animate-pulse'
                       )}
                     >
                       내 차례 {turnTimeLeft}초
                     </span>
                   ) : heroSeat.isFolded ? (
-                    <span className="text-ph-error/60 font-semibold uppercase tracking-wide">FOLD</span>
+                    <span className="text-op-error/60 font-semibold uppercase tracking-wide">FOLD</span>
                   ) : isPlaying && !heroSeat.isFolded ? (
                     <span className="text-white/30 truncate">
                       {gameState.currentSeat !== null
@@ -1352,7 +1352,7 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
                 {showRaiseSlider && (
                   <div
                     className="mb-2 rounded-xl p-3"
-                    style={{ background: 'var(--ph-elevated)', border: '1px solid rgba(255,255,255,0.08)' }}
+                    style={{ background: 'var(--op-elevated)', border: '1px solid rgba(255,255,255,0.08)' }}
                   >
                     {/* Preset chips */}
                     <div className="flex gap-1.5 mb-2.5 overflow-x-auto scrollbar-hide">
@@ -1422,7 +1422,7 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
                                 setBetInputEditing(false);
                               }
                             }}
-                            className="w-24 bg-white/10 border border-white/20 rounded-lg px-2 py-1 text-center text-base font-bold text-white tabular-nums outline-none focus:border-ph-enter"
+                            className="w-24 bg-white/10 border border-white/20 rounded-lg px-2 py-1 text-center text-base font-bold text-white tabular-nums outline-none focus:border-op-enter"
                           />
                           <button
                             onClick={() => {
@@ -1432,7 +1432,7 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
                               }
                               setBetInputEditing(false);
                             }}
-                            className="w-7 h-7 rounded-lg flex items-center justify-center bg-ph-enter text-white active:scale-[0.88]"
+                            className="w-7 h-7 rounded-lg flex items-center justify-center bg-op-enter text-white active:scale-[0.88]"
                           >
                             <Check className="w-4 h-4" />
                           </button>
@@ -1467,7 +1467,7 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
                       onClick={() => handleAction('fold')}
                       disabled={actionPending}
                       className={cn(
-                        'flex-1 min-h-[48px] rounded-lg font-bold text-[13px] transition-all active:scale-[0.96] bg-ph-text-secondary text-white',
+                        'flex-1 min-h-[48px] rounded-lg font-bold text-[13px] transition-all active:scale-[0.96] bg-op-text-secondary text-white',
                         actionPending && 'opacity-50 cursor-not-allowed'
                       )}
                     >
@@ -1481,7 +1481,7 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
                     disabled={actionPending}
                     className={cn(
                       'flex-1 min-h-[48px] rounded-lg font-bold transition-all active:scale-[0.96]',
-                      canCheck ? 'bg-ph-enter text-white' : 'bg-ph-felt text-white',
+                      canCheck ? 'bg-op-enter text-white' : 'bg-op-felt text-white',
                       actionPending && 'opacity-50 cursor-not-allowed'
                     )}
                   >
@@ -1514,8 +1514,8 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
                       className={cn(
                         'flex-1 min-h-[48px] rounded-lg font-bold transition-all active:scale-[0.96]',
                         showRaiseSlider && raiseAmount >= maxRaiseTotal
-                          ? 'bg-ph-error text-white animate-all-in-pulse'
-                          : 'bg-ph-warning text-white',
+                          ? 'bg-op-error text-white animate-all-in-pulse'
+                          : 'bg-op-warning text-white',
                         actionPending && 'opacity-50 cursor-not-allowed'
                       )}
                     >
@@ -1545,9 +1545,9 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
               <div className="px-3 py-2">
                 <div className="flex gap-2">
                   {[
-                    { key: 'fold' as const, label: '폴드', activeClass: 'bg-ph-text-secondary text-white' },
-                    { key: 'check_fold' as const, label: '체크/폴드', activeClass: 'bg-ph-enter-hover text-white' },
-                    { key: 'call' as const, label: '콜', activeClass: 'bg-ph-enter-hover text-white' },
+                    { key: 'fold' as const, label: '폴드', activeClass: 'bg-op-text-secondary text-white' },
+                    { key: 'check_fold' as const, label: '체크/폴드', activeClass: 'bg-op-enter-hover text-white' },
+                    { key: 'call' as const, label: '콜', activeClass: 'bg-op-enter-hover text-white' },
                   ].map(({ key, label, activeClass }) => (
                     <button
                       key={key}
@@ -1581,7 +1581,7 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
             {!userId && (
               <Link
                 href="/login"
-                className="px-4 py-1.5 rounded-lg text-[11px] font-bold bg-ph-enter text-white hover:bg-ph-enter-hover transition-colors active:scale-[0.95]"
+                className="px-4 py-1.5 rounded-lg text-[11px] font-bold bg-op-enter text-white hover:bg-op-enter-hover transition-colors active:scale-[0.95]"
               >
                 로그인
               </Link>

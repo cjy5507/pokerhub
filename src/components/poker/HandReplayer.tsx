@@ -43,13 +43,13 @@ const ACTION_LABELS: Record<string, string> = {
 };
 
 const ACTION_COLORS: Record<string, string> = {
-  fold: 'text-ph-text-muted',
-  check: 'text-ph-success',
-  call: 'text-ph-info',
-  bet: 'text-ph-warning',
-  raise: 'text-ph-warning',
-  'all-in': 'text-ph-error',
-  all_in: 'text-ph-error',
+  fold: 'text-op-text-muted',
+  check: 'text-op-success',
+  call: 'text-op-info',
+  bet: 'text-op-warning',
+  raise: 'text-op-warning',
+  'all-in': 'text-op-error',
+  all_in: 'text-op-error',
 };
 
 const POSITION_COLORS: Record<string, string> = {
@@ -280,7 +280,7 @@ export function HandReplayer({
               className="px-3 py-0.5 rounded-full"
               style={{ background: 'rgba(34,80,50,0.85)', border: '1px solid rgba(74,140,92,0.4)' }}
             >
-              <span className="text-[11px] font-bold text-ph-gold tabular-nums">
+              <span className="text-[11px] font-bold text-op-gold tabular-nums">
                 팟 {currentStep.potSize.toLocaleString()}
               </span>
             </div>
@@ -350,7 +350,7 @@ export function HandReplayer({
                     className={cn(
                       'w-10 h-10 rounded-full flex items-center justify-center text-[9px] font-bold text-white transition-all duration-200',
                       posColor,
-                      isActive && 'ring-2 ring-ph-gold ring-offset-1 ring-offset-transparent scale-110',
+                      isActive && 'ring-2 ring-op-gold ring-offset-1 ring-offset-transparent scale-110',
                       player.isHero && !isActive && 'ring-2 ring-white/40',
                     )}
                     style={
@@ -378,27 +378,27 @@ export function HandReplayer({
       {/* ── Current action description ──────────────────────── */}
       <div
         className="min-h-[40px] px-4 py-2.5 rounded-lg text-sm text-center"
-        style={{ background: 'var(--ph-elevated)', border: '1px solid var(--ph-border)' }}
+        style={{ background: 'var(--op-elevated)', border: '1px solid var(--op-border)' }}
       >
         {currentStep.action ? (
-          <span className={cn('font-semibold', ACTION_COLORS[currentStep.action.action] ?? 'text-ph-text')}>
+          <span className={cn('font-semibold', ACTION_COLORS[currentStep.action.action] ?? 'text-op-text')}>
             {currentStep.description}
           </span>
         ) : (
-          <span className="text-ph-text-muted">{currentStep.description}</span>
+          <span className="text-op-text-muted">{currentStep.description}</span>
         )}
       </div>
 
       {/* ── Progress bar ────────────────────────────────────── */}
-      <div className="h-1 rounded-full bg-ph-border overflow-hidden">
+      <div className="h-1 rounded-full bg-op-border overflow-hidden">
         <div
-          className="h-full bg-ph-gold rounded-full transition-all duration-300"
+          className="h-full bg-op-gold rounded-full transition-all duration-300"
           style={{ width: `${totalSteps > 1 ? (stepIndex / (totalSteps - 1)) * 100 : 0}%` }}
         />
       </div>
 
       {/* ── Step indicator ─────────────────────────────────── */}
-      <div className="text-center text-xs text-ph-text-muted">
+      <div className="text-center text-xs text-op-text-muted">
         {stepIndex + 1} / {totalSteps}
       </div>
 
@@ -410,8 +410,8 @@ export function HandReplayer({
           disabled={stepIndex === 0}
           className={cn(
             'flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-medium transition-all',
-            'bg-ph-surface border border-ph-border hover:bg-ph-elevated',
-            stepIndex === 0 ? 'opacity-40 cursor-not-allowed' : 'text-ph-text',
+            'bg-op-surface border border-op-border hover:bg-op-elevated',
+            stepIndex === 0 ? 'opacity-40 cursor-not-allowed' : 'text-op-text',
           )}
         >
           <SkipBack className="w-3.5 h-3.5" />
@@ -424,8 +424,8 @@ export function HandReplayer({
           disabled={stepIndex === 0}
           className={cn(
             'flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-medium transition-all',
-            'bg-ph-surface border border-ph-border hover:bg-ph-elevated',
-            stepIndex === 0 ? 'opacity-40 cursor-not-allowed' : 'text-ph-text',
+            'bg-op-surface border border-op-border hover:bg-op-elevated',
+            stepIndex === 0 ? 'opacity-40 cursor-not-allowed' : 'text-op-text',
           )}
         >
           <ChevronLeft className="w-3.5 h-3.5" />
@@ -439,8 +439,8 @@ export function HandReplayer({
           className={cn(
             'flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all',
             isPlaying
-              ? 'bg-ph-warning text-ph-text-inverse'
-              : 'bg-ph-gold text-ph-text-inverse hover:opacity-90',
+              ? 'bg-op-warning text-op-text-inverse'
+              : 'bg-op-gold text-op-text-inverse hover:opacity-90',
             stepIndex >= totalSteps - 1 && !isPlaying && 'opacity-40 cursor-not-allowed',
           )}
         >
@@ -456,8 +456,8 @@ export function HandReplayer({
           disabled={stepIndex >= totalSteps - 1}
           className={cn(
             'flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-medium transition-all',
-            'bg-ph-surface border border-ph-border hover:bg-ph-elevated',
-            stepIndex >= totalSteps - 1 ? 'opacity-40 cursor-not-allowed' : 'text-ph-text',
+            'bg-op-surface border border-op-border hover:bg-op-elevated',
+            stepIndex >= totalSteps - 1 ? 'opacity-40 cursor-not-allowed' : 'text-op-text',
           )}
         >
           다음
@@ -468,10 +468,10 @@ export function HandReplayer({
       {/* ── Action log strip ─────────────────────────────────── */}
       <div
         className="rounded-lg overflow-hidden"
-        style={{ background: 'var(--ph-elevated)', border: '1px solid var(--ph-border)' }}
+        style={{ background: 'var(--op-elevated)', border: '1px solid var(--op-border)' }}
       >
-        <div className="px-3 py-2 border-b border-ph-border">
-          <span className="text-xs font-semibold text-ph-text-muted">액션 로그</span>
+        <div className="px-3 py-2 border-b border-op-border">
+          <span className="text-xs font-semibold text-op-text-muted">액션 로그</span>
         </div>
         <div className="max-h-40 overflow-y-auto">
           {steps.slice(1).map((step, i) => (
@@ -481,8 +481,8 @@ export function HandReplayer({
               className={cn(
                 'w-full text-left px-3 py-1.5 text-xs transition-colors',
                 step.stepIndex === stepIndex
-                  ? 'bg-ph-gold/15 text-ph-gold font-semibold'
-                  : 'text-ph-text-secondary hover:bg-ph-surface',
+                  ? 'bg-op-gold/15 text-op-gold font-semibold'
+                  : 'text-op-text-secondary hover:bg-op-surface',
               )}
             >
               {step.description}

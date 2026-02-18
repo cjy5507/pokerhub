@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { X, User, Settings, LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -11,6 +12,9 @@ interface MobileMenuProps {
   navLinks: Array<{ label: string; href: string }>;
   isLoggedIn: boolean;
   userPoints: number;
+  userName?: string;
+  userLevel?: number;
+  userId?: string;
 }
 
 export function MobileMenu({
@@ -19,7 +23,12 @@ export function MobileMenu({
   navLinks,
   isLoggedIn,
   userPoints,
+  userName,
+  userLevel,
+  userId,
 }: MobileMenuProps) {
+  const router = useRouter();
+
   // Lock body scroll when menu is open
   useEffect(() => {
     if (isOpen) {
@@ -31,6 +40,13 @@ export function MobileMenu({
       document.body.style.overflow = '';
     };
   }, [isOpen]);
+
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    onClose();
+    router.push('/login');
+    router.refresh();
+  };
 
   return (
     <>
@@ -69,11 +85,11 @@ export function MobileMenu({
           <div className="px-4 py-4 border-b border-[#333]">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-12 h-12 rounded-full bg-[#c9a227] flex items-center justify-center text-lg font-bold text-black">
-                U
+                {userName?.[0]?.toUpperCase() || 'U'}
               </div>
               <div>
-                <p className="text-sm font-medium text-[#e0e0e0]">사용자명</p>
-                <p className="text-xs text-[#a0a0a0]">Lv.15</p>
+                <p className="text-sm font-medium text-[#e0e0e0]">{userName || '사용자'}</p>
+                <p className="text-xs text-[#a0a0a0]">Lv.{userLevel ?? 1}</p>
               </div>
             </div>
             <div className="px-3 py-2 bg-[#2a2a2a] rounded-lg">
@@ -103,7 +119,7 @@ export function MobileMenu({
         {isLoggedIn ? (
           <div className="border-t border-[#333] py-2">
             <Link
-              href="/profile/me"
+              href={userId ? `/profile/${userId}` : '/settings'}
               onClick={onClose}
               className="flex items-center gap-3 px-4 py-3 text-sm text-[#e0e0e0] hover:bg-[#2a2a2a] transition-colors"
             >
@@ -119,6 +135,7 @@ export function MobileMenu({
               설정
             </Link>
             <button
+              onClick={handleLogout}
               className="w-full flex items-center gap-3 px-4 py-3 text-sm text-[#ef4444] hover:bg-[#2a2a2a] transition-colors"
             >
               <LogOut className="w-5 h-5" />

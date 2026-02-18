@@ -71,13 +71,14 @@ export default function Header() {
               {isLoggedIn ? (
                 <>
                   {/* Notification Bell */}
-                  <button
+                  <Link
+                    href="/notifications"
                     className="relative min-w-[44px] min-h-[44px] flex items-center justify-center text-[#a0a0a0] hover:text-[#c9a227] transition-colors"
                     aria-label="알림"
                   >
                     <Bell className="w-5 h-5" />
                     <span className="absolute top-2 right-2 w-2 h-2 bg-[#ef4444] rounded-full" />
-                  </button>
+                  </Link>
 
                   {/* User Avatar Dropdown */}
                   <div className="relative hidden lg:block">
@@ -152,6 +153,9 @@ export default function Header() {
         navLinks={navLinks}
         isLoggedIn={isLoggedIn}
         userPoints={0}
+        userName={session?.nickname}
+        userLevel={1}
+        userId={session?.userId}
       />
 
       <SearchOverlay

@@ -9,6 +9,7 @@ import { Eye, Heart, MessageSquare } from 'lucide-react';
 type Post = {
   id: string;
   title: string;
+  boardSlug: string;
   createdAt: Date;
   viewCount: number;
   likeCount: number;
@@ -79,7 +80,7 @@ export function ProfileTabs({ userId, recentPosts, recentHands }: ProfileTabsPro
             recentPosts.map((post) => (
               <Link
                 key={post.id}
-                href={`/board/post/${post.id}`}
+                href={`/board/${post.boardSlug}/${post.id}`}
                 className="block bg-surface border border-border rounded-lg p-4 hover:border-primary transition-colors"
               >
                 <h3 className="font-medium mb-2">{post.title}</h3>

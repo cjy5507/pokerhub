@@ -9,9 +9,10 @@ import { useSession } from '@/components/providers/SessionProvider';
 type SidebarProps = {
   popularPosts: { id: string; title: string; likes: number; boardSlug: string }[];
   onlineCount: number;
+  userLevel?: number;
 };
 
-export default function Sidebar({ popularPosts, onlineCount }: SidebarProps) {
+export default function Sidebar({ popularPosts, onlineCount, userLevel }: SidebarProps) {
   const session = useSession();
   const isLoggedIn = !!session;
 
@@ -40,7 +41,7 @@ export default function Sidebar({ popularPosts, onlineCount }: SidebarProps) {
               <p className="text-sm font-medium text-[#e0e0e0]">{session?.nickname}</p>
               <div className="flex items-center gap-1.5">
                 <div className="px-1.5 py-0.5 rounded text-xs font-bold bg-yellow-500/20 text-yellow-400">
-                  Lv.1
+                  Lv.{userLevel ?? 1}
                 </div>
               </div>
             </div>

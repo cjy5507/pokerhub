@@ -11,7 +11,7 @@ export default async function PointsPage({
   const session = await getSession();
 
   if (!session?.userId) {
-    redirect('/login');
+    redirect('/login?redirect=%2Fpoints');
   }
 
   const { page: pageParam } = await searchParams;

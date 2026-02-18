@@ -55,16 +55,26 @@ export function ThreadsFeedClient({
     <div className="space-y-4">
       {currentUserId && <ThreadCompose onThreadCreated={handleThreadCreated} />}
 
-      <div className="space-y-3">
-        {threads.map((thread) => (
-          <ThreadCard
-            key={thread.id}
-            thread={thread}
-            currentUserId={currentUserId}
-            onDelete={() => handleDelete(thread.id)}
-          />
-        ))}
-      </div>
+      {threads.length === 0 ? (
+        <div className="bg-[#1e1e1e] border border-[#333] rounded-lg py-16 text-center">
+          <div className="text-4xl mb-4">💬</div>
+          <p className="text-[#a0a0a0] text-sm mb-1">아직 쓰레드가 없습니다</p>
+          <p className="text-[#888] text-xs">
+            {currentUserId ? '첫 번째 쓰레드를 작성해보세요!' : '로그인 후 쓰레드를 작성할 수 있습니다.'}
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {threads.map((thread) => (
+            <ThreadCard
+              key={thread.id}
+              thread={thread}
+              currentUserId={currentUserId}
+              onDelete={() => handleDelete(thread.id)}
+            />
+          ))}
+        </div>
+      )}
 
       {hasMore && (
         <button

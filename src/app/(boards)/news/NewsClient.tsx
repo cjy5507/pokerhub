@@ -193,7 +193,7 @@ function NewsCard({ item }: { item: NewsItem }) {
 
       {/* Footer */}
       <div className="flex items-center justify-between mt-auto pt-2 border-t border-[#2a2a2a]">
-        <span className="text-[11px] text-[#888]">
+        <span className="text-[11px] text-[#888]" suppressHydrationWarning>
           {formatRelativeTime(item.pubDate)}
         </span>
         <span className="inline-flex items-center gap-1 text-[11px] text-[#c9a227] opacity-0 group-hover:opacity-100 transition-opacity">

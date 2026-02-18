@@ -17,7 +17,7 @@ export default async function MissionsPage() {
   const session = await getSession();
 
   if (!session?.userId) {
-    redirect('/login');
+    redirect('/login?redirect=%2Fmissions');
   }
 
   // Fetch daily missions

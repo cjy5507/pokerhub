@@ -837,6 +837,29 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
     };
   }, [tableId, handleStateUpdate]);
 
+  // ─── SSE Watchdog Connection ──────────────────────────────────
+  // Keeps the server-side watchdog alive for auto-start, auto-fold, auto-close
+  useEffect(() => {
+    let eventSource: EventSource | null = null;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+
+    function connect() {
+      eventSource = new EventSource(`/api/poker/${tableId}`);
+      eventSource.onerror = () => {
+        eventSource?.close();
+        // Retry after 5s on error
+        retryTimer = setTimeout(connect, 5000);
+      };
+    }
+
+    connect();
+
+    return () => {
+      eventSource?.close();
+      if (retryTimer) clearTimeout(retryTimer);
+    };
+  }, [tableId]);
+
   // ─── Client-side Turn Timer ────────────────────────────────────
   useEffect(() => {
     if (!gameState.turnStartedAt || gameState.currentSeat === null) {

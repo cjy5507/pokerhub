@@ -141,6 +141,7 @@ const MOCK_STATE_9: GameState = {
   lastAction: { seat: 8, action: 'raise', amount: 600 },
   actionClosedBySeat: null,
   turnTimeLeft: 18,
+  turnStartedAt: new Date(Date.now() - 12000).toISOString(),
   status: 'playing',
 };
 

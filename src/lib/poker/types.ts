@@ -66,6 +66,7 @@ export interface GameState {
   /** Seats restricted to call/fold only due to a short all-in (PokerStars rule) */
   callOnlySeats?: number[];
   turnTimeLeft: number; // seconds remaining
+  turnStartedAt: string | null; // ISO timestamp for client-side timer
   status: 'waiting' | 'playing' | 'paused';
 }
 

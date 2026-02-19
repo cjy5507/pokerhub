@@ -7,6 +7,7 @@ import { eq, sql, desc, ne, and } from 'drizzle-orm';
 import { redirect } from 'next/navigation';
 import type { GameState, SeatState, PlayerAction } from '@/lib/poker/types';
 import { processAction as processGameAction, startNewHand as startHand } from '@/lib/poker/gameLoop';
+import { broadcastTableUpdate } from '@/lib/poker/broadcast';
 
 export type PokerTableWithSeats = {
   id: string;
@@ -279,6 +280,7 @@ export async function getTableState(tableId: string): Promise<GameState | null> 
     lastAction: null,
     actionClosedBySeat: null,
     turnTimeLeft: 30,
+    turnStartedAt: currentHand?.turnStartedAt?.toISOString() ?? null,
     status: t.status === 'closed' ? 'paused' : (t.status as 'waiting' | 'playing' | 'paused'),
   };
 }
@@ -379,6 +381,9 @@ export async function joinTable(tableId: string, seatNumber: number, buyIn: numb
   // Start hand AFTER transaction commits so the new seat is visible
   if (shouldStartHand) {
     await startHand(tableId);
+    await broadcastTableUpdate(tableId, 'hand_start');
+  } else {
+    await broadcastTableUpdate(tableId, 'player_join');
   }
 
   return { success: true };
@@ -437,17 +442,103 @@ export async function leaveTable(tableId: string) {
           amount: 0,
         });
 
-        // If it was this player's turn, schedule turn advancement after the tx commits
         if (hand.currentSeat === seat.seatNumber) {
-          const capturedUserId = session.userId;
-          advanceTurnAfterTx = async () => {
-            try {
-              await processGameAction(tableId, capturedUserId, 'fold');
-            } catch {
-              // Best-effort: the fold action is already recorded; the game loop
-              // will detect the duplicate fold on the next poll and skip it.
+          // Advance turn within this transaction (can't use processGameAction
+          // post-tx because the seat will be deleted by then)
+          const foldActions = await tx
+            .select({ seatNumber: pokerGameActions.seatNumber })
+            .from(pokerGameActions)
+            .where(
+              and(
+                eq(pokerGameActions.handId, hand.id),
+                eq(pokerGameActions.actionType, 'fold')
+              )
+            );
+          const foldedSeatNumbers = new Set(foldActions.map((a: any) => a.seatNumber));
+
+          // All active seats excluding the leaving player
+          const allActiveSeats = await tx
+            .select()
+            .from(pokerTableSeats)
+            .where(
+              and(
+                eq(pokerTableSeats.tableId, tableId),
+                eq(pokerTableSeats.isActive, true),
+                eq(pokerTableSeats.isSittingOut, false)
+              )
+            );
+          const otherActiveSeats = allActiveSeats.filter((s: any) => s.userId !== session.userId);
+          const nonFoldedSeats = otherActiveSeats.filter((s: any) => !foldedSeatNumbers.has(s.seatNumber));
+
+          if (nonFoldedSeats.length <= 1) {
+            // 0 or 1 non-folded player remains → complete the hand
+            if (nonFoldedSeats.length === 1) {
+              const winner = nonFoldedSeats[0];
+              // Award pot to winner
+              await tx
+                .update(pokerTableSeats)
+                .set({ chipStack: sql`chip_stack + ${hand.potTotal}` })
+                .where(
+                  and(
+                    eq(pokerTableSeats.tableId, tableId),
+                    eq(pokerTableSeats.seatNumber, winner.seatNumber)
+                  )
+                );
+              // Calculate winner's total bet from actions
+              const winnerBetActions = await tx
+                .select({ amount: pokerGameActions.amount })
+                .from(pokerGameActions)
+                .where(
+                  and(
+                    eq(pokerGameActions.handId, hand.id),
+                    eq(pokerGameActions.seatNumber, winner.seatNumber),
+                    sql`${pokerGameActions.actionType} != 'fold'`
+                  )
+                );
+              const winnerTotalBet = winnerBetActions.reduce((sum: number, a: any) => sum + a.amount, 0);
+              await tx
+                .update(pokerGameResults)
+                .set({
+                  chipChange: hand.potTotal - winnerTotalBet,
+                  isWinner: true,
+                })
+                .where(
+                  and(
+                    eq(pokerGameResults.handId, hand.id),
+                    eq(pokerGameResults.seatNumber, winner.seatNumber)
+                  )
+                );
             }
-          };
+            await tx
+              .update(pokerGameHands)
+              .set({ status: 'complete', completedAt: new Date(), currentSeat: null })
+              .where(eq(pokerGameHands.id, hand.id));
+            await tx
+              .update(pokerTables)
+              .set({ status: 'waiting', currentHandId: null, lastActivityAt: new Date() })
+              .where(eq(pokerTables.id, tableId));
+          } else {
+            // Multiple non-folded players remain → find next active seat
+            const maxSeats = table?.maxSeats || 9;
+            let nextSeat: number | null = null;
+            for (let i = 1; i <= maxSeats; i++) {
+              const idx = (seat.seatNumber + i) % maxSeats;
+              const s = nonFoldedSeats.find((ns: any) => ns.seatNumber === idx);
+              if (s && s.chipStack > 0) {
+                nextSeat = idx;
+                break;
+              }
+            }
+            await tx
+              .update(pokerGameHands)
+              .set({
+                currentSeat: nextSeat,
+                turnStartedAt: nextSeat !== null ? new Date() : null,
+              })
+              .where(eq(pokerGameHands.id, hand.id));
+          }
+          // Turn handled within tx — skip post-tx processGameAction
+          advanceTurnAfterTx = null;
         }
       }
     }
@@ -522,6 +613,8 @@ export async function leaveTable(tableId: string) {
     await pendingTurnAdvance();
   }
 
+  await broadcastTableUpdate(tableId, 'player_leave');
+
   return result;
 }
 
@@ -541,6 +634,10 @@ export async function performAction(tableId: string, action: PlayerAction, amoun
     if (!result.success) {
       throw new Error(result.error || 'Action failed');
     }
+
+    // Broadcast based on whether the hand completed
+    const event = result.events?.includes('hand_complete') ? 'hand_complete' : 'action';
+    await broadcastTableUpdate(tableId, event);
 
     return { success: true, action, amount };
   } catch (error) {

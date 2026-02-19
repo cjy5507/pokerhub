@@ -48,6 +48,7 @@ function createGameState(overrides?: Partial<GameState>): GameState {
     actionClosedBySeat: 2,
     closerHasActed: false,
     turnTimeLeft: 30,
+    turnStartedAt: null,
     status: 'playing',
     ...overrides,
   };
@@ -72,6 +73,7 @@ function startTestHand(
     handId: 'hand-1',
     handNumber: 1,
     turnTimeLeft: 30,
+    turnStartedAt: null,
     ...gameState,
   } as GameState;
 

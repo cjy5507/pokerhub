@@ -10,6 +10,8 @@ import { LogOut, MessageSquare, ChevronDown, Volume2, VolumeX, ArrowLeft, Users,
 import Link from 'next/link';
 import { usePokerSounds } from '@/lib/poker/sounds';
 import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
+import { getTableState } from '../actions';
 
 // ─── Types ────────────────────────────────────────────────────────
 
@@ -703,195 +705,155 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
     prevTimeLeftRef.current = turnTimeLeft;
   }, [turnTimeLeft, isHeroTurn, sounds]);
 
-  // ─── SSE Connection ───────────────────────────────────────────
+  // ─── Supabase Realtime Connection ───────────────────────────────
 
-  useEffect(() => {
-    let eventSource: EventSource | null = null;
-    let reconnectTimeout: NodeJS.Timeout | null = null;
-    let reconnectDelay = 1000;
-    const MAX_RECONNECT_DELAY = 10000;
-
-    function connect() {
-      eventSource = new EventSource(`/api/poker/${tableId}`);
-
-      eventSource.onopen = () => {
-        reconnectDelay = 1000;
-      };
-
-      eventSource.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.type === 'game_state') {
-            const t = data.table;
-            const sseSeats = data.seats ?? [];
-            const hand = data.hand;
-
-            const reconstructed: GameState = {
-              tableId: t.id,
-              tableName: t.name,
-              smallBlind: t.smallBlind,
-              bigBlind: t.bigBlind,
-              maxSeats: sseSeats.length,
-              handId: hand?.id ?? null,
-              handNumber: hand?.handNumber ?? 0,
-              street: hand?.status ?? null,
-              communityCards: hand?.communityCards ?? [],
-              pot: hand?.pot ?? 0,
-              sidePots: [],
-              currentSeat: hand?.currentSeat ?? null,
-              currentBet: hand?.currentBet ?? 0,
-              minRaise: hand?.minRaise ?? t.bigBlind,
-              dealerSeat: hand?.dealerSeat ?? 0,
-              seats: sseSeats.map((s: any) =>
-                s
-                  ? {
-                      seatNumber: s.seatNumber,
-                      userId: s.userId,
-                      nickname: s.nickname ?? 'Player',
-                      chipStack: s.chipStack,
-                      holeCards: s.holeCards ?? null,
-                      betInRound: s.betInRound ?? 0,
-                      totalBetInHand: s.totalBetInHand ?? 0,
-                      isFolded: s.isFolded ?? false,
-                      isAllIn: s.isAllIn ?? false,
-                      isSittingOut: s.isSittingOut ?? false,
-                      isActive: s.isActive ?? true,
-                    }
-                  : null
-              ),
-              lastAction: hand?.lastAction ?? null,
-              actionClosedBySeat: null,
-              turnTimeLeft: hand?.turnTimeLeft ?? 30,
-              status: t.status === 'closed' ? 'paused' : t.status,
-            };
-
-            // ── Sound & Animation Triggers ──
-
-            // Detect new hand
-            if (hand?.id && hand.id !== prevHandIdRef.current) {
-              sounds.newHand();
-              // Brief flag for card deal animation
-              setNewCardsDealt(true);
-              setTimeout(() => setNewCardsDealt(false), 1500);
-              prevCommunityCountRef.current = 0;
-              prevCCLengthForAnimRef.current = 0;
-              newCardStartIndex.current = 0;
-              // If we had a previous hand, it just completed
-              if (prevHandIdRef.current) {
-                setLastCompletedHandId(prevHandIdRef.current);
-              }
-              prevHandIdRef.current = hand.id;
-            }
-            // Also catch hand completion when hand goes to null
-            if (!hand?.id && prevHandIdRef.current) {
-              setLastCompletedHandId(prevHandIdRef.current);
-              prevHandIdRef.current = null;
-            }
-
-            // Detect new community cards
-            const newCCCount = (hand?.communityCards ?? []).length;
-            if (newCCCount > prevCommunityCountRef.current) {
-              const newCards = newCCCount - prevCommunityCountRef.current;
-              for (let c = 0; c < newCards; c++) {
-                setTimeout(() => { sounds.communityCard(); }, c * 150);
-              }
-              prevCommunityCountRef.current = newCCCount;
-            }
-
-            // Detect turn change
-            if (reconstructed.currentSeat !== null && reconstructed.currentSeat !== prevTurnRef.current) {
-              const heroIdx = sseSeats.findIndex((s: any) => s?.userId === userId);
-              if (reconstructed.currentSeat === heroIdx) {
-                sounds.yourTurn();
-              }
-              prevTurnRef.current = reconstructed.currentSeat;
-            }
-
-            // Detect pot increase (betting round complete)
-            if (reconstructed.pot > prevPotRef.current && prevPotRef.current > 0) {
-              setPotBounce(true);
-              setTimeout(() => setPotBounce(false), 400);
-            }
-            prevPotRef.current = reconstructed.pot;
-
-            // Detect hand completion + winner
-            if (
-              prevHandIdRef.current &&
-              hand?.id !== prevHandIdRef.current &&
-              !hand?.id
-            ) {
-              // Hand ended - check if hero won
-              // This is handled by the showdown/pot_awarded events
-            }
-
-            setGameState(reconstructed);
-            setTurnTimeLeft(reconstructed.turnTimeLeft);
-
-            // ── Last Action Sound + Display ──
-            if (hand?.lastAction) {
-              const la = hand.lastAction;
-              const actionKey = la.action as string;
-
-              // Play action sound
-              const soundActionId = `${la.seatNumber}-${la.action}-${Date.now()}`;
-              if (soundActionId !== prevLastActionRef.current) {
-                prevLastActionRef.current = soundActionId;
-                switch (la.action) {
-                  case 'fold': sounds.fold(); break;
-                  case 'check': sounds.check(); break;
-                  case 'call': sounds.call(); break;
-                  case 'bet':
-                  case 'raise': sounds.raise(); break;
-                  case 'all_in': sounds.allIn(); break;
-                  case 'post_sb':
-                  case 'post_bb': sounds.chipBet(); break;
-                }
-              }
-
-              const text = ACTION_LABELS_KR[actionKey] ?? la.action;
-              const display = la.amount > 0 ? `${text} ${la.amount.toLocaleString()}` : text;
-              setLastActions(prev => ({ ...prev, [la.seatNumber]: display }));
-              const prevTimer = lastActionTimers.current.get(la.seatNumber);
-              if (prevTimer) clearTimeout(prevTimer);
-              const timer = setTimeout(() => {
-                setLastActions(prev => {
-                  const next = { ...prev };
-                  delete next[la.seatNumber];
-                  return next;
-                });
-                lastActionTimers.current.delete(la.seatNumber);
-              }, 3000);
-              lastActionTimers.current.set(la.seatNumber, timer);
-            }
-          } else if (data.type === 'heartbeat' && data.turnTimeLeft !== undefined) {
-            setTurnTimeLeft(data.turnTimeLeft);
-          } else if (data.type === 'table_closed') {
-            // Table was closed due to inactivity, redirect to lobby
-            window.location.href = '/poker';
-          }
-        } catch {
-          // Ignore parse errors
-        }
-      };
-
-      eventSource.onerror = () => {
-        eventSource?.close();
-        reconnectTimeout = setTimeout(() => {
-          reconnectDelay = Math.min(reconnectDelay * 2, MAX_RECONNECT_DELAY);
-          connect();
-        }, reconnectDelay);
-      };
+  // State update handler — extracts sound/animation triggers from state diff
+  const handleStateUpdate = useCallback((newState: GameState) => {
+    // Detect new hand
+    if (newState.handId && newState.handId !== prevHandIdRef.current) {
+      sounds.newHand();
+      setNewCardsDealt(true);
+      setTimeout(() => setNewCardsDealt(false), 1500);
+      prevCommunityCountRef.current = 0;
+      prevCCLengthForAnimRef.current = 0;
+      newCardStartIndex.current = 0;
+      if (prevHandIdRef.current) {
+        setLastCompletedHandId(prevHandIdRef.current);
+      }
+      prevHandIdRef.current = newState.handId;
+    }
+    // Hand completed (went to null)
+    if (!newState.handId && prevHandIdRef.current) {
+      setLastCompletedHandId(prevHandIdRef.current);
+      prevHandIdRef.current = null;
     }
 
-    connect();
+    // Detect new community cards
+    const newCCCount = (newState.communityCards ?? []).length;
+    if (newCCCount > prevCommunityCountRef.current) {
+      const newCards = newCCCount - prevCommunityCountRef.current;
+      for (let c = 0; c < newCards; c++) {
+        setTimeout(() => { sounds.communityCard(); }, c * 150);
+      }
+      prevCommunityCountRef.current = newCCCount;
+    }
+
+    // Detect turn change
+    if (newState.currentSeat !== null && newState.currentSeat !== prevTurnRef.current) {
+      const heroIdx = newState.seats.findIndex((s) => s?.userId === userId);
+      if (newState.currentSeat === heroIdx) {
+        sounds.yourTurn();
+      }
+      prevTurnRef.current = newState.currentSeat;
+    }
+
+    // Detect pot increase
+    if (newState.pot > prevPotRef.current && prevPotRef.current > 0) {
+      setPotBounce(true);
+      setTimeout(() => setPotBounce(false), 400);
+    }
+    prevPotRef.current = newState.pot;
+
+    // Detect last action from state diff
+    if (newState.lastAction) {
+      const la = newState.lastAction;
+      const actionKey = la.action as string;
+
+      const soundActionId = `${la.seat}-${la.action}-${Date.now()}`;
+      if (soundActionId !== prevLastActionRef.current) {
+        prevLastActionRef.current = soundActionId;
+        switch (la.action) {
+          case 'fold': sounds.fold(); break;
+          case 'check': sounds.check(); break;
+          case 'call': sounds.call(); break;
+          case 'bet':
+          case 'raise': sounds.raise(); break;
+          case 'all_in': sounds.allIn(); break;
+        }
+      }
+
+      const text = ACTION_LABELS_KR[actionKey] ?? la.action;
+      const display = la.amount > 0 ? `${text} ${la.amount.toLocaleString()}` : text;
+      setLastActions(prev => ({ ...prev, [la.seat]: display }));
+      const prevTimer = lastActionTimers.current.get(la.seat);
+      if (prevTimer) clearTimeout(prevTimer);
+      const timer = setTimeout(() => {
+        setLastActions(prev => {
+          const next = { ...prev };
+          delete next[la.seat];
+          return next;
+        });
+        lastActionTimers.current.delete(la.seat);
+      }, 3000);
+      lastActionTimers.current.set(la.seat, timer);
+    }
+
+    setGameState(newState);
+  }, [userId, sounds]);
+
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase.channel(`poker:${tableId}`);
+    let fallbackTimer: ReturnType<typeof setTimeout> | null = null;
+    let lastBroadcastTime = Date.now();
+
+    // Fetch fresh state from server
+    async function fetchAndUpdate() {
+      try {
+        const freshState = await getTableState(tableId);
+        if (freshState) {
+          handleStateUpdate(freshState);
+        }
+      } catch (err) {
+        console.error('Failed to fetch table state:', err);
+      }
+    }
+
+    channel
+      .on('broadcast', { event: 'state_changed' }, () => {
+        lastBroadcastTime = Date.now();
+        fetchAndUpdate();
+      })
+      .subscribe();
+
+    // Fallback polling: if no broadcast received within 5s, poll every 3s
+    function startFallbackPolling() {
+      fallbackTimer = setInterval(() => {
+        if (Date.now() - lastBroadcastTime > 5000) {
+          fetchAndUpdate();
+        }
+      }, 3000);
+    }
+    startFallbackPolling();
+
+    // Initial fetch to ensure we have fresh state
+    fetchAndUpdate();
 
     return () => {
-      eventSource?.close();
-      if (reconnectTimeout) clearTimeout(reconnectTimeout);
+      supabase.removeChannel(channel);
+      if (fallbackTimer) clearInterval(fallbackTimer);
       lastActionTimers.current.forEach(t => clearTimeout(t));
       lastActionTimers.current.clear();
     };
-  }, [tableId, userId, sounds]);
+  }, [tableId, handleStateUpdate]);
+
+  // ─── Client-side Turn Timer ────────────────────────────────────
+  useEffect(() => {
+    if (!gameState.turnStartedAt || gameState.currentSeat === null) {
+      setTurnTimeLeft(30);
+      return;
+    }
+
+    function updateTimer() {
+      const elapsed = (Date.now() - new Date(gameState.turnStartedAt!).getTime()) / 1000;
+      setTurnTimeLeft(Math.max(0, Math.ceil(30 - elapsed)));
+    }
+
+    updateTimer(); // immediate update
+    const interval = setInterval(updateTimer, 1000);
+
+    return () => clearInterval(interval);
+  }, [gameState.turnStartedAt, gameState.currentSeat]);
 
   // ─── Detect showdown / win for hero ──────────────────────────
   useEffect(() => {

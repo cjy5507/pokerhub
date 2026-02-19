@@ -8,6 +8,7 @@ import {
   users,
 } from '@/lib/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
+import { broadcastTableUpdate } from './broadcast';
 import { PokerEngine } from './engine';
 import { Deck } from './deck';
 import { GameState, Card, SeatState, PlayerAction } from './types';
@@ -61,7 +62,7 @@ export async function processAction(
 ): Promise<ActionResult> {
   if (!db) return { success: false, error: 'Database not available' };
   try {
-    return await db.transaction(async (tx: any) => {
+    const result = await db.transaction(async (tx: any) => {
       // 1. Load current game state
       const table = await tx
         .select()
@@ -257,6 +258,7 @@ export async function processAction(
         actionClosedBySeat,
         closerHasActed,
         turnTimeLeft: 30,
+        turnStartedAt: hand.turnStartedAt?.toISOString() ?? null,
         status: table.status as any,
       };
 
@@ -301,19 +303,22 @@ export async function processAction(
         })
         .where(eq(pokerGameHands.id, hand.id));
 
-      // 6. Update seat chip stacks
+      // 6. Update seat chip stacks (only changed seats)
       const updatedSeats = newState.seats || gameState.seats;
       for (const seat of updatedSeats) {
         if (seat) {
-          await tx
-            .update(pokerTableSeats)
-            .set({ chipStack: seat.chipStack })
-            .where(
-              and(
-                eq(pokerTableSeats.tableId, tableId),
-                eq(pokerTableSeats.seatNumber, seat.seatNumber)
-              )
-            );
+          const original = gameState.seats[seat.seatNumber];
+          if (!original || original.chipStack !== seat.chipStack) {
+            await tx
+              .update(pokerTableSeats)
+              .set({ chipStack: seat.chipStack })
+              .where(
+                and(
+                  eq(pokerTableSeats.tableId, tableId),
+                  eq(pokerTableSeats.seatNumber, seat.seatNumber)
+                )
+              );
+          }
         }
       }
 
@@ -335,7 +340,7 @@ export async function processAction(
               await tx
                 .update(pokerGameResults)
                 .set({
-                  chipChange: mergedState.pot - (winnerSeat ? winnerSeat.totalBetInHand : 0),
+                  chipChange: gameState.pot - (winnerSeat ? winnerSeat.totalBetInHand : 0),
                   isWinner: true,
                 })
                 .where(
@@ -545,6 +550,14 @@ export async function processAction(
         events: events.map((e) => e.type),
       };
     });
+
+    // Broadcast after transaction commits
+    if (result.success) {
+      const event = result.events?.includes('hand_complete') ? 'hand_complete' : 'action';
+      await broadcastTableUpdate(tableId, event);
+    }
+
+    return result;
   } catch (error) {
     console.error('Error processing action:', error);
     return {
@@ -561,7 +574,7 @@ export async function processAction(
 export async function startNewHand(tableId: string): Promise<{ success: boolean; error?: string; handId?: string }> {
   if (!db) return { success: false, error: 'Database not available' };
   try {
-    return await db.transaction(async (tx: any) => {
+    const result = await db.transaction(async (tx: any) => {
       const table = await tx
         .select()
         .from(pokerTables)
@@ -719,19 +732,22 @@ export async function startNewHand(tableId: string): Promise<{ success: boolean;
         },
       ]);
 
-      // Update seat chip stacks (blinds deducted)
+      // Update seat chip stacks (only blinds-deducted seats)
       const updatedSeats = gameState.seats || [];
       for (const seat of updatedSeats) {
         if (seat) {
-          await tx
-            .update(pokerTableSeats)
-            .set({ chipStack: seat.chipStack })
-            .where(
-              and(
-                eq(pokerTableSeats.tableId, tableId),
-                eq(pokerTableSeats.seatNumber, seat.seatNumber)
-              )
-            );
+          const originalSeat = dbSeats.find((ds: any) => ds.seatNumber === seat.seatNumber);
+          if (!originalSeat || originalSeat.chipStack !== seat.chipStack) {
+            await tx
+              .update(pokerTableSeats)
+              .set({ chipStack: seat.chipStack })
+              .where(
+                and(
+                  eq(pokerTableSeats.tableId, tableId),
+                  eq(pokerTableSeats.seatNumber, seat.seatNumber)
+                )
+              );
+          }
         }
       }
 
@@ -747,6 +763,13 @@ export async function startNewHand(tableId: string): Promise<{ success: boolean;
 
       return { success: true, handId: hand.id };
     });
+
+    // Broadcast after transaction commits
+    if (result.success) {
+      await broadcastTableUpdate(tableId, 'hand_start');
+    }
+
+    return result;
   } catch (error) {
     console.error('Error starting new hand:', error);
     return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };

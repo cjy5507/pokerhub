@@ -56,6 +56,7 @@ function buildState(
     handId: 'hand-1',
     handNumber: 1,
     turnTimeLeft: 30,
+    turnStartedAt: null,
     ...partial,
   } as GameState;
 }

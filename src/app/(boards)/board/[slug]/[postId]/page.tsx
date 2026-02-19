@@ -53,7 +53,7 @@ export default async function PostPage({ params }: PostPageProps) {
   const timeAgo = formatDistanceToNow(post.createdAt, { addSuffix: true, locale: ko });
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6">
+    <div className="max-w-4xl mx-auto px-4 py-6 pb-20 lg:pb-0">
       {/* Board breadcrumb */}
       <div className="mb-4">
         <Link
@@ -67,10 +67,10 @@ export default async function PostPage({ params }: PostPageProps) {
       {/* Post container */}
       <div className="bg-op-surface rounded-lg overflow-hidden">
         {/* Post header */}
-        <div className="p-6 border-b border-op-border">
-          <h1 className="text-2xl font-bold text-op-text mb-4">{post.title}</h1>
+        <div className="p-4 sm:p-6 border-b border-op-border">
+          <h1 className="text-xl sm:text-2xl font-bold text-op-text mb-4">{post.title}</h1>
 
-          <div className="flex items-center gap-4 text-sm">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm">
             <AuthorBadge
               userId={post.author?.id || ''}
               nickname={post.author?.nickname || '알 수 없음'}
@@ -92,7 +92,7 @@ export default async function PostPage({ params }: PostPageProps) {
         </div>
 
         {/* Post content */}
-        <div className="p-6 border-b border-op-border">
+        <div className="p-4 sm:p-6 border-b border-op-border">
           {post.contentHtml ? (
             <div
               className="prose prose-invert max-w-none"

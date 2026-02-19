@@ -81,11 +81,12 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
                   )}
                   strokeWidth={isActive ? 2.5 : 2}
                 />
-                {isActive && (
-                  <span className="text-[10px] font-medium text-op-gold">
-                    {item.label}
-                  </span>
-                )}
+                <span className={cn(
+                  'text-[10px] font-medium',
+                  isActive ? 'text-op-gold' : 'text-op-text-muted'
+                )}>
+                  {item.label}
+                </span>
               </button>
             );
           }
@@ -111,11 +112,12 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
                   strokeWidth={isActive ? 2.5 : 2}
                 />
               )}
-              {isActive && (
-                <span className="text-[10px] font-medium text-op-gold">
-                  {item.label}
-                </span>
-              )}
+              <span className={cn(
+                'text-[10px] font-medium',
+                isActive ? 'text-op-gold' : 'text-op-text-muted'
+              )}>
+                {item.label}
+              </span>
             </Link>
           );
         })}

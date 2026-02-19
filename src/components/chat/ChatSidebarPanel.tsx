@@ -105,7 +105,7 @@ export default function ChatSidebarPanel() {
                       className={cn(
                         'px-2.5 py-1.5 rounded-lg text-xs',
                         isOwn
-                          ? 'bg-op-elevated text-op-text'
+                          ? 'bg-op-gold/20 text-op-text'
                           : 'bg-op-elevated text-op-text'
                       )}
                     >

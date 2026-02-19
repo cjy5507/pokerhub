@@ -119,7 +119,7 @@ export default function LotteryPage() {
   };
 
   return (
-    <div className="min-h-screen bg-op-bg text-op-text pb-20">
+    <div className="min-h-screen bg-op-bg text-op-text pb-20 lg:pb-0">
       {/* Header */}
       <div className="border-b border-op-border bg-op-surface">
         <div className="max-w-4xl mx-auto px-4 py-6">
@@ -165,7 +165,7 @@ export default function LotteryPage() {
 
           {!currentTicket ? (
             <div className="flex flex-col items-center justify-center py-12">
-              <div className="w-80 h-96 rounded-2xl bg-gradient-to-br from-op-elevated to-op-surface border-2 border-dashed border-op-border-medium flex items-center justify-center mb-6">
+              <div className="w-full max-w-[320px] h-96 mx-auto rounded-2xl bg-gradient-to-br from-op-elevated to-op-surface border-2 border-dashed border-op-border-medium flex items-center justify-center mb-6">
                 <div className="text-center">
                   <Ticket size={64} className="text-op-border-medium mx-auto mb-4" />
                   <p className="text-op-text-secondary">복권을 구매하세요</p>
@@ -175,7 +175,7 @@ export default function LotteryPage() {
                 onClick={handleBuyTicket}
                 disabled={isPurchasing || userPoints < TICKET_COST || todayCount >= DAILY_LIMIT}
                 className={cn(
-                  "px-8 py-4 rounded-xl font-bold text-lg transition-all transform hover:scale-105 active:scale-95",
+                  "px-6 py-3 sm:px-8 sm:py-4 rounded-xl font-bold text-base sm:text-lg transition-all transform hover:scale-105 active:scale-95",
                   "bg-gradient-to-r from-op-gold to-op-gold-hover text-black shadow-lg shadow-op-gold/30",
                   "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                 )}
@@ -188,7 +188,7 @@ export default function LotteryPage() {
               <div className="card-container" style={{ perspective: '1000px' }}>
                 <div
                   className={cn(
-                    "card-flip w-80 h-96 relative cursor-pointer",
+                    "card-flip w-full max-w-[320px] h-96 relative cursor-pointer",
                     isRevealed && "flipped"
                   )}
                   onClick={handleFlip}
@@ -277,7 +277,7 @@ export default function LotteryPage() {
                 {isRevealed && (
                   <button
                     onClick={handleReset}
-                    className="px-8 py-4 rounded-xl font-bold text-lg transition-all transform hover:scale-105 active:scale-95 bg-gradient-to-r from-op-gold to-op-gold-hover text-black shadow-lg shadow-op-gold/30"
+                    className="px-6 py-3 sm:px-8 sm:py-4 rounded-xl font-bold text-base sm:text-lg transition-all transform hover:scale-105 active:scale-95 bg-gradient-to-r from-op-gold to-op-gold-hover text-black shadow-lg shadow-op-gold/30"
                   >
                     다시 구매하기
                   </button>
@@ -302,7 +302,7 @@ export default function LotteryPage() {
                     <div className="flex items-center gap-3">
                       <TierIcon size={20} className="text-op-gold" />
                       <span className="font-bold text-op-text">{tier.name}</span>
-                      <span className="text-2xl font-black text-op-gold">
+                      <span className="text-xl sm:text-2xl font-black text-op-gold">
                         {tier.prize > 0 ? `${tier.prize.toLocaleString()}P` : '0P'}
                       </span>
                     </div>

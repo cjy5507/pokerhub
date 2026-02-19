@@ -51,7 +51,7 @@ export function PointsHistoryClient({
     .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
 
   return (
-    <div className="container max-w-4xl mx-auto px-4 py-6 lg:py-8">
+    <div className="container max-w-4xl mx-auto px-4 py-6 pb-20 lg:pb-0 lg:py-8">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl lg:text-3xl font-bold text-op-text mb-2">

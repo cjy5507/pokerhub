@@ -80,12 +80,12 @@ export default function RegisterPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-2">회원가입</h1>
-          <p className="text-muted-foreground">Open Poker에 오신 것을 환영합니다</p>
+          <p className="text-op-text-secondary">Open Poker에 오신 것을 환영합니다</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {serverError && (
-            <div className="p-3 bg-destructive/10 border border-destructive rounded-md text-destructive text-sm">
+            <div className="p-3 bg-op-error-dim border border-op-error rounded-md text-op-error text-sm">
               {serverError}
             </div>
           )}
@@ -99,11 +99,11 @@ export default function RegisterPage() {
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full px-4 py-2 rounded-md bg-surface border border-border focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full px-4 py-2.5 rounded-md bg-op-surface border border-op-border focus:outline-none focus:ring-2 focus:ring-op-gold"
               placeholder="your@email.com"
               disabled={isLoading}
             />
-            {errors.email && <p className="mt-1 text-sm text-destructive">{errors.email}</p>}
+            {errors.email && <p className="mt-1 text-sm text-op-error">{errors.email}</p>}
           </div>
 
           <div>
@@ -115,11 +115,11 @@ export default function RegisterPage() {
               type="text"
               value={formData.nickname}
               onChange={(e) => setFormData({ ...formData, nickname: e.target.value })}
-              className="w-full px-4 py-2 rounded-md bg-surface border border-border focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full px-4 py-2.5 rounded-md bg-op-surface border border-op-border focus:outline-none focus:ring-2 focus:ring-op-gold"
               placeholder="닉네임"
               disabled={isLoading}
             />
-            {errors.nickname && <p className="mt-1 text-sm text-destructive">{errors.nickname}</p>}
+            {errors.nickname && <p className="mt-1 text-sm text-op-error">{errors.nickname}</p>}
           </div>
 
           <div>
@@ -131,11 +131,11 @@ export default function RegisterPage() {
               type="password"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              className="w-full px-4 py-2 rounded-md bg-surface border border-border focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full px-4 py-2.5 rounded-md bg-op-surface border border-op-border focus:outline-none focus:ring-2 focus:ring-op-gold"
               placeholder="8자 이상"
               disabled={isLoading}
             />
-            {errors.password && <p className="mt-1 text-sm text-destructive">{errors.password}</p>}
+            {errors.password && <p className="mt-1 text-sm text-op-error">{errors.password}</p>}
           </div>
 
           <div>
@@ -147,27 +147,27 @@ export default function RegisterPage() {
               type="password"
               value={formData.confirmPassword}
               onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-              className="w-full px-4 py-2 rounded-md bg-surface border border-border focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full px-4 py-2.5 rounded-md bg-op-surface border border-op-border focus:outline-none focus:ring-2 focus:ring-op-gold"
               placeholder="비밀번호 재입력"
               disabled={isLoading}
             />
             {errors.confirmPassword && (
-              <p className="mt-1 text-sm text-destructive">{errors.confirmPassword}</p>
+              <p className="mt-1 text-sm text-op-error">{errors.confirmPassword}</p>
             )}
           </div>
 
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3 bg-primary text-primary-foreground rounded-md font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-3 bg-op-gold text-op-text-inverse rounded-md font-medium hover:bg-op-gold-hover disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? '처리 중...' : '가입하기'}
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-muted-foreground">
+        <p className="mt-6 text-center text-sm text-op-text-secondary">
           이미 계정이 있으신가요?{' '}
-          <Link href="/login" className="text-primary hover:underline">
+          <Link href="/login" className="text-op-gold hover:underline">
             로그인
           </Link>
         </p>

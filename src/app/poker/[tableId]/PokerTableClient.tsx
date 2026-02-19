@@ -61,14 +61,14 @@ const SEAT_POSITIONS_6: [number, number][] = [
 // center=(50,50), radiusY=42, radiusX=38
 const SEAT_POSITIONS_9: [number, number][] = [
   [92, 50],  // Seat 0 - bottom center (hero)
-  [82, 26],  // Seat 1 - bottom left
-  [57, 13],  // Seat 2 - left
-  [29, 17],  // Seat 3 - upper left
-  [11, 37],  // Seat 4 - top left
-  [11, 63],  // Seat 5 - top right
-  [29, 83],  // Seat 6 - upper right
-  [57, 87],  // Seat 7 - right
-  [82, 74],  // Seat 8 - bottom right
+  [80, 22],  // Seat 1 - bottom left (was 82,26 - move left+up)
+  [55, 8],   // Seat 2 - left (was 57,13 - move more left)
+  [27, 14],  // Seat 3 - upper left (was 29,17)
+  [10, 35],  // Seat 4 - top left (was 11,37)
+  [10, 65],  // Seat 5 - top right (was 11,63)
+  [27, 86],  // Seat 6 - upper right (was 29,83)
+  [55, 92],  // Seat 7 - right (was 57,87 - move more right)
+  [80, 78],  // Seat 8 - bottom right (was 82,74 - move right+up)
 ];
 
 // Bet chip positions (offset from seat toward center of table)
@@ -89,14 +89,14 @@ const BET_POSITIONS_6: [number, number][] = [
 // Bet chips: ~60% of the way from seat to center (50,50)
 const BET_POSITIONS_9: [number, number][] = [
   [75, 50],  // Seat 0
-  [69, 34],  // Seat 1
-  [54, 27],  // Seat 2
-  [37, 29],  // Seat 3
-  [26, 41],  // Seat 4
-  [26, 59],  // Seat 5
-  [37, 71],  // Seat 6
-  [54, 73],  // Seat 7
-  [69, 66],  // Seat 8
+  [68, 32],  // Seat 1 (was 69,34)
+  [53, 24],  // Seat 2 (was 54,27)
+  [36, 27],  // Seat 3 (was 37,29)
+  [25, 40],  // Seat 4 (was 26,41)
+  [25, 60],  // Seat 5 (was 26,59)
+  [36, 73],  // Seat 6 (was 37,71)
+  [53, 76],  // Seat 7 (was 54,73)
+  [68, 68],  // Seat 8 (was 69,66)
 ];
 
 // ─── Helper Components ────────────────────────────────────────────
@@ -1016,8 +1016,8 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
     { label: '1/3', getValue: (p: number) => Math.floor(p / 3) },
     { label: '1/2', getValue: (p: number) => Math.floor(p / 2) },
     { label: '2/3', getValue: (p: number) => Math.floor(p * 2 / 3) },
-    { label: 'Pot', getValue: (p: number) => p },
-    { label: 'All-in', getValue: (_p: number, stack: number) => stack },
+    { label: '팟', getValue: (p: number) => p },
+    { label: '올인', getValue: (_p: number, stack: number) => stack },
   ];
   const betPresets = BET_PRESETS.map((preset) => {
     const raw = preset.getValue(pot, maxRaiseTotal);
@@ -1123,10 +1123,10 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
         )}
 
         {/* Table container — fills entire available space, minimal padding */}
-        <div className="absolute inset-0 md:inset-1 lg:inset-2">
+        <div className="absolute inset-1 md:inset-2 lg:inset-3">
           {/* Green felt -- PokerNow: radial gradient, brighter center */}
           <div
-            className="absolute inset-0 rounded-[20px] md:rounded-[50%/42%]"
+            className="absolute inset-0 rounded-[50%/42%]"
             style={{
               background: 'radial-gradient(ellipse at 50% 40%, #4a8c5c 0%, #3d7a4e 55%, #2d5a3a 100%)',
               border: '3px solid #2a5a3a',
@@ -1156,15 +1156,15 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
           </div>
 
           {/* ── Community Cards ── */}
-          <div className="absolute top-[40%] md:top-[38%] left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-1.5 z-10">
-            <div className="flex gap-1.5 md:gap-2">
+          <div className="absolute top-[40%] md:top-[38%] left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-1.5 z-10 max-w-[calc(100%-16px)]">
+            <div className="flex gap-1 md:gap-2">
               {Array.from({ length: communityCardSlots }).map((_, i) => {
                 const card = communityCards[i];
                 if (!card) {
                   return (
                     <div
                       key={i}
-                      className="w-10 h-[56px] md:w-12 md:h-[66px] rounded-[3px]"
+                      className="w-8 h-[48px] md:w-12 md:h-[66px] rounded-[3px]"
                       style={{
                         background: 'rgba(0,0,0,0.12)',
                         border: '1px solid rgba(255,255,255,0.04)',
@@ -1182,7 +1182,7 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
                     className={isNewCard ? 'animate-community-reveal' : undefined}
                     style={isNewCard ? { animationDelay: `${delayWithinStreet}ms` } : undefined}
                   >
-                    <CardRenderer rank={parsed.rank} suit={parsed.suit} size="md" className="md:hidden" />
+                    <CardRenderer rank={parsed.rank} suit={parsed.suit} size="sm" className="md:hidden" />
                     <CardRenderer rank={parsed.rank} suit={parsed.suit} size="lg" className="hidden md:flex" />
                   </div>
                 );
@@ -1217,7 +1217,7 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
                   />
                 ))}
               </div>
-              <p className="text-[11px] font-medium text-white/60">Waiting for others...</p>
+              <p className="text-[11px] font-medium text-white/60">다른 플레이어를 기다리는 중...</p>
               <div className="text-[10px] text-white/30 text-center leading-relaxed">
                 <p>NLH ~ {gameState.smallBlind}/{gameState.bigBlind}</p>
               </div>
@@ -1379,9 +1379,9 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => setRaiseAmount(Math.max(minRaiseTotal, raiseAmount - bigBlind))}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center bg-white/8 text-white/50 active:scale-[0.88]"
+                        className="w-10 h-10 rounded-lg flex items-center justify-center bg-white/8 text-white/50 active:scale-[0.88]"
                       >
-                        <Minus className="w-3.5 h-3.5" />
+                        <Minus className="w-4 h-4" />
                       </button>
                       <input
                         type="range"
@@ -1395,9 +1395,9 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
                       />
                       <button
                         onClick={() => setRaiseAmount(Math.min(maxRaiseTotal, raiseAmount + bigBlind))}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center bg-white/8 text-white/50 active:scale-[0.88]"
+                        className="w-10 h-10 rounded-lg flex items-center justify-center bg-white/8 text-white/50 active:scale-[0.88]"
                       >
-                        <Plus className="w-3.5 h-3.5" />
+                        <Plus className="w-4 h-4" />
                       </button>
                     </div>
 

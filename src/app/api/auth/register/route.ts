@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
-import { users, pointTransactions } from '@/lib/db/schema';
+import { users, pointTransactions, userSettings } from '@/lib/db/schema';
 import { hashPassword } from '@/lib/auth/password';
 import { createSession } from '@/lib/auth/session';
 import { eq } from 'drizzle-orm';
@@ -69,14 +69,19 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
-    // Award initial points transaction
-    await db.insert(pointTransactions).values({
-      userId: newUser.id,
-      amount: 1000,
-      balanceAfter: 1000,
-      type: 'admin_adjust', // No 'earn_signup' type exists; admin_adjust is the closest for one-time welcome bonus
-      description: '회원가입 축하 포인트',
-    });
+    // Award initial points transaction + create default settings
+    await Promise.all([
+      db.insert(pointTransactions).values({
+        userId: newUser.id,
+        amount: 1000,
+        balanceAfter: 1000,
+        type: 'admin_adjust',
+        description: '회원가입 축하 포인트',
+      }),
+      db.insert(userSettings).values({
+        userId: newUser.id,
+      }),
+    ]);
 
     // Create session
     await createSession({

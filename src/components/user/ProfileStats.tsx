@@ -22,16 +22,14 @@ export function ProfileStats({ userId, stats }: ProfileStatsProps) {
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+    <div className="grid grid-cols-4 gap-2 sm:gap-4 mb-4 sm:mb-8">
       {statItems.map((item) => {
         const Icon = item.icon;
         const content = (
           <>
-            <div className="flex justify-center mb-2">
-              <Icon className="w-6 h-6 text-muted-foreground" />
-            </div>
-            <div className="text-3xl font-bold mb-1">{item.value.toLocaleString()}</div>
-            <div className="text-sm text-muted-foreground">{item.label}</div>
+            <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground mx-auto mb-1" />
+            <div className="text-lg sm:text-2xl font-bold">{item.value.toLocaleString()}</div>
+            <div className="text-[10px] sm:text-sm text-muted-foreground">{item.label}</div>
           </>
         );
 
@@ -40,7 +38,7 @@ export function ProfileStats({ userId, stats }: ProfileStatsProps) {
             <Link
               key={item.label}
               href={item.link}
-              className="bg-surface border border-border rounded-lg p-6 text-center hover:border-primary transition-colors cursor-pointer"
+              className="bg-surface border border-border rounded-lg p-2.5 sm:p-4 text-center hover:border-primary transition-colors cursor-pointer"
             >
               {content}
             </Link>
@@ -50,7 +48,7 @@ export function ProfileStats({ userId, stats }: ProfileStatsProps) {
         return (
           <div
             key={item.label}
-            className="bg-surface border border-border rounded-lg p-6 text-center hover:border-primary transition-colors"
+            className="bg-surface border border-border rounded-lg p-2.5 sm:p-4 text-center"
           >
             {content}
           </div>

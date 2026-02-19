@@ -87,8 +87,8 @@ export default async function RootLayout({
             <ChatProvider>
               <Header />
 
-              <div className="flex-1 mx-auto w-full max-w-[1560px] px-4 py-6">
-                <div className="flex gap-6">
+              <div className="flex-1 mx-auto w-full max-w-[1560px] px-4 py-4 lg:py-6">
+                <div className="flex gap-4 lg:gap-6">
                   {/* Main Content */}
                   <main className="flex-1 min-w-0">
                     {children}

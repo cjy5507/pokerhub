@@ -38,11 +38,11 @@ export function ProfileTabs({ userId, recentPosts, recentHands }: ProfileTabsPro
   return (
     <div>
       {/* Tabs */}
-      <div className="border-b border-border mb-6">
+      <div className="border-b border-border mb-3 sm:mb-6">
         <div className="flex gap-6">
           <button
             onClick={() => setActiveTab('posts')}
-            className={`pb-4 px-2 font-medium transition-colors relative ${
+            className={`pb-2 sm:pb-4 px-2 text-sm sm:text-base font-medium transition-colors relative ${
               activeTab === 'posts'
                 ? 'text-primary'
                 : 'text-muted-foreground hover:text-foreground'
@@ -55,7 +55,7 @@ export function ProfileTabs({ userId, recentPosts, recentHands }: ProfileTabsPro
           </button>
           <button
             onClick={() => setActiveTab('hands')}
-            className={`pb-4 px-2 font-medium transition-colors relative ${
+            className={`pb-2 sm:pb-4 px-2 text-sm sm:text-base font-medium transition-colors relative ${
               activeTab === 'hands'
                 ? 'text-primary'
                 : 'text-muted-foreground hover:text-foreground'
@@ -73,7 +73,7 @@ export function ProfileTabs({ userId, recentPosts, recentHands }: ProfileTabsPro
       {activeTab === 'posts' && (
         <div className="space-y-4">
           {recentPosts.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
+            <div className="text-center py-6 sm:py-12 text-muted-foreground text-sm">
               작성한 게시글이 없습니다
             </div>
           ) : (
@@ -112,7 +112,7 @@ export function ProfileTabs({ userId, recentPosts, recentHands }: ProfileTabsPro
       {activeTab === 'hands' && (
         <div className="space-y-4">
           {recentHands.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
+            <div className="text-center py-6 sm:py-12 text-muted-foreground text-sm">
               공유한 핸드가 없습니다
             </div>
           ) : (

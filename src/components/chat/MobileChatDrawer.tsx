@@ -145,7 +145,7 @@ export function MobileChatDrawer() {
                         className={cn(
                           'px-4 py-2.5 rounded-2xl max-w-[75%]',
                           isOwn
-                            ? 'bg-op-elevated text-op-text rounded-br-sm'
+                            ? 'bg-op-gold/20 text-op-text rounded-br-sm'
                             : 'bg-op-surface text-op-text rounded-bl-sm'
                         )}
                       >

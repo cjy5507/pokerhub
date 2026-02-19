@@ -137,20 +137,20 @@ export function CooldownRewardWidget() {
       )}
 
       {/* Header */}
-      <div className="relative flex items-center gap-2 mb-4">
-        <Leaf className="w-5 h-5 text-op-gold" />
-        <h3 className="text-op-gold font-bold text-lg">포인트 수확</h3>
+      <div className="relative flex items-center gap-1.5 mb-2">
+        <Leaf className="w-4 h-4 text-op-gold" />
+        <h3 className="text-op-gold font-bold text-sm">포인트 수확</h3>
       </div>
 
       {/* Divider */}
-      <div className="h-px bg-gradient-to-r from-transparent via-op-gold/30 to-transparent mb-4" />
+      <div className="h-px bg-gradient-to-r from-transparent via-op-gold/30 to-transparent mb-2" />
 
       {/* Main button */}
       <button
         onClick={handleClaim}
         disabled={!isAvailable || isClaiming}
         className={cn(
-          'relative w-full py-4 px-6 rounded-lg font-bold text-lg transition-all duration-300',
+          'relative w-full py-2.5 px-4 rounded-lg font-bold text-sm transition-all duration-300',
           'flex items-center justify-center gap-2',
           'border-2 overflow-hidden group',
           isAvailable
@@ -168,19 +168,19 @@ export function CooldownRewardWidget() {
             <>
               {isClaiming ? (
                 <>
-                  <div className="w-5 h-5 border-2 border-op-surface border-t-transparent rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-op-surface border-t-transparent rounded-full animate-spin" />
                   수확 중...
                 </>
               ) : (
                 <>
                   수확하기
-                  <Leaf className="w-5 h-5" />
+                  <Leaf className="w-4 h-4" />
                 </>
               )}
             </>
           ) : (
             <>
-              <Clock className="w-5 h-5" />
+              <Clock className="w-4 h-4" />
               {timeRemaining} 남음
             </>
           )}
@@ -188,11 +188,11 @@ export function CooldownRewardWidget() {
       </button>
 
       {/* Stats */}
-      <div className="mt-4 space-y-2 text-sm">
+      <div className="mt-2 space-y-1 text-sm">
         {stats.lastReward > 0 && (
           <div className="flex items-center justify-between text-op-text-muted">
             <span className="flex items-center gap-1">
-              <Coins className="w-4 h-4 text-op-gold" />
+              <Coins className="w-3.5 h-3.5 text-op-gold" />
               마지막 수확
             </span>
             <span className="text-op-gold font-bold">+{stats.lastReward}P</span>
@@ -201,7 +201,7 @@ export function CooldownRewardWidget() {
 
         <div className="flex items-center justify-between text-op-text-muted">
           <span className="flex items-center gap-1">
-            <Sparkles className="w-4 h-4 text-op-gold" />
+            <Sparkles className="w-3.5 h-3.5 text-op-gold" />
             오늘 수확
           </span>
           <span className="text-op-gold font-bold">

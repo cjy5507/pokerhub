@@ -31,21 +31,21 @@ function getNotificationIcon(type: string) {
   const baseClass = "w-5 h-5 flex items-center justify-center rounded-full text-xs font-bold";
   switch (type) {
     case 'comment':
-      return <div className={`${baseClass} bg-blue-400 text-white`}>💬</div>;
+      return <div className={`${baseClass} bg-op-info text-white`}>💬</div>;
     case 'like':
-      return <div className={`${baseClass} bg-red-400 text-white`}>❤️</div>;
+      return <div className={`${baseClass} bg-op-error text-white`}>❤️</div>;
     case 'follow':
-      return <div className={`${baseClass} bg-green-400 text-white`}>👤</div>;
+      return <div className={`${baseClass} bg-op-success text-white`}>👤</div>;
     case 'mention':
-      return <div className={`${baseClass} bg-purple-400 text-white`}>@</div>;
+      return <div className={`${baseClass} bg-[#a855f7] text-white`}>@</div>;
     case 'badge':
       return <div className={`${baseClass} bg-op-gold text-white`}>🏆</div>;
     case 'level_up':
       return <div className={`${baseClass} bg-op-gold text-white`}>📈</div>;
     case 'system':
-      return <div className={`${baseClass} bg-gray-400 text-white`}>ℹ️</div>;
+      return <div className={`${baseClass} bg-op-text-muted text-white`}>ℹ️</div>;
     default:
-      return <div className={`${baseClass} bg-gray-400 text-white`}>🔔</div>;
+      return <div className={`${baseClass} bg-op-text-muted text-white`}>🔔</div>;
   }
 }
 
@@ -109,15 +109,15 @@ export default function NotificationsClient({
   };
 
   return (
-    <div className="min-h-screen bg-op-bg text-op-text">
-      <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="min-h-screen bg-op-bg text-op-text pb-20 lg:pb-0">
+      <div className="max-w-4xl mx-auto px-4 py-6 sm:py-8">
         {/* Header */}
         <div className="mb-8 flex items-start justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-op-gold mb-2">Notifications</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-op-gold mb-2">알림</h1>
             {unreadCount > 0 && (
               <p className="text-op-text-secondary">
-                You have <span className="text-op-gold font-semibold">{unreadCount}</span> unread notification{unreadCount !== 1 && 's'}
+                읽지 않은 알림 <span className="text-op-gold font-semibold">{unreadCount}</span>건
               </p>
             )}
           </div>
@@ -136,7 +136,7 @@ export default function NotificationsClient({
         {notifications.length === 0 ? (
           <div className="bg-op-surface border border-op-border rounded-lg p-12 text-center">
             <div className="text-6xl text-op-text-secondary mx-auto mb-4">🔔</div>
-            <p className="text-op-text-secondary text-lg">No notifications yet</p>
+            <p className="text-op-text-secondary text-lg">아직 알림이 없습니다</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -195,7 +195,7 @@ export default function NotificationsClient({
                         {/* Delete button */}
                         <button
                           onClick={(e) => handleDelete(e, notification.id)}
-                          className="p-1.5 rounded-md text-op-text-dim hover:text-red-400 hover:bg-op-border transition-colors"
+                          className="p-2 min-w-[36px] min-h-[36px] flex items-center justify-center rounded-md text-op-text-dim hover:text-red-400 hover:bg-op-border transition-colors"
                           aria-label="삭제"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -222,7 +222,7 @@ export default function NotificationsClient({
               disabled={loadingMore}
               className="px-6 py-2 bg-op-surface border border-op-border rounded-lg text-op-gold hover:bg-op-elevated transition-colors disabled:opacity-50"
             >
-              {loadingMore ? '불러오는 중...' : 'Load More'}
+              {loadingMore ? '불러오는 중...' : '더 보기'}
             </button>
           </div>
         )}

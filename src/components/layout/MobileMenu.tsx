@@ -90,7 +90,7 @@ export function MobileMenu({
       {/* Slide-in Menu */}
       <div
         className={cn(
-          'fixed top-0 left-0 bottom-0 w-[280px] bg-op-surface z-50 transition-transform duration-300 lg:hidden',
+          'fixed top-0 left-0 bottom-0 w-[280px] max-w-[85vw] bg-op-surface z-50 transition-transform duration-300 lg:hidden',
           'flex flex-col',
           isOpen ? 'translate-x-0' : '-translate-x-full'
         )}

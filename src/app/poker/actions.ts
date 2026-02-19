@@ -82,6 +82,7 @@ type CreateTableData = {
   name: string;
   smallBlind: number;
   bigBlind: number;
+  ante: number;
   maxSeats: number;
 };
 
@@ -104,6 +105,13 @@ export async function createPokerTable(data: CreateTableData) {
     throw new Error('블라인드는 0보다 커야 합니다');
   }
 
+  if (data.ante < 0) {
+    throw new Error('앤티는 0 이상이어야 합니다');
+  }
+  if (data.ante > data.bigBlind) {
+    throw new Error('앤티는 빅블라인드 이하여야 합니다');
+  }
+
   const minBuyIn = data.bigBlind * 20;
   const maxBuyIn = data.bigBlind * 100;
 
@@ -122,6 +130,7 @@ export async function createPokerTable(data: CreateTableData) {
       name: data.name,
       smallBlind: data.smallBlind,
       bigBlind: data.bigBlind,
+      ante: data.ante,
       minBuyIn,
       maxBuyIn,
       maxSeats: data.maxSeats,

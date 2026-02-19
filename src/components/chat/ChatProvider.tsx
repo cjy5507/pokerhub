@@ -84,28 +84,38 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     }
   }, [rooms, activeRoomId]);
 
-  // Fetch messages when active room changes
+  // Fetch messages when active room changes + poll every 5 seconds
   useEffect(() => {
     if (!activeRoomId) {
       setMessages([]);
       return;
     }
 
-    const fetchMessages = async () => {
-      setIsLoading(true);
+    let isMounted = true;
+
+    const fetchMessages = async (showLoading = true) => {
+      if (showLoading) setIsLoading(true);
       try {
         const result = await getChatMessages(activeRoomId);
-        if (result.messages) {
+        if (isMounted && result.messages) {
           setMessages(result.messages);
         }
       } catch (error) {
         console.error('Failed to fetch messages:', error);
       } finally {
-        setIsLoading(false);
+        if (showLoading && isMounted) setIsLoading(false);
       }
     };
 
-    fetchMessages();
+    fetchMessages(true);
+
+    // Poll for new messages every 5 seconds
+    const interval = setInterval(() => fetchMessages(false), 5000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, [activeRoomId]);
 
   const value: ChatContextValue = {

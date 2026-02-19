@@ -72,12 +72,12 @@ function LoginForm() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-2">로그인</h1>
-          <p className="text-muted-foreground">Open Poker 계정으로 로그인하세요</p>
+          <p className="text-op-text-secondary">Open Poker 계정으로 로그인하세요</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {serverError && (
-            <div className="p-3 bg-destructive/10 border border-destructive rounded-md text-destructive text-sm">
+            <div className="p-3 bg-op-error-dim border border-op-error rounded-md text-op-error text-sm">
               {serverError}
             </div>
           )}
@@ -91,11 +91,11 @@ function LoginForm() {
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full px-4 py-2 rounded-md bg-surface border border-border focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full px-4 py-2.5 rounded-md bg-op-surface border border-op-border focus:outline-none focus:ring-2 focus:ring-op-gold"
               placeholder="your@email.com"
               disabled={isLoading}
             />
-            {errors.email && <p className="mt-1 text-sm text-destructive">{errors.email}</p>}
+            {errors.email && <p className="mt-1 text-sm text-op-error">{errors.email}</p>}
           </div>
 
           <div>
@@ -107,25 +107,25 @@ function LoginForm() {
               type="password"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              className="w-full px-4 py-2 rounded-md bg-surface border border-border focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full px-4 py-2.5 rounded-md bg-op-surface border border-op-border focus:outline-none focus:ring-2 focus:ring-op-gold"
               placeholder="비밀번호"
               disabled={isLoading}
             />
-            {errors.password && <p className="mt-1 text-sm text-destructive">{errors.password}</p>}
+            {errors.password && <p className="mt-1 text-sm text-op-error">{errors.password}</p>}
           </div>
 
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3 bg-primary text-primary-foreground rounded-md font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-3 bg-op-gold text-op-text-inverse rounded-md font-medium hover:bg-op-gold-hover disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? '로그인 중...' : '로그인'}
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-muted-foreground">
+        <p className="mt-6 text-center text-sm text-op-text-secondary">
           계정이 없으신가요?{' '}
-          <Link href="/register" className="text-primary hover:underline">
+          <Link href="/register" className="text-op-gold hover:underline">
             회원가입
           </Link>
         </p>

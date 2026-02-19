@@ -172,7 +172,7 @@ export default function RoulettePage() {
   }).join(', ');
 
   return (
-    <div className="min-h-screen bg-op-bg text-op-text pb-20 px-4 py-6">
+    <div className="min-h-screen bg-op-bg text-op-text pb-20 lg:pb-0 px-4 py-6">
       {/* Header */}
       <div className="max-w-5xl mx-auto mb-8">
         <div className="flex items-center justify-center gap-3 mb-4">
@@ -188,12 +188,12 @@ export default function RoulettePage() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-5xl mx-auto grid lg:grid-cols-2 gap-8">
+      <div className="max-w-5xl mx-auto grid lg:grid-cols-2 gap-4 lg:gap-8">
         {/* Left Column - Wheel */}
         <div className="space-y-6">
           {/* Wheel Container */}
           <div className="bg-op-surface border border-op-border rounded-xl p-8">
-            <div className="relative mx-auto" style={{ width: '320px', height: '320px' }}>
+            <div className="relative mx-auto" style={{ width: 'min(320px, calc(100vw - 64px))', height: 'min(320px, calc(100vw - 64px))' }}>
               {/* Pointer */}
               <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 z-20">
                 <div
@@ -206,7 +206,7 @@ export default function RoulettePage() {
               <div className="absolute inset-0 flex items-center justify-center">
                 <div
                   className={cn(
-                    "relative w-[300px] h-[300px] rounded-full shadow-[0_0_30px_rgba(201,162,39,0.3)] border-4 border-op-gold/30",
+                    "relative w-full h-full rounded-full shadow-[0_0_30px_rgba(201,162,39,0.3)] border-4 border-op-gold/30",
                     isSpinning && "shadow-[0_0_50px_rgba(201,162,39,0.6)] transition-transform duration-[4000ms] ease-out"
                   )}
                   style={{
@@ -353,17 +353,17 @@ export default function RoulettePage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-op-elevated rounded-lg p-4">
                 <div className="text-sm text-op-text-secondary mb-1">총 스핀</div>
-                <div className="text-2xl font-bold">{stats.totalSpins}</div>
+                <div className="text-2xl font-bold truncate">{stats.totalSpins}</div>
               </div>
 
               <div className="bg-op-elevated rounded-lg p-4">
                 <div className="text-sm text-op-text-secondary mb-1">총 배팅</div>
-                <div className="text-2xl font-bold text-red-400">{stats.totalBet.toLocaleString()}P</div>
+                <div className="text-2xl font-bold text-red-400 truncate">{stats.totalBet.toLocaleString()}P</div>
               </div>
 
               <div className="bg-op-elevated rounded-lg p-4">
                 <div className="text-sm text-op-text-secondary mb-1">총 획득</div>
-                <div className="text-2xl font-bold text-green-400">{stats.totalWon.toLocaleString()}P</div>
+                <div className="text-2xl font-bold text-green-400 truncate">{stats.totalWon.toLocaleString()}P</div>
               </div>
 
               <div className="bg-op-elevated rounded-lg p-4">
@@ -376,7 +376,7 @@ export default function RoulettePage() {
                   손익
                 </div>
                 <div className={cn(
-                  "text-2xl font-bold",
+                  "text-2xl font-bold truncate",
                   profit >= 0 ? "text-green-400" : "text-red-400"
                 )}>
                   {profit >= 0 ? "+" : ""}{profit.toLocaleString()}P

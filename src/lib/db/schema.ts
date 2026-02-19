@@ -430,6 +430,7 @@ export const chatMessages = pgTable('chat_messages', {
 }, (table) => ({
   roomIdIdx: index('chat_messages_room_id_idx').on(table.roomId),
   createdAtIdx: index('chat_messages_created_at_idx').on(table.createdAt),
+  roomCreatedAtIdx: index('chat_messages_room_created_at_idx').on(table.roomId, table.createdAt),
 }));
 
 // ==================== ADMIN DOMAIN ====================
@@ -474,7 +475,10 @@ export const threads = pgTable('threads', {
   repliesCount: integer('replies_count').default(0).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
-});
+}, (table) => ({
+  authorIdIdx: index('threads_author_id_idx').on(table.authorId),
+  createdAtIdx: index('threads_created_at_idx').on(table.createdAt),
+}));
 
 export const threadLikes = pgTable('thread_likes', {
   userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
@@ -490,7 +494,10 @@ export const threadReplies = pgTable('thread_replies', {
   authorId: uuid('author_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   content: text('content').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-});
+}, (table) => ({
+  threadIdIdx: index('thread_replies_thread_id_idx').on(table.threadId),
+  authorIdIdx: index('thread_replies_author_id_idx').on(table.authorId),
+}));
 
 // ==================== GAMES & REWARDS DOMAIN ====================
 
@@ -549,6 +556,7 @@ export const pokerTables = pgTable('poker_tables', {
   name: varchar('name', { length: 100 }).notNull(),
   smallBlind: integer('small_blind').notNull(),
   bigBlind: integer('big_blind').notNull(),
+  ante: integer('ante').notNull().default(0),
   minBuyIn: integer('min_buy_in').notNull(),
   maxBuyIn: integer('max_buy_in').notNull(),
   maxSeats: integer('max_seats').notNull().default(6),

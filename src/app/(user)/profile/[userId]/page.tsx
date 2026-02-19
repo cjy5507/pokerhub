@@ -143,7 +143,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userId
   const userBadges = await getUserBadges(userId);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-20 lg:pb-0">
       <ProfileHeader
         user={{
           id: user.id,
@@ -165,9 +165,9 @@ export default async function ProfilePage({ params }: { params: Promise<{ userId
         isBlocked={isBlocked}
       />
 
-      <div className="max-w-[1560px] mx-auto px-4 py-8">
+      <div className="max-w-[1560px] mx-auto px-3 sm:px-4 py-3 sm:py-8">
         {isOwnProfile && (
-          <div className="mb-6">
+          <div className="mb-3 sm:mb-6">
             <CooldownRewardWidget />
           </div>
         )}

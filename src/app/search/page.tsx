@@ -18,7 +18,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const results = await searchPosts(query);
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6">
+    <div className="max-w-4xl mx-auto px-4 py-6 pb-20 lg:pb-0">
       {/* Search Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-op-text mb-4">검색</h1>

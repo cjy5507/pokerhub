@@ -218,17 +218,17 @@ export default function SettingsClient() {
   ];
 
   return (
-    <div className="min-h-screen bg-op-bg text-op-text">
+    <div className="min-h-screen bg-op-bg text-op-text pb-20 lg:pb-0">
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">설정</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold mb-6">설정</h1>
 
         {/* Tabs */}
-        <div className="flex gap-2 mb-8 border-b border-op-border overflow-x-auto">
+        <div className="flex gap-2 mb-6 border-b border-op-border overflow-x-auto">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-6 py-3 font-medium transition-colors whitespace-nowrap ${
+              className={`px-4 py-2.5 sm:px-6 sm:py-3 font-medium transition-colors whitespace-nowrap ${
                 activeTab === tab.id
                   ? 'text-op-gold border-b-2 border-op-gold'
                   : 'text-op-text-secondary hover:text-op-text'
@@ -255,7 +255,7 @@ export default function SettingsClient() {
         {/* Profile Tab */}
         {activeTab === 'profile' && (
           <div className="space-y-6">
-            <div className="bg-op-surface border border-op-border rounded-lg p-6">
+            <div className="bg-op-surface border border-op-border rounded-lg p-4 sm:p-6">
               <h2 className="text-xl font-bold mb-4">프로필 정보</h2>
 
               <div className="space-y-4">
@@ -356,7 +356,7 @@ export default function SettingsClient() {
         {/* Notifications Tab */}
         {activeTab === 'notifications' && (
           <div className="space-y-6">
-            <div className="bg-op-surface border border-op-border rounded-lg p-6">
+            <div className="bg-op-surface border border-op-border rounded-lg p-4 sm:p-6">
               <h2 className="text-xl font-bold mb-4">알림 설정</h2>
 
               <div className="space-y-4">
@@ -423,7 +423,7 @@ export default function SettingsClient() {
             </div>
 
             {/* Custom Title Section */}
-            <div className="bg-op-surface border border-op-border rounded-lg p-6">
+            <div className="bg-op-surface border border-op-border rounded-lg p-4 sm:p-6">
               <div className="flex items-center gap-2 mb-4">
                 <Type className="w-5 h-5 text-op-gold" />
                 <h2 className="text-xl font-bold">커스텀 타이틀</h2>
@@ -458,7 +458,7 @@ export default function SettingsClient() {
             </div>
 
             {/* Badge Shop Section */}
-            <div className="bg-op-surface border border-op-border rounded-lg p-6">
+            <div className="bg-op-surface border border-op-border rounded-lg p-4 sm:p-6">
               <div className="flex items-center gap-2 mb-4">
                 <Award className="w-5 h-5 text-op-gold" />
                 <h2 className="text-xl font-bold">뱃지 상점</h2>
@@ -551,7 +551,7 @@ export default function SettingsClient() {
         {/* Account Tab */}
         {activeTab === 'account' && (
           <div className="space-y-6">
-            <div className="bg-op-surface border border-op-border rounded-lg p-6">
+            <div className="bg-op-surface border border-op-border rounded-lg p-4 sm:p-6">
               <h2 className="text-xl font-bold mb-4">비밀번호 변경</h2>
 
               <div className="space-y-4">
@@ -595,7 +595,7 @@ export default function SettingsClient() {
               </button>
             </div>
 
-            <div className="bg-op-surface border border-red-700 rounded-lg p-6">
+            <div className="bg-op-surface border border-red-700 rounded-lg p-4 sm:p-6">
               <h2 className="text-xl font-bold mb-2 text-red-400">위험 구역</h2>
               <p className="text-sm text-op-text-secondary mb-4">
                 회원탈퇴 시 모든 데이터가 삭제되며 복구할 수 없습니다.

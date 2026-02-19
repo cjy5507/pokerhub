@@ -19,16 +19,22 @@ function checkRateLimit(ip: string): boolean {
   const now = Date.now();
   const entry = rateLimitMap.get(ip);
 
-  if (!entry || now > entry.resetAt) {
+  // Lazy cleanup: remove expired entry
+  if (entry && now > entry.resetAt) {
+    rateLimitMap.delete(ip);
+  }
+
+  const current = rateLimitMap.get(ip);
+  if (!current) {
     rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
     return true;
   }
 
-  if (entry.count >= RATE_LIMIT_MAX) {
+  if (current.count >= RATE_LIMIT_MAX) {
     return false;
   }
 
-  entry.count += 1;
+  current.count += 1;
   return true;
 }
 

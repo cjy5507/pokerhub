@@ -86,51 +86,47 @@ export async function toggleBlock(targetUserId: string): Promise<{
       return { success: false, isBlocked: false, error: '자기 자신을 차단할 수 없습니다' };
     }
 
-    // Check if already blocked
-    const [existing] = await db
-      .select()
-      .from(userBlocks)
-      .where(
-        and(
-          eq(userBlocks.blockerId, session.userId),
-          eq(userBlocks.blockedId, targetUserId)
-        )
-      )
-      .limit(1);
+    // Atomic toggle: attempt insert first (block), fall back to delete (unblock)
+    const result = await db.transaction(async (tx: any) => {
+      // Try to insert; if the row already exists the conflict is suppressed
+      const inserted = await tx
+        .insert(userBlocks)
+        .values({
+          blockerId: session.userId,
+          blockedId: targetUserId,
+        })
+        .onConflictDoNothing()
+        .returning({ blockerId: userBlocks.blockerId });
 
-    if (existing) {
-      // Unblock
-      await db
+      if (inserted.length > 0) {
+        // Row was newly inserted → now blocked; also unfollow if following
+        await tx
+          .delete(userFollows)
+          .where(
+            and(
+              eq(userFollows.followerId, session.userId),
+              eq(userFollows.followingId, targetUserId)
+            )
+          );
+        return { isBlocked: true };
+      }
+
+      // Row already existed → unblock by deleting
+      const deleted = await tx
         .delete(userBlocks)
         .where(
           and(
             eq(userBlocks.blockerId, session.userId),
             eq(userBlocks.blockedId, targetUserId)
           )
-        );
+        )
+        .returning({ blockerId: userBlocks.blockerId });
 
-      revalidatePath(`/profile/${targetUserId}`);
-      return { success: true, isBlocked: false };
-    } else {
-      // Block
-      await db.insert(userBlocks).values({
-        blockerId: session.userId,
-        blockedId: targetUserId,
-      });
+      return { isBlocked: deleted.length > 0 ? false : true };
+    });
 
-      // Also unfollow if following
-      await db
-        .delete(userFollows)
-        .where(
-          and(
-            eq(userFollows.followerId, session.userId),
-            eq(userFollows.followingId, targetUserId)
-          )
-        );
-
-      revalidatePath(`/profile/${targetUserId}`);
-      return { success: true, isBlocked: true };
-    }
+    revalidatePath(`/profile/${targetUserId}`);
+    return { success: true, isBlocked: result.isBlocked };
   } catch (error) {
     console.error('Error toggling block:', error);
     return { success: false, isBlocked: false, error: '오류가 발생했습니다' };

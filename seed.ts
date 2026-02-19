@@ -50,7 +50,7 @@ async function seed() {
   const boardMap = new Map(boards.map((b: any) => [b.slug, b.id]));
 
   const samplePosts = [
-    { board: 'free', title: '안녕하세요! 포커허브에 첫 글을 올립니다', content: '포커허브에 가입했습니다. 앞으로 많은 이야기 나눠요! 포커를 좋아하는 분들과 소통하고 싶습니다.' },
+    { board: 'free', title: '안녕하세요! 오픈포커에 첫 글을 올립니다', content: '오픈포커에 가입했습니다. 앞으로 많은 이야기 나눠요! 포커를 좋아하는 분들과 소통하고 싶습니다.' },
     { board: 'free', title: '오늘 홈게임 후기', content: '친구들과 홈게임을 했는데 올인 3번이나 성공했네요. 오늘은 운이 좋았습니다. 다음에도 이런 결과가 나오면 좋겠어요.' },
     { board: 'strategy', title: 'NL50 레이트 포지션 오픈레인지 분석', content: '레이트 포지션에서의 오픈레인지를 분석해봤습니다. BTN에서는 약 40-50%의 핸드를 오픈할 수 있습니다. CO에서는 약 25-30% 정도가 적합합니다.' },
     { board: 'strategy', title: '3-bet 팟에서의 cbet 전략', content: '3-bet 팟에서 IP와 OOP에 따른 c-bet 사이징과 빈도에 대해 분석했습니다. IP에서는 33% cbet이 효율적이고, OOP에서는 체크가 더 좋은 경우가 많습니다.' },
@@ -58,7 +58,7 @@ async function seed() {
     { board: 'tournament', title: '주말 토너먼트 참가 후기', content: '이번 주말 로컬 토너먼트에 참가했습니다. 128명 참가, 최종 15등으로 마무리했네요. 아쉽지만 좋은 경험이었습니다.' },
     { board: 'beginner', title: '포지션의 중요성 - 초보자 가이드', content: '포커에서 가장 중요한 개념 중 하나가 포지션입니다. 늦게 행동할수록 유리한 이유를 설명합니다. 상대방의 행동을 보고 결정할 수 있기 때문이죠.' },
     { board: 'beginner', title: '팟 오즈 계산하는 방법', content: '팟 오즈는 콜할 금액 대비 팟의 비율입니다. 예를 들어 팟이 100이고 콜이 20이면 팟 오즈는 5:1입니다. 이를 확률로 변환하면 약 17%입니다.' },
-    { board: 'notice', title: '[공지] 포커허브 오픈 안내', content: '포커허브가 오픈되었습니다! 포커를 사랑하는 모든 분들을 환영합니다. 게시판 이용 규칙을 숙지해주세요.' },
+    { board: 'notice', title: '[공지] 오픈포커 오픈 안내', content: '오픈포커가 오픈되었습니다! 포커를 사랑하는 모든 분들을 환영합니다. 게시판 이용 규칙을 숙지해주세요.' },
   ];
 
   for (const post of samplePosts) {

@@ -168,47 +168,52 @@ describe('toggleBlock', () => {
 
   it('successfully blocks a user when not already blocked', async () => {
     getSession.mockResolvedValue(mockUserSession);
-    // First select: check existing block -> empty (not blocked)
-    mockSelectSequence([[]]);
-    mockInsertChain(mockDb, []);
-    // delete is called twice: once for userBlocks insert then userFollows delete
-    // Actually block path: insert userBlocks, then delete userFollows
-    mockDeleteChain(mockDb, []);
+    // insert returns a row → newly blocked; delete for userFollows cleanup returns []
+    const tx = {
+      insert: vi.fn().mockReturnValue(createChainableMock([{ blockerId: mockUserSession.userId }])),
+      delete: vi.fn().mockReturnValue(createChainableMock([])),
+    };
+    mockDb.transaction.mockImplementationOnce((cb: (tx: any) => any) => cb(tx));
 
     const result = await toggleBlock('target-user-id');
 
     expect(result).toEqual({ success: true, isBlocked: true });
-    expect(mockDb.insert).toHaveBeenCalledOnce();
+    expect(tx.insert).toHaveBeenCalledOnce();
     // delete called for the unfollow step
-    expect(mockDb.delete).toHaveBeenCalledOnce();
+    expect(tx.delete).toHaveBeenCalledOnce();
   });
 
   it('successfully unblocks a user when already blocked', async () => {
     getSession.mockResolvedValue(mockUserSession);
-    // select returns existing block
-    mockSelectSequence([[{ blockerId: mockUserSession.userId, blockedId: 'target-user-id' }]]);
-    mockDeleteChain(mockDb, []);
+    // insert returns [] → conflict (already blocked) → delete to unblock returns a row
+    const tx = {
+      insert: vi.fn().mockReturnValue(createChainableMock([])),
+      delete: vi.fn().mockReturnValue(createChainableMock([{ blockerId: mockUserSession.userId }])),
+    };
+    mockDb.transaction.mockImplementationOnce((cb: (tx: any) => any) => cb(tx));
 
     const result = await toggleBlock('target-user-id');
 
     expect(result).toEqual({ success: true, isBlocked: false });
-    expect(mockDb.delete).toHaveBeenCalledOnce();
-    // insert should NOT be called on unblock
-    expect(mockDb.insert).not.toHaveBeenCalled();
+    expect(tx.delete).toHaveBeenCalledOnce();
+    // insert was attempted (conflict suppressed) but delete was called to unblock
+    expect(tx.insert).toHaveBeenCalledOnce();
   });
 
   it('blocking a user also removes existing follow relationship', async () => {
     getSession.mockResolvedValue(mockUserSession);
-    // select returns empty (not yet blocked)
-    mockSelectSequence([[]]);
-    mockInsertChain(mockDb, []);
-    mockDeleteChain(mockDb, []);
+    // insert returns a row → newly blocked; delete for userFollows cleanup
+    const tx = {
+      insert: vi.fn().mockReturnValue(createChainableMock([{ blockerId: mockUserSession.userId }])),
+      delete: vi.fn().mockReturnValue(createChainableMock([])),
+    };
+    mockDb.transaction.mockImplementationOnce((cb: (tx: any) => any) => cb(tx));
 
     await toggleBlock('target-user-id');
 
-    // insert for userBlocks, delete for userFollows cleanup
-    expect(mockDb.insert).toHaveBeenCalledOnce();
-    expect(mockDb.delete).toHaveBeenCalledOnce();
+    // insert for userBlocks (conflict-safe), delete for userFollows cleanup
+    expect(tx.insert).toHaveBeenCalledOnce();
+    expect(tx.delete).toHaveBeenCalledOnce();
   });
 });
 

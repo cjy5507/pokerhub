@@ -6,12 +6,57 @@ import { verifyPassword } from '@/lib/auth/password';
 import { createSession } from '@/lib/auth/session';
 import { eq } from 'drizzle-orm';
 
+// --- In-memory rate limiter: 10 login attempts per IP per 15 minutes ---
+interface RateLimitEntry {
+  count: number;
+  resetAt: number;
+}
+const loginRateLimitMap = new Map<string, RateLimitEntry>();
+const LOGIN_RATE_LIMIT_MAX = 10;
+const LOGIN_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+
+function checkLoginRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = loginRateLimitMap.get(ip);
+
+  // Lazy cleanup: remove expired entry
+  if (entry && now > entry.resetAt) {
+    loginRateLimitMap.delete(ip);
+  }
+
+  const current = loginRateLimitMap.get(ip);
+  if (!current) {
+    loginRateLimitMap.set(ip, { count: 1, resetAt: now + LOGIN_RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+
+  if (current.count >= LOGIN_RATE_LIMIT_MAX) {
+    return false;
+  }
+
+  current.count += 1;
+  return true;
+}
+
 const loginSchema = z.object({
   email: z.string().email('유효한 이메일을 입력해주세요'),
   password: z.string().min(1, '비밀번호를 입력해주세요'),
 });
 
 export async function POST(request: NextRequest) {
+  // Rate limiting
+  const ip =
+    request.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+    request.headers.get('x-real-ip') ||
+    'unknown';
+
+  if (!checkLoginRateLimit(ip)) {
+    return NextResponse.json(
+      { error: '너무 많은 로그인 시도입니다. 15분 후 다시 시도해주세요' },
+      { status: 429 }
+    );
+  }
+
   try {
     const body = await request.json();
 

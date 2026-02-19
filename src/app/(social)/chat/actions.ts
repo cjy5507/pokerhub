@@ -37,6 +37,13 @@ export interface ChatMessageData {
   createdAt: string;
 }
 
+// ==================== VALIDATION HELPERS ====================
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function isValidUUID(id: string): boolean {
+  return UUID_REGEX.test(id);
+}
+
 // ==================== HELPER FUNCTIONS ====================
 
 async function requireAuth() {
@@ -143,6 +150,9 @@ export async function getChatRooms() {
  */
 export async function getChatRoom(roomId: string) {
   if (!db) return { success: false, room: null, error: 'Database not available' };
+  if (!roomId || !isValidUUID(roomId)) {
+    return { success: false, room: null, error: '유효하지 않은 채팅방입니다' };
+  }
   try {
     const roomResult = await db
       .select()
@@ -211,6 +221,9 @@ export async function getChatRoom(roomId: string) {
  */
 export async function getChatMessages(roomId: string, cursor?: string) {
   if (!db) return { success: false, messages: [], hasMore: false, error: 'Database not available' };
+  if (!roomId || !isValidUUID(roomId)) {
+    return { success: false, messages: [], hasMore: false, error: '유효하지 않은 채팅방입니다' };
+  }
   try {
     const pageSize = 20;
 
@@ -281,6 +294,11 @@ export async function sendChatMessage(roomId: string, content: string) {
   try {
     const session = await requireAuth();
 
+    // Validate roomId format (UUID)
+    if (!roomId || !isValidUUID(roomId)) {
+      return { success: false, error: '유효하지 않은 채팅방입니다' };
+    }
+
     if (!content || content.trim().length === 0) {
       return { success: false, error: '메시지 내용을 입력해주세요' };
     }
@@ -298,6 +316,21 @@ export async function sendChatMessage(roomId: string, content: string) {
 
     if (roomResult.length === 0) {
       return { success: false, error: '채팅방을 찾을 수 없습니다' };
+    }
+
+    const room = roomResult[0];
+
+    // C1: Enforce minLevel access control
+    if (room.minLevel > 0) {
+      const [sender] = await db
+        .select({ level: users.level })
+        .from(users)
+        .where(eq(users.id, session.userId))
+        .limit(1);
+
+      if (!sender || sender.level < room.minLevel) {
+        return { success: false, error: `이 채팅방은 레벨 ${room.minLevel} 이상만 참여할 수 있습니다` };
+      }
     }
 
     // Insert message
@@ -341,7 +374,7 @@ export async function sendChatMessage(roomId: string, content: string) {
     return { success: true, message: newMessage };
   } catch (error) {
     console.error('Send chat message error:', error);
-    if (error instanceof Error) {
+    if (error instanceof Error && error.message === '로그인이 필요합니다') {
       return { success: false, error: error.message };
     }
     return { success: false, error: '메시지 전송 중 오류가 발생했습니다' };

@@ -3,11 +3,16 @@
 import { revalidatePath } from 'next/cache';
 import { db } from '@/lib/db';
 import { users, userFollows, userBlocks, userSettings } from '@/lib/db/schema';
-import { getSession } from '@/lib/auth/session';
+import { getSession, getSessionVerified } from '@/lib/auth/session';
 import { eq, and, sql, count, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import { hashPassword, verifyPassword } from '@/lib/auth/password';
 import { createSession } from '@/lib/auth/session';
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function isValidUUID(id: string): boolean {
+  return UUID_REGEX.test(id);
+}
 
 /**
  * Toggle follow/unfollow a user
@@ -22,6 +27,10 @@ export async function toggleFollow(targetUserId: string): Promise<{
     const session = await getSession();
     if (!session) {
       return { success: false, isFollowing: false, error: '로그인이 필요합니다' };
+    }
+
+    if (!targetUserId || !isValidUUID(targetUserId)) {
+      return { success: false, isFollowing: false, error: '유효하지 않은 사용자입니다' };
     }
 
     if (session.userId === targetUserId) {
@@ -81,6 +90,10 @@ export async function toggleBlock(targetUserId: string): Promise<{
     const session = await getSession();
     if (!session) {
       return { success: false, isBlocked: false, error: '로그인이 필요합니다' };
+    }
+
+    if (!targetUserId || !isValidUUID(targetUserId)) {
+      return { success: false, isBlocked: false, error: '유효하지 않은 사용자입니다' };
     }
 
     if (session.userId === targetUserId) {
@@ -318,6 +331,9 @@ export async function getFollowers(userId: string, page = 1): Promise<{
   error?: string;
 }> {
   if (!db) return { success: false, error: 'Database not available' };
+  if (!userId || !isValidUUID(userId)) {
+    return { success: false, error: '유효하지 않은 사용자입니다' };
+  }
   try {
     const session = await getSession();
     const pageSize = 20;
@@ -393,6 +409,9 @@ export async function getFollowing(userId: string, page = 1): Promise<{
   error?: string;
 }> {
   if (!db) return { success: false, error: 'Database not available' };
+  if (!userId || !isValidUUID(userId)) {
+    return { success: false, error: '유효하지 않은 사용자입니다' };
+  }
   try {
     const pageSize = 20;
     const offset = (page - 1) * pageSize;
@@ -440,7 +459,7 @@ export async function changePassword(
 }> {
   if (!db) return { success: false, error: 'Database not available' };
   try {
-    const session = await getSession();
+    const session = await getSessionVerified();
     if (!session) {
       return { success: false, error: '로그인이 필요합니다' };
     }
@@ -502,5 +521,55 @@ export async function changePassword(
   } catch (error) {
     console.error('Error changing password:', error);
     return { success: false, error: '비밀번호 변경 중 오류가 발생했습니다' };
+  }
+}
+
+/**
+ * Delete user account permanently
+ */
+export async function deleteAccount(
+  password: string
+): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  if (!db) return { success: false, error: 'Database not available' };
+  try {
+    const session = await getSessionVerified();
+    if (!session) {
+      return { success: false, error: '로그인이 필요합니다' };
+    }
+
+    if (!password || password.length === 0) {
+      return { success: false, error: '비밀번호를 입력해주세요' };
+    }
+
+    // Get user to verify password
+    const [user] = await db
+      .select({ passwordHash: users.passwordHash })
+      .from(users)
+      .where(eq(users.id, session.userId))
+      .limit(1);
+
+    if (!user) {
+      return { success: false, error: '사용자를 찾을 수 없습니다' };
+    }
+
+    const isValid = await verifyPassword(password, user.passwordHash);
+    if (!isValid) {
+      return { success: false, error: '비밀번호가 올바르지 않습니다' };
+    }
+
+    // Delete user — DB cascades handle related records
+    await db.delete(users).where(eq(users.id, session.userId));
+
+    // Clear session
+    const { deleteSession } = await import('@/lib/auth/session');
+    await deleteSession();
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting account:', error);
+    return { success: false, error: '계정 삭제 중 오류가 발생했습니다' };
   }
 }

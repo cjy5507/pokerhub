@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Save, Loader2, ShoppingBag, Award, Type } from 'lucide-react';
-import { getUserSettings, updateUserSettings, updateProfile, changePassword } from '../actions';
+import { getUserSettings, updateUserSettings, updateProfile, changePassword, deleteAccount } from '../actions';
 import { getBadgeShop, purchaseBadge, purchaseCustomTitle } from './actions';
 import type { BadgeShopItem } from './actions';
 
@@ -53,6 +53,7 @@ export default function SettingsClient() {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [deletePassword, setDeletePassword] = useState('');
 
   // Shop state
   const [shopBadges, setShopBadges] = useState<BadgeShopItem[]>([]);
@@ -600,16 +601,42 @@ export default function SettingsClient() {
               <p className="text-sm text-op-text-secondary mb-4">
                 회원탈퇴 시 모든 데이터가 삭제되며 복구할 수 없습니다.
               </p>
-              <button
-                onClick={() => {
-                  if (confirm('정말로 회원탈퇴 하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
-                    setMessage({ type: 'error', text: '회원탈퇴 기능은 구현 예정입니다' });
-                  }
-                }}
-                className="bg-red-900/20 hover:bg-red-900/30 border border-red-700 text-red-400 font-medium px-6 py-2 rounded transition-colors"
-              >
-                회원탈퇴
-              </button>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-red-400">비밀번호 확인</label>
+                  <input
+                    type="password"
+                    value={deletePassword}
+                    onChange={(e) => setDeletePassword(e.target.value)}
+                    placeholder="현재 비밀번호를 입력하세요"
+                    className="w-full bg-op-bg border border-red-700/50 rounded px-4 py-2 text-op-text focus:border-red-500 outline-none"
+                  />
+                </div>
+                <button
+                  onClick={async () => {
+                    if (!deletePassword) {
+                      setMessage({ type: 'error', text: '비밀번호를 입력해주세요' });
+                      return;
+                    }
+                    if (!confirm('정말로 회원탈퇴 하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+                      return;
+                    }
+                    setLoading(true);
+                    setMessage(null);
+                    const result = await deleteAccount(deletePassword);
+                    setLoading(false);
+                    if (result.success) {
+                      router.push('/');
+                    } else {
+                      setMessage({ type: 'error', text: result.error || '오류가 발생했습니다' });
+                    }
+                  }}
+                  disabled={loading || !deletePassword}
+                  className="bg-red-900/20 hover:bg-red-900/30 border border-red-700 text-red-400 font-medium px-6 py-2 rounded transition-colors disabled:opacity-50"
+                >
+                  {loading ? '처리 중...' : '회원탈퇴'}
+                </button>
+              </div>
             </div>
           </div>
         )}

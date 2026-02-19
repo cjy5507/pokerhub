@@ -47,14 +47,14 @@ async function requireAuth() {
   return session;
 }
 
-async function awardXP(userId: string, amount: number, type: string, referenceId?: string) {
+async function awardXP(userId: string, amount: number, type: 'post' | 'comment' | 'like' | 'hand_share' | 'attendance' | 'mission' | 'admin_adjust', referenceId?: string) {
   if (!db) return;
   try {
     // Add XP transaction
     await db.insert(xpTransactions).values({
       userId,
       amount,
-      type: type as any,
+      type,
       referenceId,
     });
 
@@ -70,7 +70,7 @@ async function awardXP(userId: string, amount: number, type: string, referenceId
   }
 }
 
-async function awardPoints(userId: string, amount: number, type: string, referenceId?: string, description?: string) {
+async function awardPoints(userId: string, amount: number, type: 'earn_post' | 'earn_comment' | 'earn_like' | 'earn_attendance' | 'earn_mission' | 'earn_game' | 'earn_harvest' | 'spend_badge' | 'spend_custom_title' | 'spend_game' | 'admin_adjust', referenceId?: string, description?: string) {
   if (!db) return;
   try {
     await db.transaction(async (tx: any) => {
@@ -90,7 +90,7 @@ async function awardPoints(userId: string, amount: number, type: string, referen
         userId,
         amount,
         balanceAfter: updated.points,
-        type: type as any,
+        type,
         referenceId,
         description,
       });

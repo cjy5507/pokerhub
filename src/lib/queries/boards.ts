@@ -67,7 +67,7 @@ export async function getPosts(input: GetPostsInput & { userId?: string }) {
         );
         break;
       case 'author':
-        // Need to join users table for author search
+        conditions.push(ilike(users.nickname, `%${search}%`));
         break;
     }
   }

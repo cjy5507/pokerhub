@@ -7,6 +7,9 @@ import { createSession } from '@/lib/auth/session';
 import { eq } from 'drizzle-orm';
 
 // --- In-memory rate limiter: 5 registrations per IP per 15 minutes ---
+// NOTE: On Vercel serverless, this Map resets per cold start. For production-grade
+// rate limiting, migrate to Vercel KV or Upstash Redis. The in-memory approach
+// still provides protection within a warm container instance.
 interface RateLimitEntry {
   count: number;
   resetAt: number;

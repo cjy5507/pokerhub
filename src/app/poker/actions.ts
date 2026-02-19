@@ -272,10 +272,10 @@ export async function getTableState(tableId: string): Promise<GameState | null> 
     communityCards: currentHand?.communityCards || [],
     pot: currentHand?.potTotal || 0,
     sidePots: [],
-    currentSeat: currentHand?.currentSeat || null,
-    currentBet: currentHand?.currentBet || 0,
-    minRaise: currentHand?.minRaise || t.bigBlind,
-    dealerSeat: currentHand?.dealerSeat || 0,
+    currentSeat: currentHand?.currentSeat ?? null,
+    currentBet: currentHand?.currentBet ?? 0,
+    minRaise: currentHand?.minRaise ?? t.bigBlind,
+    dealerSeat: currentHand?.dealerSeat ?? 0,
     seats,
     lastAction: null,
     actionClosedBySeat: null,
@@ -381,7 +381,6 @@ export async function joinTable(tableId: string, seatNumber: number, buyIn: numb
   // Start hand AFTER transaction commits so the new seat is visible
   if (shouldStartHand) {
     await startHand(tableId);
-    await broadcastTableUpdate(tableId, 'hand_start');
   } else {
     await broadcastTableUpdate(tableId, 'player_join');
   }
@@ -634,10 +633,6 @@ export async function performAction(tableId: string, action: PlayerAction, amoun
     if (!result.success) {
       throw new Error(result.error || 'Action failed');
     }
-
-    // Broadcast based on whether the hand completed
-    const event = result.events?.includes('hand_complete') ? 'hand_complete' : 'action';
-    await broadcastTableUpdate(tableId, event);
 
     return { success: true, action, amount };
   } catch (error) {

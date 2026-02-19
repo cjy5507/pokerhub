@@ -4,6 +4,7 @@ import { pokerTables, pokerGameHands, pokerTableSeats } from '@/lib/db/schema';
 import { eq, and, sql } from 'drizzle-orm';
 import { processAction, startNewHand } from '@/lib/poker/gameLoop';
 import { broadcastTableUpdate } from '@/lib/poker/broadcast';
+import { getSession } from '@/lib/auth/session';
 
 const TURN_TIMEOUT_SECONDS = 30;
 const WATCHDOG_INTERVAL = 3000;
@@ -19,6 +20,14 @@ export async function GET(
   { params }: { params: Promise<{ tableId: string }> }
 ) {
   const { tableId } = await params;
+
+  const session = await getSession();
+  if (!session) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
 
   const encoder = new TextEncoder();
   let isProcessingTimeout = false;
@@ -211,7 +220,7 @@ export async function GET(
         stopped = true;
         if (watchdogTimer) clearTimeout(watchdogTimer);
         if (keepaliveTimer) clearInterval(keepaliveTimer);
-        controller.close();
+        try { controller.close(); } catch { /* already closed */ }
       });
     },
   });

@@ -80,19 +80,53 @@ export async function createHand(formData: FormData) {
   const heroPosition = formData.get('heroPosition') as Position;
   // Parse card arrays from JSON (share/page.tsx sends JSON arrays)
   const heroCardsJson = formData.get('heroCards') as string;
-  const heroCardsParsed: Card[] = heroCardsJson ? JSON.parse(heroCardsJson) : [];
-  const heroCardsStr = heroCardsParsed.join(' ');
-
   const boardFlopJson = formData.get('boardFlop') as string | null;
-  const boardFlopCards: Card[] = boardFlopJson ? JSON.parse(boardFlopJson) : [];
-  const boardFlopStr = boardFlopCards.length > 0 ? boardFlopCards.join(' ') : null;
-
   const boardTurnJson = formData.get('boardTurn') as string | null;
-  const boardTurnCards: Card[] = boardTurnJson ? JSON.parse(boardTurnJson) : [];
-  const boardTurnStr = boardTurnCards.length > 0 ? boardTurnCards[0] : null;
-
   const boardRiverJson = formData.get('boardRiver') as string | null;
-  const boardRiverCards: Card[] = boardRiverJson ? JSON.parse(boardRiverJson) : [];
+  const preflopActionsJson = formData.get('preflopActions') as string;
+  const flopActionsJson = formData.get('flopActions') as string;
+  const turnActionsJson = formData.get('turnActions') as string;
+  const riverActionsJson = formData.get('riverActions') as string;
+  const playersJson = formData.get('players') as string;
+  const actionsJson = formData.get('actions') as string;
+
+  let heroCardsParsed: Card[];
+  let boardFlopCards: Card[];
+  let boardTurnCards: Card[];
+  let boardRiverCards: Card[];
+  let players: any[];
+  let actions: any[];
+  const allStreetActions: any[] = [];
+
+  try {
+    heroCardsParsed = heroCardsJson ? JSON.parse(heroCardsJson) : [];
+    boardFlopCards = boardFlopJson ? JSON.parse(boardFlopJson) : [];
+    boardTurnCards = boardTurnJson ? JSON.parse(boardTurnJson) : [];
+    boardRiverCards = boardRiverJson ? JSON.parse(boardRiverJson) : [];
+
+    let seq = 1;
+    for (const [json, street] of [
+      [preflopActionsJson, 'preflop'],
+      [flopActionsJson, 'flop'],
+      [turnActionsJson, 'turn'],
+      [riverActionsJson, 'river'],
+    ] as const) {
+      if (json) {
+        for (const a of JSON.parse(json)) {
+          allStreetActions.push({ ...a, street, sequence: a.sequence ?? seq++ });
+        }
+      }
+    }
+
+    players = playersJson ? JSON.parse(playersJson) : [];
+    actions = actionsJson ? JSON.parse(actionsJson) : allStreetActions;
+  } catch {
+    return { success: false, error: '잘못된 데이터 형식입니다' };
+  }
+
+  const heroCardsStr = heroCardsParsed.join(' ');
+  const boardFlopStr = boardFlopCards.length > 0 ? boardFlopCards.join(' ') : null;
+  const boardTurnStr = boardTurnCards.length > 0 ? boardTurnCards[0] : null;
   const boardRiverStr = boardRiverCards.length > 0 ? boardRiverCards[0] : null;
 
   const potPreflop = formData.get('potPreflop') ? parseInt(formData.get('potPreflop') as string) : null;
@@ -103,33 +137,6 @@ export async function createHand(formData: FormData) {
   // Accept both 'notes' (share page) and 'analysisNotes' keys
   const analysisNotes = (formData.get('notes') || formData.get('analysisNotes')) as string | null;
   const rawText = formData.get('rawText') as string | null;
-
-  // Build players/actions from per-street action keys
-  const preflopActionsJson = formData.get('preflopActions') as string;
-  const flopActionsJson = formData.get('flopActions') as string;
-  const turnActionsJson = formData.get('turnActions') as string;
-  const riverActionsJson = formData.get('riverActions') as string;
-
-  const playersJson = formData.get('players') as string;
-  const actionsJson = formData.get('actions') as string;
-
-  const allStreetActions: any[] = [];
-  let seq = 1;
-  for (const [json, street] of [
-    [preflopActionsJson, 'preflop'],
-    [flopActionsJson, 'flop'],
-    [turnActionsJson, 'turn'],
-    [riverActionsJson, 'river'],
-  ] as const) {
-    if (json) {
-      for (const a of JSON.parse(json)) {
-        allStreetActions.push({ ...a, street, sequence: a.sequence ?? seq++ });
-      }
-    }
-  }
-
-  const players = playersJson ? JSON.parse(playersJson) : [];
-  const actions = actionsJson ? JSON.parse(actionsJson) : allStreetActions;
 
   const handId = await db.transaction(async (tx: any) => {
     // Insert poker hand
@@ -379,20 +386,35 @@ export async function createHandComment(handId: string, street: string, content:
     throw new Error('Unauthorized');
   }
 
-  const [comment] = await db.insert(pokerHandComments).values({
-    handId,
-    authorId: session.userId,
-    street: street as Street,
-    content,
-  }).returning({ id: pokerHandComments.id });
+  // Validate street
+  const validStreets = ['preflop', 'flop', 'turn', 'river'];
+  if (!validStreets.includes(street)) {
+    return { success: false, error: '유효하지 않은 스트리트입니다' };
+  }
 
-  // Update comment count
-  await db
-    .update(pokerHands)
-    .set({ commentCount: sql`${pokerHands.commentCount} + 1` })
-    .where(eq(pokerHands.id, handId));
+  // Validate content
+  const trimmedContent = content.trim();
+  if (!trimmedContent) {
+    return { success: false, error: '댓글 내용을 입력해주세요' };
+  }
+  if (trimmedContent.length > 2000) {
+    return { success: false, error: '댓글은 2000자 이내로 입력해주세요' };
+  }
 
-  return { success: true, commentId: comment.id };
+  const commentId = await db.transaction(async (tx: any) => {
+    const [comment] = await tx.insert(pokerHandComments).values({
+      handId,
+      authorId: session.userId,
+      street: street as Street,
+      content: trimmedContent,
+    }).returning({ id: pokerHandComments.id });
+    await tx.update(pokerHands)
+      .set({ commentCount: sql`${pokerHands.commentCount} + 1` })
+      .where(eq(pokerHands.id, handId));
+    return comment.id;
+  });
+
+  return { success: true, commentId };
 }
 
 export async function getHandComments(handId: string) {

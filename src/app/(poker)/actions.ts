@@ -113,12 +113,20 @@ export async function createHand(formData: FormData) {
   const playersJson = formData.get('players') as string;
   const actionsJson = formData.get('actions') as string;
 
-  const allStreetActions = [
-    ...(preflopActionsJson ? JSON.parse(preflopActionsJson).map((a: any) => ({ ...a, street: 'preflop' })) : []),
-    ...(flopActionsJson ? JSON.parse(flopActionsJson).map((a: any) => ({ ...a, street: 'flop' })) : []),
-    ...(turnActionsJson ? JSON.parse(turnActionsJson).map((a: any) => ({ ...a, street: 'turn' })) : []),
-    ...(riverActionsJson ? JSON.parse(riverActionsJson).map((a: any) => ({ ...a, street: 'river' })) : []),
-  ];
+  const allStreetActions: any[] = [];
+  let seq = 1;
+  for (const [json, street] of [
+    [preflopActionsJson, 'preflop'],
+    [flopActionsJson, 'flop'],
+    [turnActionsJson, 'turn'],
+    [riverActionsJson, 'river'],
+  ] as const) {
+    if (json) {
+      for (const a of JSON.parse(json)) {
+        allStreetActions.push({ ...a, street, sequence: a.sequence ?? seq++ });
+      }
+    }
+  }
 
   const players = playersJson ? JSON.parse(playersJson) : [];
   const actions = actionsJson ? JSON.parse(actionsJson) : allStreetActions;

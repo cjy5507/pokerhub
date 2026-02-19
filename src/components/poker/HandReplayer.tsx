@@ -362,12 +362,14 @@ export function HandReplayer({
                     {normalPos}
                   </div>
                   {/* Stack size */}
-                  <div
-                    className="px-1.5 py-0.5 rounded text-[8px] font-semibold text-white/80 whitespace-nowrap"
-                    style={{ background: 'rgba(0,0,0,0.55)' }}
-                  >
-                    {player.stackSize.toLocaleString()}
-                  </div>
+                  {player.stackSize > 0 && (
+                    <div
+                      className="px-1.5 py-0.5 rounded text-[8px] font-semibold text-white/80 whitespace-nowrap"
+                      style={{ background: 'rgba(0,0,0,0.55)' }}
+                    >
+                      {player.stackSize.toLocaleString()}
+                    </div>
+                  )}
                 </div>
               </div>
             );

@@ -30,7 +30,7 @@ function mapPositionFromDb(dbPosition: string): Position {
   const upperPosition = dbPosition.toUpperCase();
   if (upperPosition === 'UTG1') return 'UTG+1';
   if (upperPosition === 'UTG2') return 'UTG+2';
-  if (upperPosition === 'MP1') return 'MP';
+  if (upperPosition === 'MP1') return 'HJ';
   if (upperPosition === 'MP2') return 'MP';
   return upperPosition as Position;
 }
@@ -120,6 +120,24 @@ export async function createHand(formData: FormData) {
 
     players = playersJson ? JSON.parse(playersJson) : [];
     actions = actionsJson ? JSON.parse(actionsJson) : allStreetActions;
+
+    // Auto-generate player entries from actions when none explicitly provided
+    if (players.length === 0 && (actions.length > 0 || allStreetActions.length > 0)) {
+      const actionList = actions.length > 0 ? actions : allStreetActions;
+      const uniquePositions = new Set<string>();
+      for (const a of actionList) {
+        uniquePositions.add(a.position);
+      }
+      if (heroPosition) {
+        uniquePositions.add(heroPosition);
+      }
+      players = Array.from(uniquePositions).map(pos => ({
+        position: pos,
+        stackSize: 0,
+        cards: pos === heroPosition ? heroCardsParsed : null,
+        isHero: pos === heroPosition,
+      }));
+    }
   } catch {
     return { success: false, error: '잘못된 데이터 형식입니다' };
   }

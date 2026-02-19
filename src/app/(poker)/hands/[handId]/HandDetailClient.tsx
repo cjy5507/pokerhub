@@ -58,11 +58,30 @@ function buildStreetData(hand: PokerHand): StreetData[] {
 // ─── Build HandReplayer data ──────────────────────────────────────
 
 function buildReplayerPlayers(hand: PokerHand) {
-  return (hand.players ?? []).map(p => ({
-    position: p.position,
-    stackSize: p.stackSize,
-    cards: p.cards?.join(' '),
-    isHero: p.isHero,
+  if (hand.players && hand.players.length > 0) {
+    return hand.players.map(p => ({
+      position: p.position,
+      stackSize: p.stackSize,
+      cards: p.cards?.join(' '),
+      isHero: p.isHero,
+    }));
+  }
+
+  // Fallback: auto-generate players from actions when no player data exists
+  // This handles hands shared via the wizard which doesn't collect player data
+  const positions = new Set<string>();
+  for (const a of (hand.actions ?? [])) {
+    positions.add(a.position);
+  }
+  if (hand.heroPosition) {
+    positions.add(hand.heroPosition);
+  }
+
+  return Array.from(positions).map(pos => ({
+    position: pos,
+    stackSize: 0,
+    cards: pos === hand.heroPosition ? hand.heroCards?.join(' ') : undefined,
+    isHero: pos === hand.heroPosition,
   }));
 }
 

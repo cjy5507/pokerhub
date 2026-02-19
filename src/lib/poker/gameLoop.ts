@@ -7,7 +7,7 @@ import {
   pokerGameResults,
   users,
 } from '@/lib/db/schema';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, sql } from 'drizzle-orm';
 import { broadcastTableUpdate } from './broadcast';
 import { PokerEngine } from './engine';
 import { Deck } from './deck';
@@ -555,6 +555,31 @@ export async function processAction(
     if (result.success) {
       const event = result.events?.includes('hand_complete') ? 'hand_complete' : 'action';
       await broadcastTableUpdate(tableId, event);
+
+      // Auto-start next hand after completion
+      if (result.events?.includes('hand_complete')) {
+        setTimeout(async () => {
+          try {
+            const activePlayerCount = await db
+              .select({ count: sql`count(*)::int` })
+              .from(pokerTableSeats)
+              .where(
+                and(
+                  eq(pokerTableSeats.tableId, tableId),
+                  eq(pokerTableSeats.isActive, true),
+                  eq(pokerTableSeats.isSittingOut, false)
+                )
+              )
+              .then((rows: any) => rows[0]?.count ?? 0);
+
+            if (activePlayerCount >= 2) {
+              await startNewHand(tableId);
+            }
+          } catch (err) {
+            console.error('Auto-start next hand error:', err);
+          }
+        }, 3000); // 3 second delay between hands
+      }
     }
 
     return result;

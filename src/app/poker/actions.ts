@@ -260,6 +260,68 @@ export async function getTableState(tableId: string): Promise<GameState | null> 
     }
   }
 
+  // Auto-fold timeout check (runs on each state fetch)
+  if (currentHand && currentHand.currentSeat !== null && currentHand.turnStartedAt) {
+    const elapsed = (Date.now() - new Date(currentHand.turnStartedAt).getTime()) / 1000;
+    if (elapsed >= 30) {
+      // Use advisory lock to prevent concurrent auto-folds
+      try {
+        const lockResult = await db.execute(
+          sql`SELECT pg_try_advisory_lock(hashtext(${currentHand.id}::text)) as locked`
+        );
+        const locked = (lockResult as any)?.[0]?.locked;
+        if (locked) {
+          try {
+            // Re-check after getting lock
+            const freshHand = await db
+              .select()
+              .from(pokerGameHands)
+              .where(eq(pokerGameHands.id, currentHand.id))
+              .limit(1)
+              .then((rows: any) => rows[0] ?? null);
+
+            if (freshHand && freshHand.status !== 'complete' && freshHand.currentSeat === currentHand.currentSeat) {
+              const [timedOutSeat] = await db
+                .select({ userId: pokerTableSeats.userId })
+                .from(pokerTableSeats)
+                .where(
+                  and(
+                    eq(pokerTableSeats.tableId, tableId),
+                    eq(pokerTableSeats.seatNumber, freshHand.currentSeat)
+                  )
+                )
+                .limit(1);
+
+              if (timedOutSeat) {
+                await processGameAction(tableId, timedOutSeat.userId, 'fold');
+              }
+            }
+          } finally {
+            await db.execute(
+              sql`SELECT pg_advisory_unlock(hashtext(${currentHand.id}::text))`
+            );
+          }
+        }
+      } catch (err) {
+        console.error('Auto-fold timeout error:', err);
+      }
+
+      // Re-fetch current hand after potential auto-fold so returned state is fresh
+      if (t.currentHandId) {
+        const refreshedHandData = await db
+          .select()
+          .from(pokerGameHands)
+          .where(eq(pokerGameHands.id, t.currentHandId))
+          .limit(1);
+        if (refreshedHandData.length > 0) {
+          currentHand = refreshedHandData[0];
+        } else {
+          currentHand = null;
+        }
+      }
+    }
+  }
+
   return {
     tableId: t.id,
     tableName: t.name,

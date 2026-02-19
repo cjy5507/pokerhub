@@ -451,7 +451,12 @@ export async function deleteHand(handId: string) {
   if (!hand) return { success: false, error: '핸드를 찾을 수 없습니다' };
   if (hand.authorId !== session.userId) throw new Error('권한이 없습니다');
 
-  await db.delete(pokerHands).where(eq(pokerHands.id, handId));
+  await db.transaction(async (tx: any) => {
+    await tx.delete(pokerHandComments).where(eq(pokerHandComments.handId, handId));
+    await tx.delete(pokerHandActions).where(eq(pokerHandActions.handId, handId));
+    await tx.delete(pokerHandPlayers).where(eq(pokerHandPlayers.handId, handId));
+    await tx.delete(pokerHands).where(eq(pokerHands.id, handId));
+  });
   return { success: true };
 }
 
@@ -554,9 +559,15 @@ export async function convertGameHandToHistory(
   // Find hero seat number: first from current seats, fallback to results matching stack
   const heroSeatNumber: number | null = userSeat?.seatNumber ?? null;
 
-  // If user no longer at table, we can't verify — still allow if they were recently there
-  // We'll allow conversion if the hand exists and user is logged in
-  // (In production you'd cross-reference a hand_participants snapshot table)
+  // Verify the user was actually a participant in this hand via game results
+  const isParticipant = gameResults.some((r: any) => {
+    const seat = tableSeats.find((s: any) => s.seatNumber === r.seatNumber);
+    return seat?.userId === session.userId;
+  });
+
+  if (!isParticipant) {
+    return { success: false, error: '이 핸드의 참가자가 아닙니다' };
+  }
 
   // 4. Fetch game actions
   const gameActions = await db

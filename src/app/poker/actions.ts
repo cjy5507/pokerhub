@@ -588,11 +588,62 @@ export async function leaveTable(tableId: string) {
 
     if (remainingSeats.length < 2) {
       // 현재 핸드가 있으면 완료 처리 (orphan 방지)
+      // Re-fetch the table to check whether the hand was already completed
+      // by the earlier "current actor leaving" block above.
       const [currentTable] = await tx.select().from(pokerTables).where(eq(pokerTables.id, tableId)).limit(1);
       if (currentTable.currentHandId) {
-        await tx.update(pokerGameHands)
-          .set({ status: 'complete', completedAt: new Date(), currentSeat: null })
-          .where(eq(pokerGameHands.id, currentTable.currentHandId));
+        // Fetch the hand to get potTotal and verify it isn't already complete
+        const [activeHand] = await tx
+          .select()
+          .from(pokerGameHands)
+          .where(eq(pokerGameHands.id, currentTable.currentHandId))
+          .limit(1);
+
+        if (activeHand && activeHand.status !== 'complete') {
+          // Award the pot to the sole remaining player (if any)
+          if (remainingSeats.length === 1) {
+            const winner = remainingSeats[0];
+            await tx
+              .update(pokerTableSeats)
+              .set({ chipStack: sql`chip_stack + ${activeHand.potTotal}` })
+              .where(
+                and(
+                  eq(pokerTableSeats.tableId, tableId),
+                  eq(pokerTableSeats.seatNumber, winner.seatNumber)
+                )
+              );
+            // Calculate the winner's total contribution to the pot
+            const winnerBetActions = await tx
+              .select({ amount: pokerGameActions.amount })
+              .from(pokerGameActions)
+              .where(
+                and(
+                  eq(pokerGameActions.handId, activeHand.id),
+                  eq(pokerGameActions.seatNumber, winner.seatNumber),
+                  sql`${pokerGameActions.actionType} != 'fold'`
+                )
+              );
+            const winnerTotalBet = winnerBetActions.reduce((sum: number, a: any) => sum + a.amount, 0);
+            // Update game results for the winner (record exists from hand start)
+            await tx
+              .update(pokerGameResults)
+              .set({
+                chipChange: activeHand.potTotal - winnerTotalBet,
+                isWinner: true,
+              })
+              .where(
+                and(
+                  eq(pokerGameResults.handId, activeHand.id),
+                  eq(pokerGameResults.seatNumber, winner.seatNumber)
+                )
+              );
+          }
+          // Mark the hand as complete
+          await tx
+            .update(pokerGameHands)
+            .set({ status: 'complete', completedAt: new Date(), currentSeat: null })
+            .where(eq(pokerGameHands.id, activeHand.id));
+        }
       }
       await tx
         .update(pokerTables)

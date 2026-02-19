@@ -303,9 +303,11 @@ export default function ShareHandPage() {
     formData.append('tags', JSON.stringify(selectedTags));
 
     try {
-      const result = await createHand(formData);
-      if (result.success) {
-        router.push(`/hands/${result.handId}`);
+      const createResult = await createHand(formData);
+      if (createResult.success) {
+        router.push(`/hands/${createResult.handId}`);
+      } else {
+        alert(createResult.error || '핸드 저장에 실패했습니다.');
       }
     } catch (error) {
       console.error('Failed to create hand:', error);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import {
   TrendingUp,
@@ -66,6 +66,14 @@ export default function RoulettePage() {
   const [showResult, setShowResult] = useState(false);
   const [winningSegmentIndex, setWinningSegmentIndex] = useState<number | null>(null);
 
+  const spinTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  useEffect(() => () => {
+    if (spinTimerRef.current) clearTimeout(spinTimerRef.current);
+    if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+  }, []);
+
   const refreshBalance = useCallback(async () => {
     const result = await getUserPoints();
     if (result.success && result.points !== undefined) {
@@ -110,7 +118,7 @@ export default function RoulettePage() {
       setSpinDegree(finalRotation);
 
       // After spin animation completes
-      setTimeout(async () => {
+      spinTimerRef.current = setTimeout(async () => {
         setIsSpinning(false);
         setResult({ multiplier, winAmount });
         setShowResult(true);
@@ -138,7 +146,7 @@ export default function RoulettePage() {
         }));
 
         // Clear winning segment highlight after 2 seconds
-        setTimeout(() => setWinningSegmentIndex(null), 2000);
+        highlightTimerRef.current = setTimeout(() => setWinningSegmentIndex(null), 2000);
       }, 4000);
     } catch {
       alert('룰렛 실행에 실패했습니다. 다시 시도해주세요.');

@@ -515,6 +515,7 @@ export const cooldownRewards = pgTable('cooldown_rewards', {
 }, (table) => ({
   userIdIdx: index('cooldown_rewards_user_id_idx').on(table.userId),
   claimedAtIdx: index('cooldown_rewards_claimed_at_idx').on(table.claimedAt),
+  userClaimedAtIdx: index('idx_cooldown_rewards_user_claimed').on(table.userId, table.claimedAt),
 }));
 
 // Lottery ticket purchases and results

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Ticket, Star, Crown, Zap, Trophy, X, TrendingUp, Gift } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { buyLotteryTicket, getUserPoints } from '../actions';
@@ -43,6 +43,12 @@ export default function LotteryPage() {
   const [todayCount, setTodayCount] = useState(0);
   const [history, setHistory] = useState<LotteryTicket[]>([]);
   const [isPurchasing, setIsPurchasing] = useState(false);
+
+  const flipTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  useEffect(() => () => {
+    if (flipTimerRef.current) clearTimeout(flipTimerRef.current);
+  }, []);
 
   const refreshBalance = useCallback(async () => {
     const result = await getUserPoints();
@@ -99,7 +105,7 @@ export default function LotteryPage() {
     setIsFlipping(true);
 
     // Card flip animation duration
-    setTimeout(() => {
+    flipTimerRef.current = setTimeout(() => {
       setIsFlipping(false);
       setIsRevealed(true);
 

@@ -21,6 +21,20 @@ const adminRoutes = ['/admin'];
 // Define auth routes (redirect if already logged in)
 const authRoutes = ['/login', '/register'];
 
+const CSP_HEADER =
+  "default-src 'self'; " +
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
+  "style-src 'self' 'unsafe-inline'; " +
+  "img-src 'self' data: blob: https:; " +
+  "font-src 'self' data:; " +
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co; " +
+  "frame-ancestors 'none';";
+
+function withCsp(response: NextResponse): NextResponse {
+  response.headers.set('Content-Security-Policy', CSP_HEADER);
+  return response;
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -42,17 +56,17 @@ export async function middleware(request: NextRequest) {
   if (isProtected && !session) {
     const url = new URL('/login', request.url);
     url.searchParams.set('redirect', pathname);
-    return NextResponse.redirect(url);
+    return withCsp(NextResponse.redirect(url));
   }
 
   // Redirect to home if admin route and not admin
   if (isAdminRoute && (!session || session.role !== 'admin')) {
-    return NextResponse.redirect(new URL('/', request.url));
+    return withCsp(NextResponse.redirect(new URL('/', request.url)));
   }
 
   // Redirect to home if already logged in and trying to access auth routes
   if (isAuthRoute && session) {
-    return NextResponse.redirect(new URL('/', request.url));
+    return withCsp(NextResponse.redirect(new URL('/', request.url)));
   }
 
   // Add user to request headers for server components
@@ -63,14 +77,14 @@ export async function middleware(request: NextRequest) {
     requestHeaders.set('x-user-nickname', encodeURIComponent(session.nickname));
     requestHeaders.set('x-user-role', session.role);
 
-    return NextResponse.next({
+    return withCsp(NextResponse.next({
       request: {
         headers: requestHeaders,
       },
-    });
+    }));
   }
 
-  return NextResponse.next();
+  return withCsp(NextResponse.next());
 }
 
 export const config = {

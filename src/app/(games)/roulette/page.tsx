@@ -65,6 +65,7 @@ export default function RoulettePage() {
   });
   const [showResult, setShowResult] = useState(false);
   const [winningSegmentIndex, setWinningSegmentIndex] = useState<number | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const spinTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const highlightTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -98,10 +99,11 @@ export default function RoulettePage() {
       const serverResult = await spinRoulette(betAmount);
 
       if (!serverResult.success) {
-        alert(serverResult.error || '룰렛 실행에 실패했습니다');
+        setErrorMessage(serverResult.error || '룰렛 실행에 실패했습니다');
         setIsSpinning(false);
         return;
       }
+      setErrorMessage(null);
 
       const multiplier = serverResult.multiplier!;
       const winAmount = serverResult.winAmount!;
@@ -149,7 +151,7 @@ export default function RoulettePage() {
         highlightTimerRef.current = setTimeout(() => setWinningSegmentIndex(null), 2000);
       }, 4000);
     } catch {
-      alert('룰렛 실행에 실패했습니다. 다시 시도해주세요.');
+      setErrorMessage('룰렛 실행에 실패했습니다. 다시 시도해주세요.');
       setIsSpinning(false);
     }
   };
@@ -303,6 +305,10 @@ export default function RoulettePage() {
                 </button>
               ))}
             </div>
+
+            {errorMessage && (
+              <p className="mb-3 text-sm text-red-400 text-center">{errorMessage}</p>
+            )}
 
             {/* Spin Button */}
             <button

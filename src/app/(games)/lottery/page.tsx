@@ -38,6 +38,7 @@ export default function LotteryPage() {
   const [todayCount, setTodayCount] = useState(0);
   const [history, setHistory] = useState<LotteryTicket[]>([]);
   const [isPurchasing, setIsPurchasing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const flipTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
@@ -62,14 +63,15 @@ export default function LotteryPage() {
 
   const handleBuyTicket = async () => {
     if (userPoints < TICKET_COST) {
-      alert('포인트가 부족합니다!');
+      setErrorMessage('포인트가 부족합니다!');
       return;
     }
     if (todayCount >= DAILY_LIMIT) {
-      alert('오늘의 구매 한도를 초과했습니다!');
+      setErrorMessage('오늘의 구매 한도를 초과했습니다!');
       return;
     }
 
+    setErrorMessage(null);
     setIsPurchasing(true);
     try {
       const result = await buyLotteryTicket();
@@ -85,10 +87,10 @@ export default function LotteryPage() {
         setIsRevealed(false);
         setTodayCount(prev => prev + 1);
       } else {
-        alert(result.error || '복권 구매에 실패했습니다');
+        setErrorMessage(result.error || '복권 구매에 실패했습니다');
       }
     } catch {
-      alert('복권 구매에 실패했습니다. 다시 시도해주세요.');
+      setErrorMessage('복권 구매에 실패했습니다. 다시 시도해주세요.');
     } finally {
       setIsPurchasing(false);
     }
@@ -172,6 +174,9 @@ export default function LotteryPage() {
                   <p className="text-op-text-secondary">복권을 구매하세요</p>
                 </div>
               </div>
+              {errorMessage && (
+                <p className="mb-4 text-sm text-red-400 text-center">{errorMessage}</p>
+              )}
               <button
                 onClick={handleBuyTicket}
                 disabled={isPurchasing || userPoints < TICKET_COST || todayCount >= DAILY_LIMIT}

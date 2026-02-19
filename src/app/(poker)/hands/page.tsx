@@ -60,7 +60,7 @@ export default function HandsPage() {
   const hasActiveFilters = selectedPosition || selectedGameType || selectedResult || selectedTag;
 
   return (
-    <div className="min-h-screen bg-op-bg text-op-text">
+    <div className="min-h-screen bg-op-bg text-op-text pb-20 lg:pb-0">
       {/* Header */}
       <div className="sticky top-0 z-50 bg-op-surface border-b border-op-border">
         <div className="max-w-6xl mx-auto px-4 py-4">

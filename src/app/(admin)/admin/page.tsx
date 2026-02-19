@@ -1,4 +1,10 @@
+import type { Metadata } from 'next';
 import { getAdminDashboard } from './actions';
+
+export const metadata: Metadata = {
+  title: '관리자 | Open Poker',
+  description: '오픈포커 관리자 대시보드.',
+};
 import { Users, UserPlus, Activity, FileText } from 'lucide-react';
 
 export default async function AdminDashboardPage() {
@@ -12,7 +18,7 @@ export default async function AdminDashboardPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20 lg:pb-0">
       <h2 className="text-2xl font-bold text-op-gold">대시보드</h2>
 
       {/* Stat cards */}

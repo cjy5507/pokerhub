@@ -1,6 +1,12 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowLeft, User } from 'lucide-react';
 import { getFollowers } from '@/app/(user)/actions';
+
+export const metadata: Metadata = {
+  title: '팔로워 | Open Poker',
+  description: '이 사용자를 팔로우하는 오픈포커 회원 목록.',
+};
 import { FollowButton } from '@/components/user/FollowButton';
 
 export default async function FollowersPage({

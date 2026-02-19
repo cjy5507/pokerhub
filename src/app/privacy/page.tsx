@@ -1,3 +1,10 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: '개인정보처리방침 | Open Poker',
+  description: 'Open Poker 개인정보처리방침을 확인하세요.',
+};
+
 export default function PrivacyPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">

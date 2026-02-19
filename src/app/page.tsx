@@ -1,3 +1,10 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Open Poker - 포커 커뮤니티',
+  description: '포커 전략, 핸드 분석, 실시간 게임을 즐기는 포커 커뮤니티',
+};
+
 import { db } from '@/lib/db';
 import { posts, boards, users } from '@/lib/db/schema';
 import { eq, desc, and, gte, sql } from 'drizzle-orm';

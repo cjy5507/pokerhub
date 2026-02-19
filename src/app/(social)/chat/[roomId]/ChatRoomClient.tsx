@@ -21,6 +21,7 @@ export default function ChatRoomClient({ room, initialMessages }: ChatRoomClient
   const [input, setInput] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [sseRetry, setSseRetry] = useState(0);
+  const [sendError, setSendError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -74,13 +75,14 @@ export default function ChatRoomClient({ room, initialMessages }: ChatRoomClient
 
       if (result.success && result.message) {
         setMessages((prev) => [...prev, result.message!]);
+        setSendError(null);
       } else {
-        alert(result.error || '메시지 전송에 실패했습니다');
+        setSendError(result.error || '메시지 전송에 실패했습니다');
         setInput(content);
       }
     } catch (error) {
       console.error('Send message error:', error);
-      alert('메시지 전송 중 오류가 발생했습니다');
+      setSendError('메시지 전송 중 오류가 발생했습니다');
       setInput(content);
     } finally {
       setIsSending(false);
@@ -184,6 +186,9 @@ export default function ChatRoomClient({ room, initialMessages }: ChatRoomClient
 
       {/* Input Bar */}
       <div className="bg-op-surface border-t border-op-border px-4 py-3">
+        {sendError && (
+          <p className="text-sm text-red-400 text-center mb-2">{sendError}</p>
+        )}
         {session ? (
           <>
             <div className="flex items-end gap-2">

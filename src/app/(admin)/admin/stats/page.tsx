@@ -1,11 +1,17 @@
+import type { Metadata } from 'next';
 import { getAdminStats } from '../actions';
+
+export const metadata: Metadata = {
+  title: '통계 | Open Poker 관리자',
+  description: '오픈포커 사이트 통계 및 분석.',
+};
 import { TrendingUp, TrendingDown, Coins } from 'lucide-react';
 
 export default async function AdminStatsPage() {
   const data = await getAdminStats();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20 lg:pb-0">
       <h2 className="text-2xl font-bold text-op-gold">통계</h2>
 
       {/* Point economy */}

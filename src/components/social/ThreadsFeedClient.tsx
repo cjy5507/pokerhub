@@ -20,6 +20,7 @@ export function ThreadsFeedClient({
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const handleLoadMore = async () => {
     setIsLoading(true);
@@ -36,6 +37,7 @@ export function ThreadsFeedClient({
   };
 
   const handleDelete = async (threadId: string) => {
+    // TODO: Replace window.confirm with a custom dialog component for better UX
     if (!confirm('쓰레드를 삭제하시겠습니까?')) return;
 
     const result = await deleteThread(threadId);
@@ -43,7 +45,7 @@ export function ThreadsFeedClient({
     if (result.success) {
       setThreads((prev) => prev.filter((t) => t.id !== threadId));
     } else {
-      alert(result.error || '삭제에 실패했습니다');
+      setDeleteError(result.error || '삭제에 실패했습니다');
     }
   };
 
@@ -54,6 +56,9 @@ export function ThreadsFeedClient({
   return (
     <div className="space-y-4">
       {currentUserId && <ThreadCompose onThreadCreated={handleThreadCreated} />}
+      {deleteError && (
+        <p className="text-sm text-red-400 text-center">{deleteError}</p>
+      )}
 
       {threads.length === 0 ? (
         <div className="bg-op-surface border border-op-border rounded-lg py-16 text-center">

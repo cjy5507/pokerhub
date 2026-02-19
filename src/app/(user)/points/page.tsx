@@ -1,3 +1,10 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: '포인트 | Open Poker',
+  description: '내 포인트 잔액과 사용 내역을 확인하세요.',
+};
+
 import { getSession } from '@/lib/auth/session';
 import { redirect } from 'next/navigation';
 import { getPointHistory, getPointBalance } from '@/lib/gamification/points';

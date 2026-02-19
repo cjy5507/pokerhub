@@ -196,7 +196,7 @@ export function ProfileHeader({
           <div className="mt-2 sm:mt-3">
             <div className="flex items-center justify-between text-[11px] sm:text-sm text-muted-foreground mb-0.5">
               <span className="font-medium">Lv.{levelInfo.currentLevel}</span>
-              <span>{levelInfo.xpNeeded} XP to Lv.{levelInfo.nextLevel}</span>
+              <span>다음 레벨까지 {levelInfo.xpNeeded} XP</span>
             </div>
             <div className="h-1 sm:h-1.5 bg-surface rounded-full overflow-hidden">
               <div

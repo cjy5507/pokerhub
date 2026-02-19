@@ -1,4 +1,10 @@
+import type { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
+
+export const metadata: Metadata = {
+  title: '글쓰기 | Open Poker',
+  description: '오픈포커 커뮤니티에 게시글을 작성하세요.',
+};
 import { getSession } from '@/lib/auth/session';
 import { getBoard, getBoards } from '@/lib/queries/boards';
 import { PostEditor } from './PostEditor';

@@ -1,3 +1,10 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: '검색 | Open Poker',
+  description: 'Open Poker에서 게시글과 핸드를 검색하세요.',
+};
+
 import { Suspense } from 'react';
 import { Search as SearchIcon } from 'lucide-react';
 import Link from 'next/link';

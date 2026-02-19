@@ -1,3 +1,10 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: '랭킹 | Open Poker',
+  description: '포커 커뮤니티 랭킹을 확인하세요.',
+};
+
 import { db } from '@/lib/db';
 import { users, posts, pokerHands, postLikes } from '@/lib/db/schema';
 import { getSession } from '@/lib/auth/session';

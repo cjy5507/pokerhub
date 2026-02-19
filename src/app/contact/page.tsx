@@ -1,3 +1,10 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: '문의하기 | Open Poker',
+  description: 'Open Poker 팀에 문의사항을 남겨주세요.',
+};
+
 import { Mail } from 'lucide-react';
 
 export default function ContactPage() {

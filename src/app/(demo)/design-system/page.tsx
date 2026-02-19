@@ -1,3 +1,10 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: '디자인 시스템 | Open Poker',
+  description: '오픈포커 디자인 시스템 컴포넌트 모음.',
+};
+
 export const dynamic = 'force-dynamic';
 
 import { CardRenderer, InlineCards } from '@/components/poker/CardRenderer';

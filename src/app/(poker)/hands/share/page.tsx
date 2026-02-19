@@ -238,6 +238,7 @@ export default function ShareHandPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Step 1: Game info
   const [gameType, setGameType] = useState<GameType>('cash');
@@ -307,11 +308,11 @@ export default function ShareHandPage() {
       if (createResult.success) {
         router.push(`/hands/${createResult.handId}`);
       } else {
-        alert(createResult.error || '핸드 저장에 실패했습니다.');
+        setErrorMessage(createResult.error || '핸드 저장에 실패했습니다.');
       }
     } catch (error) {
       console.error('Failed to create hand:', error);
-      alert('핸드 저장에 실패했습니다.');
+      setErrorMessage('핸드 저장에 실패했습니다.');
     } finally {
       setIsSubmitting(false);
     }
@@ -332,7 +333,7 @@ export default function ShareHandPage() {
   ].join(' ');
 
   return (
-    <div className="min-h-screen bg-op-bg text-op-text">
+    <div className="min-h-screen bg-op-bg text-op-text pb-20 lg:pb-0">
       {/* Header */}
       <div className="sticky top-0 z-50 bg-op-surface border-b border-op-border">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
@@ -652,8 +653,11 @@ export default function ShareHandPage() {
             이전
           </button>
 
-          <div className="text-sm text-op-text-secondary">
-            {step} / 7
+          <div className="text-center">
+            <div className="text-sm text-op-text-secondary">{step} / 7</div>
+            {errorMessage && (
+              <p className="text-xs text-red-400 mt-1">{errorMessage}</p>
+            )}
           </div>
 
           {step < 7 ? (

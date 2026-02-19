@@ -1,3 +1,10 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: '출석체크 | Open Poker',
+  description: '매일 출석체크하고 포인트를 획득하세요.',
+};
+
 import { AttendanceCalendar, type AttendanceDay } from '@/components/gamification/AttendanceCalendar';
 import { getSession } from '@/lib/auth/session';
 import { redirect } from 'next/navigation';

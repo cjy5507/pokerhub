@@ -1,3 +1,10 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: '미션 | Open Poker',
+  description: '미션을 완료하고 경험치와 포인트를 획득하세요.',
+};
+
 import { MissionCard } from '@/components/gamification/MissionCard';
 import { getSession } from '@/lib/auth/session';
 import { redirect } from 'next/navigation';

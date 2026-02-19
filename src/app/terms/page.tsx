@@ -1,3 +1,10 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: '이용약관 | Open Poker',
+  description: 'Open Poker 서비스 이용약관을 확인하세요.',
+};
+
 export default function TermsPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">

@@ -39,6 +39,7 @@ export function CommentSection({ postId, comments, currentUserId }: CommentSecti
   const [commentText, setCommentText] = useState('');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const handleSubmitComment = (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,10 +53,11 @@ export function CommentSection({ postId, comments, currentUserId }: CommentSecti
 
       if (result.success) {
         setCommentText('');
+        setSubmitError(null);
         // Refresh will happen via revalidatePath
         window.location.reload();
       } else {
-        alert(result.error || '댓글 작성 중 오류가 발생했습니다');
+        setSubmitError(result.error || '댓글 작성 중 오류가 발생했습니다');
       }
     });
   };
@@ -73,9 +75,10 @@ export function CommentSection({ postId, comments, currentUserId }: CommentSecti
       if (result.success) {
         setReplyText('');
         setReplyingTo(null);
+        setSubmitError(null);
         window.location.reload();
       } else {
-        alert(result.error || '답글 작성 중 오류가 발생했습니다');
+        setSubmitError(result.error || '답글 작성 중 오류가 발생했습니다');
       }
     });
   };
@@ -101,7 +104,10 @@ export function CommentSection({ postId, comments, currentUserId }: CommentSecti
               rows={3}
               disabled={isPending}
             />
-            <div className="mt-3 flex justify-end">
+            <div className="mt-3 flex items-center justify-between">
+              {submitError ? (
+                <p className="text-sm text-red-400">{submitError}</p>
+              ) : <span />}
               <button
                 type="submit"
                 disabled={isPending || !commentText.trim()}

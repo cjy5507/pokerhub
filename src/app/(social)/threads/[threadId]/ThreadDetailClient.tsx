@@ -20,6 +20,7 @@ export function ThreadDetailClient({ thread: initialThread, replies: initialRepl
   const [replyContent, setReplyContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isTogglingLike, setIsTogglingLike] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const isAuthor = currentUserId === thread.author.id;
 
@@ -59,6 +60,7 @@ export function ThreadDetailClient({ thread: initialThread, replies: initialRepl
   };
 
   const handleDelete = async () => {
+    // TODO: Replace window.confirm with a custom dialog component for better UX
     if (!confirm('쓰레드를 삭제하시겠습니까?')) return;
 
     const result = await deleteThread(thread.id);
@@ -66,7 +68,7 @@ export function ThreadDetailClient({ thread: initialThread, replies: initialRepl
     if (result.success) {
       router.push('/threads');
     } else {
-      alert(result.error || '삭제에 실패했습니다');
+      setDeleteError(result.error || '삭제에 실패했습니다');
     }
   };
 
@@ -165,6 +167,10 @@ export function ThreadDetailClient({ thread: initialThread, replies: initialRepl
           </button>
         </div>
       </div>
+
+      {deleteError && (
+        <p className="text-sm text-red-400 text-center px-4">{deleteError}</p>
+      )}
 
       {/* Replies */}
       <div className="space-y-4">

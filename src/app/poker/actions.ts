@@ -7,7 +7,7 @@ import { eq, sql, desc, ne, and } from 'drizzle-orm';
 import { redirect } from 'next/navigation';
 import type { GameState, SeatState, PlayerAction } from '@/lib/poker/types';
 import { processAction as processGameAction, startNewHand as startHand } from '@/lib/poker/gameLoop';
-import { broadcastTableUpdate } from '@/lib/poker/broadcast';
+import { broadcastTableUpdate, broadcastGameState } from '@/lib/poker/broadcast';
 
 export type PokerTableWithSeats = {
   id: string;
@@ -260,68 +260,6 @@ export async function getTableState(tableId: string): Promise<GameState | null> 
     }
   }
 
-  // Auto-fold timeout check (runs on each state fetch)
-  if (currentHand && currentHand.currentSeat !== null && currentHand.turnStartedAt) {
-    const elapsed = (Date.now() - new Date(currentHand.turnStartedAt).getTime()) / 1000;
-    if (elapsed >= 30) {
-      // Use advisory lock to prevent concurrent auto-folds
-      try {
-        const lockResult = await db.execute(
-          sql`SELECT pg_try_advisory_lock(hashtext(${currentHand.id}::text)) as locked`
-        );
-        const locked = (lockResult as any)?.[0]?.locked;
-        if (locked) {
-          try {
-            // Re-check after getting lock
-            const freshHand = await db
-              .select()
-              .from(pokerGameHands)
-              .where(eq(pokerGameHands.id, currentHand.id))
-              .limit(1)
-              .then((rows: any) => rows[0] ?? null);
-
-            if (freshHand && freshHand.status !== 'complete' && freshHand.currentSeat === currentHand.currentSeat) {
-              const [timedOutSeat] = await db
-                .select({ userId: pokerTableSeats.userId })
-                .from(pokerTableSeats)
-                .where(
-                  and(
-                    eq(pokerTableSeats.tableId, tableId),
-                    eq(pokerTableSeats.seatNumber, freshHand.currentSeat)
-                  )
-                )
-                .limit(1);
-
-              if (timedOutSeat) {
-                await processGameAction(tableId, timedOutSeat.userId, 'fold');
-              }
-            }
-          } finally {
-            await db.execute(
-              sql`SELECT pg_advisory_unlock(hashtext(${currentHand.id}::text))`
-            );
-          }
-        }
-      } catch (err) {
-        console.error('Auto-fold timeout error:', err);
-      }
-
-      // Re-fetch current hand after potential auto-fold so returned state is fresh
-      if (t.currentHandId) {
-        const refreshedHandData = await db
-          .select()
-          .from(pokerGameHands)
-          .where(eq(pokerGameHands.id, t.currentHandId))
-          .limit(1);
-        if (refreshedHandData.length > 0) {
-          currentHand = refreshedHandData[0];
-        } else {
-          currentHand = null;
-        }
-      }
-    }
-  }
-
   return {
     tableId: t.id,
     tableName: t.name,
@@ -444,7 +382,7 @@ export async function joinTable(tableId: string, seatNumber: number, buyIn: numb
   if (shouldStartHand) {
     await startHand(tableId);
   } else {
-    await broadcastTableUpdate(tableId, 'player_join');
+    await broadcastGameState(tableId);
   }
 
   return { success: true };
@@ -725,9 +663,43 @@ export async function leaveTable(tableId: string) {
     await pendingTurnAdvance();
   }
 
-  await broadcastTableUpdate(tableId, 'player_leave');
+  await broadcastGameState(tableId);
 
   return result;
+}
+
+/**
+ * Get the current user's hole cards for a table
+ */
+export async function getMyHoleCards(tableId: string): Promise<string[] | null> {
+  if (!db) return null;
+  const session = await getSession();
+  if (!session?.userId) return null;
+
+  const [seat] = await db.select({ seatNumber: pokerTableSeats.seatNumber })
+    .from(pokerTableSeats)
+    .where(and(
+      eq(pokerTableSeats.tableId, tableId),
+      eq(pokerTableSeats.userId, session.userId)
+    ))
+    .limit(1);
+  if (!seat) return null;
+
+  const [table] = await db.select({ currentHandId: pokerTables.currentHandId })
+    .from(pokerTables)
+    .where(eq(pokerTables.id, tableId))
+    .limit(1);
+  if (!table?.currentHandId) return null;
+
+  const [result] = await db.select({ holeCards: pokerGameResults.holeCards })
+    .from(pokerGameResults)
+    .where(and(
+      eq(pokerGameResults.handId, table.currentHandId),
+      eq(pokerGameResults.seatNumber, seat.seatNumber)
+    ))
+    .limit(1);
+
+  return result?.holeCards ?? null;
 }
 
 /**

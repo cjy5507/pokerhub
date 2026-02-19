@@ -11,7 +11,7 @@ import Link from 'next/link';
 import { usePokerSounds } from '@/lib/poker/sounds';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { getTableState } from '../actions';
+import { getTableState, getMyHoleCards } from '../actions';
 
 // ─── Types ────────────────────────────────────────────────────────
 
@@ -603,10 +603,26 @@ function HandHistorySheet({
   );
 }
 
+// ─── Hole Card Merge Helper ───────────────────────────────────────
+
+function mergeHoleCards(state: GameState, myCards: string[] | null, oddsUserId: string | null): GameState {
+  if (!myCards || !oddsUserId) return state;
+  return {
+    ...state,
+    seats: state.seats.map(seat => {
+      if (seat && seat.userId === oddsUserId && !seat.holeCards) {
+        return { ...seat, holeCards: myCards as Card[] };
+      }
+      return seat;
+    }),
+  };
+}
+
 // ─── Main Component ───────────────────────────────────────────────
 
 export function PokerTableClient({ tableId, initialState, userId, nickname }: PokerTableClientProps) {
   const [gameState, setGameState] = useState<GameState>(initialState);
+  const [heroHoleCards, setHeroHoleCards] = useState<string[] | null>(null);
   const [actionLog, setActionLog] = useState<ActionLogEntry[]>([]);
   const [lastActions, setLastActions] = useState<Record<number, string>>({});
   const [showHistory, setShowHistory] = useState(false);
@@ -705,6 +721,17 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
     prevTimeLeftRef.current = turnTimeLeft;
   }, [turnTimeLeft, isHeroTurn, sounds]);
 
+  // ─── Fetch hero hole cards on new hand ──────────────────────────
+  useEffect(() => {
+    if (!gameState.handId || !userId) {
+      setHeroHoleCards(null);
+      return;
+    }
+    getMyHoleCards(tableId).then(cards => {
+      if (cards) setHeroHoleCards(cards);
+    });
+  }, [gameState.handId, tableId, userId]);
+
   // ─── Supabase Realtime Connection ───────────────────────────────
 
   // State update handler — extracts sound/animation triggers from state diff
@@ -794,40 +821,42 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
   useEffect(() => {
     const supabase = createClient();
     const channel = supabase.channel(`poker:${tableId}`);
-    let fallbackTimer: ReturnType<typeof setTimeout> | null = null;
-    let lastBroadcastTime = Date.now();
+    let fallbackTimer: ReturnType<typeof setInterval> | null = null;
+    let lastUpdateTime = Date.now();
 
-    // Fetch fresh state from server
-    async function fetchAndUpdate() {
-      try {
-        const freshState = await getTableState(tableId);
-        if (freshState) {
-          handleStateUpdate(freshState);
-        }
-      } catch (err) {
-        console.error('Failed to fetch table state:', err);
-      }
-    }
-
+    // Full state broadcast handler (new - instant)
     channel
-      .on('broadcast', { event: 'state_changed' }, () => {
-        lastBroadcastTime = Date.now();
-        fetchAndUpdate();
+      .on('broadcast', { event: 'game_state' }, (msg) => {
+        lastUpdateTime = Date.now();
+        const broadcastState = msg.payload?.state as GameState;
+        if (broadcastState) {
+          const merged = mergeHoleCards(broadcastState, heroHoleCards, userId);
+          handleStateUpdate(merged);
+        }
+      })
+      // Legacy signal handler (backward compat)
+      .on('broadcast', { event: 'state_changed' }, async () => {
+        lastUpdateTime = Date.now();
+        const freshState = await getTableState(tableId);
+        if (freshState) handleStateUpdate(freshState);
       })
       .subscribe();
 
-    // Fallback polling: if no broadcast received within 5s, poll every 3s
-    function startFallbackPolling() {
-      fallbackTimer = setInterval(() => {
-        if (Date.now() - lastBroadcastTime > 5000) {
-          fetchAndUpdate();
-        }
-      }, 3000);
-    }
-    startFallbackPolling();
+    // Reduced fallback polling: 15s, only when no recent updates
+    fallbackTimer = setInterval(async () => {
+      if (Date.now() - lastUpdateTime > 15000) {
+        try {
+          const freshState = await getTableState(tableId);
+          if (freshState) handleStateUpdate(freshState);
+          lastUpdateTime = Date.now();
+        } catch {}
+      }
+    }, 15000);
 
-    // Initial fetch to ensure we have fresh state
-    fetchAndUpdate();
+    // Initial fetch
+    getTableState(tableId).then(state => {
+      if (state) handleStateUpdate(state);
+    });
 
     return () => {
       supabase.removeChannel(channel);
@@ -835,7 +864,7 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
       lastActionTimers.current.forEach(t => clearTimeout(t));
       lastActionTimers.current.clear();
     };
-  }, [tableId, handleStateUpdate]);
+  }, [tableId, handleStateUpdate, heroHoleCards, userId]);
 
   // ─── Client-side Turn Timer ────────────────────────────────────
   useEffect(() => {

@@ -394,49 +394,19 @@ export async function leaveTable(tableId: string) {
     throw new Error('로그인이 필요합니다');
   }
 
-  // Auto-fold if player is in an active hand (must run before transaction)
-  const table = await db
-    .select()
-    .from(pokerTables)
-    .where(eq(pokerTables.id, tableId))
-    .limit(1);
+  // Track whether the leaving player was the current-seat actor so we can
+  // advance the turn via processGameAction AFTER the transaction commits.
+  // processGameAction uses its own DB connection and cannot run inside a tx.
+  let advanceTurnAfterTx: (() => Promise<void>) | null = null;
 
-  if (table.length > 0 && table[0].currentHandId) {
-    const hand = await db
+  const result = await db.transaction(async (tx: any) => {
+    // 1. Read table + seat + active hand atomically
+    const [table] = await tx
       .select()
-      .from(pokerGameHands)
-      .where(eq(pokerGameHands.id, table[0].currentHandId))
+      .from(pokerTables)
+      .where(eq(pokerTables.id, tableId))
       .limit(1);
 
-    if (hand.length > 0 && hand[0].status !== 'complete') {
-      const userSeat = await db
-        .select()
-        .from(pokerTableSeats)
-        .where(and(
-          eq(pokerTableSeats.tableId, tableId),
-          eq(pokerTableSeats.userId, session.userId)
-        ))
-        .limit(1);
-
-      if (userSeat.length > 0) {
-        if (hand[0].currentSeat === userSeat[0].seatNumber) {
-          // 자기 차례면 processGameAction으로 fold
-          await processGameAction(tableId, session.userId, 'fold');
-        } else {
-          // 차례가 아니면 DB에 직접 fold 액션 기록
-          await db.insert(pokerGameActions).values({
-            handId: hand[0].id,
-            seatNumber: userSeat[0].seatNumber,
-            street: hand[0].status,
-            actionType: 'fold',
-            amount: 0,
-          });
-        }
-      }
-    }
-  }
-
-  return await db.transaction(async (tx: any) => {
     const [seat] = await tx
       .select()
       .from(pokerTableSeats)
@@ -447,7 +417,42 @@ export async function leaveTable(tableId: string) {
       throw new Error('이 테이블에 앉아있지 않습니다');
     }
 
-    // Return remaining chips to user points (atomic)
+    // 2. If there is an active hand, insert fold action inside the transaction
+    //    so the fold is atomic with seat removal (no window for another player
+    //    to act on a seat that is about to disappear).
+    if (table?.currentHandId) {
+      const [hand] = await tx
+        .select()
+        .from(pokerGameHands)
+        .where(eq(pokerGameHands.id, table.currentHandId))
+        .limit(1);
+
+      if (hand && hand.status !== 'complete') {
+        // Record the fold action directly — works for both "my turn" and "not my turn"
+        await tx.insert(pokerGameActions).values({
+          handId: hand.id,
+          seatNumber: seat.seatNumber,
+          street: hand.status,
+          actionType: 'fold',
+          amount: 0,
+        });
+
+        // If it was this player's turn, schedule turn advancement after the tx commits
+        if (hand.currentSeat === seat.seatNumber) {
+          const capturedUserId = session.userId;
+          advanceTurnAfterTx = async () => {
+            try {
+              await processGameAction(tableId, capturedUserId, 'fold');
+            } catch {
+              // Best-effort: the fold action is already recorded; the game loop
+              // will detect the duplicate fold on the next poll and skip it.
+            }
+          };
+        }
+      }
+    }
+
+    // 3. Return remaining chips to user points (atomic)
     const [user] = await tx
       .select({ points: users.points })
       .from(users)
@@ -472,13 +477,14 @@ export async function leaveTable(tableId: string) {
       }
     }
 
+    // 4. Remove the seat and update activity timestamp
     await tx
       .delete(pokerTableSeats)
       .where(and(eq(pokerTableSeats.tableId, tableId), eq(pokerTableSeats.userId, session.userId)));
 
     await tx.update(pokerTables).set({ lastActivityAt: new Date() }).where(eq(pokerTables.id, tableId));
 
-    // Check if we should pause the table
+    // 5. Check if we should pause the table
     const remainingSeats = await tx
       .select()
       .from(pokerTableSeats)
@@ -502,10 +508,21 @@ export async function leaveTable(tableId: string) {
         .update(pokerTables)
         .set({ status: 'waiting', currentHandId: null })
         .where(eq(pokerTables.id, tableId));
+      // No need to advance turn — hand is being closed
+      advanceTurnAfterTx = null;
     }
 
     return { success: true, chipsReturned: seat.chipStack };
   });
+
+  // Advance turn outside the transaction (processGameAction manages its own connection).
+  // Cast needed: TypeScript narrows the let-binding to `never` after the async transaction boundary.
+  const pendingTurnAdvance = advanceTurnAfterTx as (() => Promise<void>) | null;
+  if (pendingTurnAdvance) {
+    await pendingTurnAdvance();
+  }
+
+  return result;
 }
 
 /**

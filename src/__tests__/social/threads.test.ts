@@ -268,6 +268,29 @@ describe('deleteThread', () => {
 // ===========================================================================
 
 describe('toggleThreadLike', () => {
+  /**
+   * Build a tx mock whose insert/delete/update/select calls resolve in order.
+   * The source uses insert-first (onConflictDoNothing) pattern inside a transaction:
+   *   1. tx.insert(threadLikes).values(...).onConflictDoNothing().returning(...)
+   *      → returns [] if row existed (conflict), or [row] if newly inserted
+   *   2a. If inserted: tx.update(threads).set(+1).where(...)
+   *   2b. If conflict: tx.delete(threadLikes).where(...).returning(...)
+   *       then if deleted: tx.update(threads).set(-1).where(...)
+   *   3. tx.select({likesCount}).from(threads).where(...).limit(1)
+   */
+  function makeTxMock(calls: Array<{ op: 'insert' | 'delete' | 'update' | 'select'; result: any[] }>) {
+    const tx: any = {
+      insert: vi.fn(),
+      delete: vi.fn(),
+      update: vi.fn(),
+      select: vi.fn(),
+    };
+    for (const { op, result } of calls) {
+      tx[op].mockReturnValueOnce(createChainableMock(result));
+    }
+    return tx;
+  }
+
   it('returns error when not authenticated', async () => {
     mockGetSession.mockResolvedValue(null);
 
@@ -277,21 +300,20 @@ describe('toggleThreadLike', () => {
     expect(result.error).toBe('로그인이 필요합니다');
   });
 
-  it('likes a thread that has no existing like (insert path)', async () => {
+  it('likes a thread when insert succeeds (no conflict)', async () => {
     mockGetSession.mockResolvedValue(mockUserSession);
     const threadId = createTestUUID();
 
-    // Call order for the "like" path:
-    // 1. select from threadLikes → [] (no existing like)
-    // 2. insert into threadLikes → []
-    // 3. update threads (increment) → []
-    // 4. select threads (get updated count) → [{ likesCount: 1 }]
-    queueDbCalls([
-      { op: 'select', result: [] },            // check existing like → none
-      { op: 'insert', result: [] },             // insert like
-      { op: 'update', result: [] },             // increment likesCount
-      { op: 'select', result: [{ likesCount: 1 }] }, // fetch updated count
+    // Source: INSERT-first pattern inside transaction
+    // 1. insert threadLikes onConflictDoNothing().returning() → [row] (newly inserted → liked)
+    // 2. update threads increment (+1)
+    // 3. select threads for updated count → [{ likesCount: 1 }]
+    const tx = makeTxMock([
+      { op: 'insert', result: [{ threadId }] },          // inserted → liked=true
+      { op: 'update', result: [] },                       // increment likesCount
+      { op: 'select', result: [{ likesCount: 1 }] },      // fetch updated count
     ]);
+    mockDb.transaction.mockImplementationOnce((cb: (tx: any) => any) => cb(tx));
 
     const result = await toggleThreadLike(threadId);
 
@@ -301,21 +323,22 @@ describe('toggleThreadLike', () => {
     expect(mockRevalidatePath).toHaveBeenCalledWith('/threads');
   });
 
-  it('unlikes a thread that already has a like (delete path)', async () => {
+  it('unlikes a thread when insert conflicts (row already existed)', async () => {
     mockGetSession.mockResolvedValue(mockUserSession);
     const threadId = createTestUUID();
 
-    // Call order for the "unlike" path:
-    // 1. select from threadLikes → [existing like]
-    // 2. delete from threadLikes → []
-    // 3. update threads (decrement) → []
-    // 4. select threads (get updated count) → [{ likesCount: 0 }]
-    queueDbCalls([
-      { op: 'select', result: [{ userId: mockUserSession.userId, threadId }] },
-      { op: 'delete', result: [] },
-      { op: 'update', result: [] },
-      { op: 'select', result: [{ likesCount: 0 }] },
+    // Source: INSERT-first pattern inside transaction
+    // 1. insert threadLikes onConflictDoNothing().returning() → [] (conflict, already liked)
+    // 2. delete threadLikes.where(...).returning() → [row] (deleted → liked=false)
+    // 3. update threads decrement (-1)
+    // 4. select threads for updated count → [{ likesCount: 0 }]
+    const tx = makeTxMock([
+      { op: 'insert', result: [] },                       // conflict → row existed
+      { op: 'delete', result: [{ threadId }] },           // deleted → liked=false
+      { op: 'update', result: [] },                       // decrement likesCount
+      { op: 'select', result: [{ likesCount: 0 }] },      // fetch updated count
     ]);
+    mockDb.transaction.mockImplementationOnce((cb: (tx: any) => any) => cb(tx));
 
     const result = await toggleThreadLike(threadId);
 
@@ -328,13 +351,13 @@ describe('toggleThreadLike', () => {
   it('returns likesCount of 0 when updated thread is missing (fallback)', async () => {
     mockGetSession.mockResolvedValue(mockUserSession);
 
-    // Like path but final select returns empty (edge case)
-    queueDbCalls([
-      { op: 'select', result: [] },        // no existing like
-      { op: 'insert', result: [] },        // insert like
-      { op: 'update', result: [] },        // increment
-      { op: 'select', result: [] },        // thread gone
+    // Like path (insert succeeds) but final select returns empty (thread deleted mid-flight)
+    const tx = makeTxMock([
+      { op: 'insert', result: [{ threadId: 'thread-gone' }] }, // inserted → liked=true
+      { op: 'update', result: [] },                             // increment
+      { op: 'select', result: [] },                             // thread gone → likesCount defaults to 0
     ]);
+    mockDb.transaction.mockImplementationOnce((cb: (tx: any) => any) => cb(tx));
 
     const result = await toggleThreadLike('thread-gone');
 
@@ -661,6 +684,7 @@ describe('getThreadReplies', () => {
       innerJoin: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
       orderBy: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
       then: (_resolve: any, reject: any) => reject(new Error('timeout')),
     });
 

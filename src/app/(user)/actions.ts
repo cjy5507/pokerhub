@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { db } from '@/lib/db';
 import { users, userFollows, userBlocks, userSettings } from '@/lib/db/schema';
 import { getSession } from '@/lib/auth/session';
-import { eq, and, sql, count } from 'drizzle-orm';
+import { eq, and, sql, count, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import { hashPassword, verifyPassword } from '@/lib/auth/password';
 
@@ -27,41 +27,40 @@ export async function toggleFollow(targetUserId: string): Promise<{
       return { success: false, isFollowing: false, error: '자기 자신을 팔로우할 수 없습니다' };
     }
 
-    // Check if already following
-    const [existing] = await db
-      .select()
-      .from(userFollows)
-      .where(
-        and(
-          eq(userFollows.followerId, session.userId),
-          eq(userFollows.followingId, targetUserId)
-        )
-      )
-      .limit(1);
+    // Atomic toggle: attempt insert first (follow), fall back to delete (unfollow)
+    const result = await db.transaction(async (tx: any) => {
+      // Try to insert; if the row already exists the conflict is suppressed
+      const inserted = await tx
+        .insert(userFollows)
+        .values({
+          followerId: session.userId,
+          followingId: targetUserId,
+        })
+        .onConflictDoNothing()
+        .returning({ followerId: userFollows.followerId });
 
-    if (existing) {
-      // Unfollow
-      await db
+      if (inserted.length > 0) {
+        // Row was newly inserted → now following
+        return { isFollowing: true };
+      }
+
+      // Row already existed → unfollow by deleting and confirming removal
+      const deleted = await tx
         .delete(userFollows)
         .where(
           and(
             eq(userFollows.followerId, session.userId),
             eq(userFollows.followingId, targetUserId)
           )
-        );
+        )
+        .returning({ followerId: userFollows.followerId });
 
-      revalidatePath(`/profile/${targetUserId}`);
-      return { success: true, isFollowing: false };
-    } else {
-      // Follow
-      await db.insert(userFollows).values({
-        followerId: session.userId,
-        followingId: targetUserId,
-      });
+      // deleted.length > 0 means the row was actually removed
+      return { isFollowing: deleted.length === 0 };
+    });
 
-      revalidatePath(`/profile/${targetUserId}`);
-      return { success: true, isFollowing: true };
-    }
+    revalidatePath(`/profile/${targetUserId}`);
+    return { success: true, isFollowing: result.isFollowing };
   } catch (error) {
     console.error('Error toggling follow:', error);
     return { success: false, isFollowing: false, error: '오류가 발생했습니다' };
@@ -347,35 +346,29 @@ export async function getFollowers(userId: string, page = 1): Promise<{
       .limit(pageSize)
       .offset(offset);
 
-    // Check if session user follows each follower back
-    const followersWithStatus = await Promise.all(
-      followersData.map(async (follower: any) => {
-        let isFollowingBack = false;
+    // Batch-check which followers the session user follows back (single query, no N+1)
+    let followingBackSet: Set<string> = new Set();
+    if (session && followersData.length > 0) {
+      const followerIds = followersData.map((f: any) => f.id);
+      const followingBack = await db
+        .select({ followingId: userFollows.followingId })
+        .from(userFollows)
+        .where(
+          and(
+            eq(userFollows.followerId, session.userId),
+            inArray(userFollows.followingId, followerIds)
+          )
+        );
+      followingBackSet = new Set(followingBack.map((r: any) => r.followingId));
+    }
 
-        if (session) {
-          const [followBack] = await db
-            .select()
-            .from(userFollows)
-            .where(
-              and(
-                eq(userFollows.followerId, session.userId),
-                eq(userFollows.followingId, follower.id)
-              )
-            )
-            .limit(1);
-
-          isFollowingBack = !!followBack;
-        }
-
-        return {
-          id: follower.id,
-          nickname: follower.nickname,
-          level: follower.level,
-          avatarUrl: follower.avatarUrl,
-          isFollowingBack,
-        };
-      })
-    );
+    const followersWithStatus = followersData.map((follower: any) => ({
+      id: follower.id,
+      nickname: follower.nickname,
+      level: follower.level,
+      avatarUrl: follower.avatarUrl,
+      isFollowingBack: followingBackSet.has(follower.id),
+    }));
 
     return {
       success: true,
@@ -459,9 +452,9 @@ export async function changePassword(
       return { success: false, error: '새 비밀번호는 현재 비밀번호와 달라야 합니다' };
     }
 
-    // Get current user with password hash
+    // Fetch only the passwordHash column — no over-fetch
     const [user] = await db
-      .select()
+      .select({ passwordHash: users.passwordHash })
       .from(users)
       .where(eq(users.id, session.userId))
       .limit(1);

@@ -109,12 +109,27 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
     fetchMessages(true);
 
-    // Poll for new messages every 5 seconds
-    const interval = setInterval(() => fetchMessages(false), 5000);
+    // Poll for new messages every 5 seconds, pausing when tab is hidden
+    const poll = () => {
+      if (document.visibilityState === 'hidden') return;
+      fetchMessages(false);
+    };
+
+    const interval = setInterval(poll, 5000);
+
+    const handleVisibilityChange = () => {
+      // Resume immediately when tab becomes visible again
+      if (document.visibilityState === 'visible') {
+        fetchMessages(false);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       isMounted = false;
       clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [activeRoomId]);
 

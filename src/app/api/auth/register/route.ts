@@ -6,6 +6,32 @@ import { hashPassword } from '@/lib/auth/password';
 import { createSession } from '@/lib/auth/session';
 import { eq } from 'drizzle-orm';
 
+// --- In-memory rate limiter: 5 registrations per IP per 15 minutes ---
+interface RateLimitEntry {
+  count: number;
+  resetAt: number;
+}
+const rateLimitMap = new Map<string, RateLimitEntry>();
+const RATE_LIMIT_MAX = 5;
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+
+  if (entry.count >= RATE_LIMIT_MAX) {
+    return false;
+  }
+
+  entry.count += 1;
+  return true;
+}
+
 const registerSchema = z.object({
   email: z.string().email('유효한 이메일을 입력해주세요'),
   nickname: z.string().min(2, '닉네임은 2자 이상이어야 합니다').max(50, '닉네임은 50자 이하여야 합니다'),
@@ -13,6 +39,19 @@ const registerSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+  // Rate limiting
+  const ip =
+    request.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+    request.headers.get('x-real-ip') ||
+    'unknown';
+
+  if (!checkRateLimit(ip)) {
+    return NextResponse.json(
+      { error: '너무 많은 가입 시도입니다. 15분 후 다시 시도해주세요' },
+      { status: 429 }
+    );
+  }
+
   try {
     const body = await request.json();
 
@@ -58,16 +97,42 @@ export async function POST(request: NextRequest) {
     // Hash password
     const passwordHash = await hashPassword(password);
 
-    // Create user
-    const [newUser] = await db
-      .insert(users)
-      .values({
-        email,
-        nickname,
-        passwordHash,
-        points: 1000, // Initial points
-      })
-      .returning();
+    // Create user — wrap in try-catch to handle unique constraint race conditions
+    let newUser: typeof users.$inferSelect;
+    try {
+      const inserted = await db
+        .insert(users)
+        .values({
+          email,
+          nickname,
+          passwordHash,
+          points: 1000, // Initial points
+        })
+        .returning();
+      newUser = inserted[0];
+    } catch (insertError: any) {
+      // PostgreSQL unique violation error code
+      if (insertError?.code === '23505') {
+        const detail: string = insertError?.detail ?? '';
+        if (detail.includes('email')) {
+          return NextResponse.json(
+            { error: '이메일이 이미 사용 중입니다' },
+            { status: 400 }
+          );
+        }
+        if (detail.includes('nickname')) {
+          return NextResponse.json(
+            { error: '닉네임이 이미 사용 중입니다' },
+            { status: 400 }
+          );
+        }
+        return NextResponse.json(
+          { error: '이미 사용 중인 이메일 또는 닉네임입니다' },
+          { status: 400 }
+        );
+      }
+      throw insertError;
+    }
 
     // Award initial points transaction + create default settings
     await Promise.all([

@@ -131,72 +131,56 @@ export async function toggleThreadLike(threadId: string) {
   try {
     const session = await requireAuth();
 
-    const [existingLike] = await db
-      .select()
-      .from(threadLikes)
-      .where(
-        and(
-          eq(threadLikes.userId, session.userId),
-          eq(threadLikes.threadId, threadId)
-        )
-      )
-      .limit(1);
+    // Atomic toggle inside a transaction: insert-or-delete, then update counter
+    const { liked, likesCount } = await db.transaction(async (tx: any) => {
+      // Attempt insert; composite PK suppresses duplicate inserts
+      const inserted = await tx
+        .insert(threadLikes)
+        .values({ userId: session.userId, threadId })
+        .onConflictDoNothing()
+        .returning({ threadId: threadLikes.threadId });
 
-    if (existingLike) {
-      // Unlike: delete like and decrement count
-      await db
-        .delete(threadLikes)
-        .where(
-          and(
-            eq(threadLikes.userId, session.userId),
-            eq(threadLikes.threadId, threadId)
+      let liked: boolean;
+      if (inserted.length > 0) {
+        // Newly inserted → increment counter atomically
+        liked = true;
+        await tx
+          .update(threads)
+          .set({ likesCount: sql`${threads.likesCount} + 1` })
+          .where(eq(threads.id, threadId));
+      } else {
+        // Row existed → delete it (unfollow), verify removal via RETURNING
+        const deleted = await tx
+          .delete(threadLikes)
+          .where(
+            and(
+              eq(threadLikes.userId, session.userId),
+              eq(threadLikes.threadId, threadId)
+            )
           )
-        );
+          .returning({ threadId: threadLikes.threadId });
 
-      await db
-        .update(threads)
-        .set({ likesCount: sql`${threads.likesCount} - 1` })
-        .where(eq(threads.id, threadId));
+        liked = deleted.length === 0;
+        if (deleted.length > 0) {
+          // Decrement counter atomically; clamp to 0 to avoid negatives
+          await tx
+            .update(threads)
+            .set({ likesCount: sql`GREATEST(${threads.likesCount} - 1, 0)` })
+            .where(eq(threads.id, threadId));
+        }
+      }
 
-      const [updatedThread] = await db
+      const [updated] = await tx
         .select({ likesCount: threads.likesCount })
         .from(threads)
         .where(eq(threads.id, threadId))
         .limit(1);
 
-      revalidatePath('/threads');
+      return { liked, likesCount: updated?.likesCount ?? 0 };
+    });
 
-      return {
-        success: true,
-        liked: false,
-        likesCount: updatedThread?.likesCount || 0
-      };
-    } else {
-      // Like: insert like and increment count
-      await db.insert(threadLikes).values({
-        userId: session.userId,
-        threadId,
-      });
-
-      await db
-        .update(threads)
-        .set({ likesCount: sql`${threads.likesCount} + 1` })
-        .where(eq(threads.id, threadId));
-
-      const [updatedThread] = await db
-        .select({ likesCount: threads.likesCount })
-        .from(threads)
-        .where(eq(threads.id, threadId))
-        .limit(1);
-
-      revalidatePath('/threads');
-
-      return {
-        success: true,
-        liked: true,
-        likesCount: updatedThread?.likesCount || 0
-      };
-    }
+    revalidatePath('/threads');
+    return { success: true, liked, likesCount };
   } catch (error) {
     console.error('Toggle thread like error:', error);
     if (error instanceof Error) {
@@ -470,7 +454,7 @@ export async function getThreadDetail(threadId: string) {
       createdAt: threadResult.createdAt.toISOString(),
     };
 
-    // Get replies with author info
+    // Get replies with author info (capped at 50 to prevent unbounded fetch)
     const repliesResult = await db
       .select({
         id: threadReplies.id,
@@ -484,7 +468,8 @@ export async function getThreadDetail(threadId: string) {
       .from(threadReplies)
       .innerJoin(users, eq(threadReplies.authorId, users.id))
       .where(eq(threadReplies.threadId, threadId))
-      .orderBy(threadReplies.createdAt);
+      .orderBy(threadReplies.createdAt)
+      .limit(50);
 
     const replies: ThreadReplyData[] = repliesResult.map((r: any) => ({
       id: r.id,
@@ -521,7 +506,8 @@ export async function getThreadReplies(threadId: string): Promise<ThreadReplyDat
       .from(threadReplies)
       .innerJoin(users, eq(threadReplies.authorId, users.id))
       .where(eq(threadReplies.threadId, threadId))
-      .orderBy(threadReplies.createdAt);
+      .orderBy(threadReplies.createdAt)
+      .limit(50);
 
     return repliesResult.map((r: any) => ({
       id: r.id,

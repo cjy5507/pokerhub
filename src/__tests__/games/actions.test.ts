@@ -168,8 +168,10 @@ describe('claimCooldownReward', () => {
 
     // Latest claim was 1 minute ago — well within the 5-hour cooldown
     const recentClaimAt = new Date(Date.now() - 60_000);
-    const chain = createChainableMock([{ claimedAt: recentClaimAt }]);
-    mockDb.select.mockReturnValue(chain);
+
+    // Cooldown check now runs inside the transaction via tx.select
+    const tx = setupTransactionMock();
+    tx.select = vi.fn().mockReturnValue(createChainableMock([{ claimedAt: recentClaimAt }]));
 
     const result = await claimCooldownReward();
 
@@ -185,13 +187,12 @@ describe('claimCooldownReward', () => {
   it('succeeds on first-ever claim (no previous record)', async () => {
     mockGetSession.mockResolvedValueOnce(mockUserSession as any);
 
-    // No previous claim
-    const selectChain = createChainableMock([]);
-    mockDb.select.mockReturnValue(selectChain);
-
     const tx = setupTransactionMock();
 
-    // tx.insert().values() — for cooldown record
+    // tx.select — no previous cooldown record
+    tx.select = vi.fn().mockReturnValue(createChainableMock([]));
+
+    // tx.insert().values() — for cooldown record and point transaction log
     const insertChain1 = createChainableMock([]);
     tx.insert = vi.fn().mockReturnValue(insertChain1);
 
@@ -211,10 +212,10 @@ describe('claimCooldownReward', () => {
 
     // Last claim was 6 hours ago — cooldown is 5 hours
     const expiredClaimAt = new Date(Date.now() - 6 * 60 * 60 * 1000);
-    const selectChain = createChainableMock([{ claimedAt: expiredClaimAt }]);
-    mockDb.select.mockReturnValue(selectChain);
 
     const tx = setupTransactionMock();
+    // tx.select — returns expired cooldown record
+    tx.select = vi.fn().mockReturnValue(createChainableMock([{ claimedAt: expiredClaimAt }]));
     const insertChain = createChainableMock([]);
     tx.insert = vi.fn().mockReturnValue(insertChain);
     const updateChain = createChainableMock([{ points: 200 }]);
@@ -234,10 +235,9 @@ describe('claimCooldownReward', () => {
     for (let i = 0; i < 50; i++) {
       mockGetSession.mockResolvedValueOnce(mockUserSession as any);
 
-      const selectChain = createChainableMock([]);
-      mockDb.select.mockReturnValue(selectChain);
-
       const tx = setupTransactionMock();
+      // tx.select — no previous cooldown record
+      tx.select = vi.fn().mockReturnValue(createChainableMock([]));
       const insertChain = createChainableMock([]);
       tx.insert = vi.fn().mockReturnValue(insertChain);
       const updateChain = createChainableMock([{ points: 500 }]);
@@ -254,10 +254,9 @@ describe('claimCooldownReward', () => {
   it('executes the debit and log inside a transaction', async () => {
     mockGetSession.mockResolvedValueOnce(mockUserSession as any);
 
-    const selectChain = createChainableMock([]);
-    mockDb.select.mockReturnValue(selectChain);
-
     const tx = setupTransactionMock();
+    // tx.select — no previous cooldown record
+    tx.select = vi.fn().mockReturnValue(createChainableMock([]));
     const insertChain = createChainableMock([]);
     tx.insert = vi.fn().mockReturnValue(insertChain);
     const updateChain = createChainableMock([{ points: 100 }]);
@@ -289,11 +288,10 @@ describe('buyLotteryTicket', () => {
     // User with only 50 points — below the 100-point lottery cost
     const user = createTestUser({ points: 50 });
 
-    // First select: fetch user row
-    // Second select: count today's tickets (chained via mockDb.select again)
-    mockDb.select
-      .mockReturnValueOnce(createChainableMock([user]))
-      .mockReturnValueOnce(createChainableMock([{ todayCount: 0 }]));
+    // Both checks (user points + daily count) now happen inside the transaction
+    const tx = setupTransactionMock();
+    // First tx.select: fetch user with FOR UPDATE lock
+    tx.select = vi.fn().mockReturnValueOnce(createChainableMock([user]));
 
     const result = await buyLotteryTicket();
 
@@ -306,7 +304,10 @@ describe('buyLotteryTicket', () => {
 
     const user = createTestUser({ points: 1000 });
 
-    mockDb.select
+    // Both checks happen inside the transaction
+    const tx = setupTransactionMock();
+    // First tx.select: user with enough points; second tx.select: daily count = 5
+    tx.select = vi.fn()
       .mockReturnValueOnce(createChainableMock([user]))
       .mockReturnValueOnce(createChainableMock([{ todayCount: 5 }]));
 
@@ -321,11 +322,11 @@ describe('buyLotteryTicket', () => {
 
     const user = createTestUser({ points: 1000 });
 
-    mockDb.select
+    const tx = setupTransactionMock();
+    // First tx.select: user; second tx.select: daily count = 0
+    tx.select = vi.fn()
       .mockReturnValueOnce(createChainableMock([user]))
       .mockReturnValueOnce(createChainableMock([{ todayCount: 0 }]));
-
-    const tx = setupTransactionMock();
 
     const newTicket = { id: 'ticket-uuid-1', tier: 'none', prizeAmount: 0 };
     const insertChain = createChainableMock([newTicket]);
@@ -348,11 +349,11 @@ describe('buyLotteryTicket', () => {
 
     const user = createTestUser({ points: 500 });
 
-    mockDb.select
+    const tx = setupTransactionMock();
+    // First tx.select: user; second tx.select: daily count = 2
+    tx.select = vi.fn()
       .mockReturnValueOnce(createChainableMock([user]))
       .mockReturnValueOnce(createChainableMock([{ todayCount: 2 }]));
-
-    const tx = setupTransactionMock();
     const newTicket = { id: 'ticket-uuid-2', tier: 'fourth', prizeAmount: 100 };
     const insertChain = createChainableMock([newTicket]);
     tx.insert = vi.fn().mockReturnValue(insertChain);
@@ -370,11 +371,12 @@ describe('buyLotteryTicket', () => {
     mockGetSession.mockResolvedValueOnce(mockUserSession as any);
 
     const user = createTestUser({ points: 1000 });
-    mockDb.select
-      .mockReturnValueOnce(createChainableMock([user]))
-      .mockReturnValueOnce(createChainableMock([{ todayCount: 0 }]));
 
     const tx = setupTransactionMock();
+    // First tx.select: user; second tx.select: daily count = 0
+    tx.select = vi.fn()
+      .mockReturnValueOnce(createChainableMock([user]))
+      .mockReturnValueOnce(createChainableMock([{ todayCount: 0 }]));
     const insertChain = createChainableMock([{ id: 'tid', tier: 'none', prizeAmount: 0 }]);
     tx.insert = vi.fn().mockReturnValue(insertChain);
     const updateChain = createChainableMock([{ points: 900 }]);
@@ -389,12 +391,7 @@ describe('buyLotteryTicket', () => {
   it('propagates INSUFFICIENT_POINTS thrown inside transaction as error response', async () => {
     mockGetSession.mockResolvedValueOnce(mockUserSession as any);
 
-    const user = createTestUser({ points: 500 });
-    mockDb.select
-      .mockReturnValueOnce(createChainableMock([user]))
-      .mockReturnValueOnce(createChainableMock([{ todayCount: 1 }]));
-
-    // Simulate race condition: tx.update returns nothing (concurrent deduct)
+    // Simulate race condition: transaction itself rejects (no outside selects needed)
     mockDb.transaction = vi.fn().mockRejectedValueOnce(new Error('INSUFFICIENT_POINTS'));
 
     const result = await buyLotteryTicket();

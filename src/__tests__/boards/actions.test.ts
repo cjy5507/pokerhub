@@ -82,7 +82,7 @@ function mockQueryFindFirst(table: string, result: any) {
 function createChain(result: any = []) {
   const methods = [
     'select', 'from', 'where', 'orderBy', 'limit', 'offset',
-    'insert', 'values', 'returning', 'onConflictDoUpdate',
+    'insert', 'values', 'returning', 'onConflictDoUpdate', 'onConflictDoNothing',
     'update', 'set', 'delete',
     'innerJoin', 'leftJoin', 'rightJoin',
     'groupBy', 'having',
@@ -389,62 +389,96 @@ describe('togglePostLike', () => {
   it('successfully likes a post when no existing like', async () => {
     mockSession(mockUserSession);
 
-    // No existing like
-    mockQueryFindFirst('postLikes', undefined);
-
-    // post found with different author (so points are awarded)
-    mockQueryFindFirst('posts', { authorId: 'another-user-id' });
-
-    // db.query.users for awardPoints
-    mockDb.query.users = {
-      findFirst: vi.fn().mockResolvedValue(createTestUser({ id: 'another-user-id', points: 100 })),
+    // Build the tx mock for the main togglePostLike transaction
+    const txInsert = vi.fn().mockReturnValue(createChain([]));
+    const txUpdate = vi.fn().mockReturnValue(createChain([]));
+    // tx.delete(...).where(...).returning() returns [] — no existing like
+    const txDelete = vi.fn().mockReturnValue(createChain([]));
+    const tx: any = {
+      delete: txDelete,
+      insert: txInsert,
+      update: txUpdate,
+      query: {
+        posts: {
+          // Returns a different author so points will be awarded
+          findFirst: vi.fn().mockResolvedValue({ authorId: 'another-user-id' }),
+        },
+      },
     };
 
-    mockDb.insert = vi.fn().mockReturnValue(createChain([]));
-    mockDb.update = vi.fn().mockReturnValue(createChain([]));
+    // Build the tx mock for the awardPoints transaction (called after the main tx)
+    const awardTxUpdate = vi.fn().mockReturnValue(createChain([{ points: 105 }]));
+    const awardTxInsert = vi.fn().mockReturnValue(createChain([]));
+    const awardTx: any = {
+      update: awardTxUpdate,
+      insert: awardTxInsert,
+    };
+
+    let transactionCallCount = 0;
+    mockDb.transaction = vi.fn().mockImplementation(async (fn: any) => {
+      transactionCallCount++;
+      if (transactionCallCount === 1) {
+        return fn(tx);
+      }
+      // Second call is awardPoints transaction
+      return fn(awardTx);
+    });
 
     const result = await togglePostLike(validInput);
 
     expect(result.success).toBe(true);
     expect((result as any).liked).toBe(true);
-    expect(mockDb.insert).toHaveBeenCalled();
+    expect(txInsert).toHaveBeenCalled();
   });
 
   it('successfully unlikes a post when existing like found', async () => {
     mockSession(mockUserSession);
 
-    // Existing like present
-    mockQueryFindFirst('postLikes', { postId: validInput.postId, userId: mockUserSession.userId });
+    // tx.delete(...).returning() returns a row — existing like found
+    const txDelete = vi.fn().mockReturnValue(createChain([{ userId: mockUserSession.userId }]));
+    const txUpdate = vi.fn().mockReturnValue(createChain([]));
+    const tx: any = {
+      delete: txDelete,
+      update: txUpdate,
+    };
 
-    mockDb.delete = vi.fn().mockReturnValue(createChain([]));
-    mockDb.update = vi.fn().mockReturnValue(createChain([]));
+    mockDb.transaction = vi.fn().mockImplementation(async (fn: any) => fn(tx));
 
     const result = await togglePostLike(validInput);
 
     expect(result.success).toBe(true);
     expect((result as any).liked).toBe(false);
-    expect(mockDb.delete).toHaveBeenCalled();
+    expect(txDelete).toHaveBeenCalled();
   });
 
   it('does not award points when liker is the post author', async () => {
     mockSession(mockUserSession);
 
-    mockQueryFindFirst('postLikes', undefined);
+    // tx.delete(...).returning() returns [] — no existing like (liking for the first time)
+    const txInsert = vi.fn().mockReturnValue(createChain([]));
+    const txUpdate = vi.fn().mockReturnValue(createChain([]));
+    const txDelete = vi.fn().mockReturnValue(createChain([]));
+    const tx: any = {
+      delete: txDelete,
+      insert: txInsert,
+      update: txUpdate,
+      query: {
+        posts: {
+          // post.authorId === session.userId — same user, no points awarded
+          findFirst: vi.fn().mockResolvedValue({ authorId: mockUserSession.userId }),
+        },
+      },
+    };
 
-    // post.authorId === session.userId — same user
-    mockQueryFindFirst('posts', { authorId: mockUserSession.userId });
-
-    mockDb.insert = vi.fn().mockReturnValue(createChain([]));
-    mockDb.update = vi.fn().mockReturnValue(createChain([]));
+    mockDb.transaction = vi.fn().mockImplementation(async (fn: any) => fn(tx));
 
     const result = await togglePostLike(validInput);
 
     expect(result.success).toBe(true);
     expect((result as any).liked).toBe(true);
-    // insert called once for postLikes, but NOT for pointTransactions
-    // (awardPoints only runs when authorId !== userId)
-    // We verify this by checking insert is called exactly once
-    expect(mockDb.insert).toHaveBeenCalledTimes(1);
+    // awardPoints is NOT called when authorId === userId, so db.transaction
+    // is only called once (the main togglePostLike transaction)
+    expect(mockDb.transaction).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -465,31 +499,43 @@ describe('toggleBookmark', () => {
   it('successfully adds bookmark when none exists', async () => {
     mockSession(mockUserSession);
 
-    mockQueryFindFirst('bookmarks', undefined);
+    // tx.delete(...).returning() returns [] — no existing bookmark
+    const txDelete = vi.fn().mockReturnValue(createChain([]));
+    const txInsert = vi.fn().mockReturnValue(createChain([]));
+    const txUpdate = vi.fn().mockReturnValue(createChain([]));
+    const tx: any = {
+      delete: txDelete,
+      insert: txInsert,
+      update: txUpdate,
+    };
 
-    mockDb.insert = vi.fn().mockReturnValue(createChain([]));
-    mockDb.update = vi.fn().mockReturnValue(createChain([]));
+    mockDb.transaction = vi.fn().mockImplementation(async (fn: any) => fn(tx));
 
     const result = await toggleBookmark(validInput);
 
     expect(result.success).toBe(true);
     expect((result as any).bookmarked).toBe(true);
-    expect(mockDb.insert).toHaveBeenCalled();
+    expect(txInsert).toHaveBeenCalled();
   });
 
   it('successfully removes bookmark when existing bookmark found', async () => {
     mockSession(mockUserSession);
 
-    mockQueryFindFirst('bookmarks', { postId: validInput.postId, userId: mockUserSession.userId });
+    // tx.delete(...).returning() returns a row — existing bookmark found
+    const txDelete = vi.fn().mockReturnValue(createChain([{ userId: mockUserSession.userId }]));
+    const txUpdate = vi.fn().mockReturnValue(createChain([]));
+    const tx: any = {
+      delete: txDelete,
+      update: txUpdate,
+    };
 
-    mockDb.delete = vi.fn().mockReturnValue(createChain([]));
-    mockDb.update = vi.fn().mockReturnValue(createChain([]));
+    mockDb.transaction = vi.fn().mockImplementation(async (fn: any) => fn(tx));
 
     const result = await toggleBookmark(validInput);
 
     expect(result.success).toBe(true);
     expect((result as any).bookmarked).toBe(false);
-    expect(mockDb.delete).toHaveBeenCalled();
+    expect(txDelete).toHaveBeenCalled();
   });
 });
 
@@ -696,34 +742,43 @@ describe('toggleCommentLike', () => {
   it('successfully likes comment when no existing like', async () => {
     mockSession(mockUserSession);
 
-    mockQueryFindFirst('commentLikes', undefined);
+    // tx.delete(...).returning() returns [] — no existing like
+    const txDelete = vi.fn().mockReturnValue(createChain([]));
+    const txInsert = vi.fn().mockReturnValue(createChain([]));
+    const txUpdate = vi.fn().mockReturnValue(createChain([]));
+    const tx: any = {
+      delete: txDelete,
+      insert: txInsert,
+      update: txUpdate,
+    };
 
-    mockDb.insert = vi.fn().mockReturnValue(createChain([]));
-    mockDb.update = vi.fn().mockReturnValue(createChain([]));
+    mockDb.transaction = vi.fn().mockImplementation(async (fn: any) => fn(tx));
 
     const result = await toggleCommentLike(validInput);
 
     expect(result.success).toBe(true);
     expect((result as any).liked).toBe(true);
-    expect(mockDb.insert).toHaveBeenCalled();
+    expect(txInsert).toHaveBeenCalled();
   });
 
   it('successfully unlikes comment when existing like found', async () => {
     mockSession(mockUserSession);
 
-    mockQueryFindFirst('commentLikes', {
-      commentId: validInput.commentId,
-      userId: mockUserSession.userId,
-    });
+    // tx.delete(...).returning() returns a row — existing like found
+    const txDelete = vi.fn().mockReturnValue(createChain([{ userId: mockUserSession.userId }]));
+    const txUpdate = vi.fn().mockReturnValue(createChain([]));
+    const tx: any = {
+      delete: txDelete,
+      update: txUpdate,
+    };
 
-    mockDb.delete = vi.fn().mockReturnValue(createChain([]));
-    mockDb.update = vi.fn().mockReturnValue(createChain([]));
+    mockDb.transaction = vi.fn().mockImplementation(async (fn: any) => fn(tx));
 
     const result = await toggleCommentLike(validInput);
 
     expect(result.success).toBe(true);
     expect((result as any).liked).toBe(false);
-    expect(mockDb.delete).toHaveBeenCalled();
+    expect(txDelete).toHaveBeenCalled();
   });
 });
 

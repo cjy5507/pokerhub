@@ -61,6 +61,7 @@ function chainMock(result: unknown[]) {
   chain.where = self;
   chain.orderBy = self;
   chain.limit = self;
+  chain.for = self;
   chain.returning = () => Promise.resolve(result);
   chain[Symbol.iterator] = function* () { yield* result as any[]; };
   chain.then = (resolve: (v: unknown) => void) => resolve(result);
@@ -313,7 +314,16 @@ describe('game actions', () => {
 
     it('should return error when insufficient points (< 100)', async () => {
       mockGetSession.mockResolvedValue({ userId: 'user-1' });
-      setupSelect([{ id: 'user-1', points: 50 }]); // not enough
+
+      // Points check now runs inside the transaction via tx.select with FOR UPDATE
+      mockTransaction.mockImplementation(async (fn: any) => {
+        const tx = {
+          select: vi.fn().mockReturnValueOnce(chainMock([{ id: 'user-1', points: 50 }])),
+          insert: vi.fn(),
+          update: vi.fn(),
+        };
+        return fn(tx);
+      });
 
       const result = await buyLotteryTicket();
 
@@ -323,8 +333,18 @@ describe('game actions', () => {
 
     it('should return error when daily limit exceeded (5 tickets/day)', async () => {
       mockGetSession.mockResolvedValue({ userId: 'user-1' });
-      setupSelect([{ id: 'user-1', points: 1000 }]); // enough points
-      setupSelect([{ todayCount: 5 }]); // already bought 5 today
+
+      // Both checks run inside the transaction
+      mockTransaction.mockImplementation(async (fn: any) => {
+        const tx = {
+          select: vi.fn()
+            .mockReturnValueOnce(chainMock([{ id: 'user-1', points: 1000 }]))
+            .mockReturnValueOnce(chainMock([{ todayCount: 5 }])),
+          insert: vi.fn(),
+          update: vi.fn(),
+        };
+        return fn(tx);
+      });
 
       const result = await buyLotteryTicket();
 
@@ -334,14 +354,11 @@ describe('game actions', () => {
 
     it('should succeed and return ticket on purchase', async () => {
       mockGetSession.mockResolvedValue({ userId: 'user-1' });
-      setupSelect([{ id: 'user-1', points: 1000 }]); // enough points
-      setupSelect([{ todayCount: 2 }]); // under daily limit
 
       // randomInt(0, 1000000) returns 200000 -> 200000/1000000 = 0.2 -> fourth tier (cumulative 0.315)
       mockRandomInt.mockReturnValueOnce(200000);
 
       mockTransaction.mockImplementation(async (fn: any) => {
-        // tx.insert().values().returning() chain
         const txInsert = vi.fn().mockReturnValue({
           values: vi.fn().mockReturnValue({
             returning: vi.fn().mockResolvedValue([{
@@ -352,6 +369,9 @@ describe('game actions', () => {
           }),
         });
         const tx = {
+          select: vi.fn()
+            .mockReturnValueOnce(chainMock([{ id: 'user-1', points: 1000 }]))
+            .mockReturnValueOnce(chainMock([{ todayCount: 2 }])),
           insert: txInsert,
           update: vi.fn().mockReturnValue({
             set: vi.fn().mockReturnValue({
@@ -374,8 +394,6 @@ describe('game actions', () => {
 
     it('should award prize when tier is not none', async () => {
       mockGetSession.mockResolvedValue({ userId: 'user-1' });
-      setupSelect([{ id: 'user-1', points: 1000 }]);
-      setupSelect([{ todayCount: 0 }]);
 
       // randomInt(0, 1000000) returns 4000 -> 4000/1000000 = 0.004 -> first tier (cumulative 0.005)
       mockRandomInt.mockReturnValueOnce(4000);
@@ -400,6 +418,9 @@ describe('game actions', () => {
 
       mockTransaction.mockImplementation(async (fn: any) => {
         const tx = {
+          select: vi.fn()
+            .mockReturnValueOnce(chainMock([{ id: 'user-1', points: 1000 }]))
+            .mockReturnValueOnce(chainMock([{ todayCount: 0 }])),
           insert: mockTxInsert,
           update: mockTxUpdate,
         };
@@ -476,6 +497,9 @@ describe('game actions', () => {
     it('should return error when insufficient points', async () => {
       mockGetSession.mockResolvedValue({ userId: 'user-1' });
       setupSelect([{ id: 'user-1', points: 30 }]); // less than bet of 50
+
+      // Ensure transaction is never reached — reset any implementation left by prior tests
+      mockTransaction.mockReset();
 
       const result = await spinRoulette(50);
 

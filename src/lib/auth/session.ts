@@ -1,15 +1,18 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 
-const JWT_SECRET_RAW = process.env.JWT_SECRET;
-// Note: JWT_SECRET must be set in production environment variables
-const JWT_SECRET = new TextEncoder().encode(JWT_SECRET_RAW || 'dev-secret-not-for-production');
-
 function getJWTSecret() {
-  if (!JWT_SECRET_RAW && process.env.NODE_ENV === 'production') {
-    throw new Error('JWT_SECRET environment variable is required in production');
+  // Read at call time (not module load) so `next build` can collect page data
+  // and tests can set process.env.JWT_SECRET in beforeAll hooks.
+  // In production the env var must be set before the server handles any request.
+  const secret = process.env.JWT_SECRET;
+  if (!secret && process.env.NODE_ENV !== 'development') {
+    throw new Error(
+      'JWT_SECRET environment variable is required in non-development environments. ' +
+      'Set it in your environment configuration before starting the server.'
+    );
   }
-  return JWT_SECRET;
+  return new TextEncoder().encode(secret || 'dev-secret-not-for-production');
 }
 
 const COOKIE_NAME = 'session';

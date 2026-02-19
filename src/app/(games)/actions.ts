@@ -113,35 +113,35 @@ export async function claimCooldownReward() {
     const userId = session.userId;
     const now = new Date();
 
-    // Query latest cooldown claim
-    const [latestClaim] = await db
-      .select()
-      .from(cooldownRewards)
-      .where(eq(cooldownRewards.userId, userId))
-      .orderBy(desc(cooldownRewards.claimedAt))
-      .limit(1);
-
-    // Check cooldown
-    if (latestClaim) {
-      const timeSinceLastClaim = now.getTime() - latestClaim.claimedAt.getTime();
-      const cooldownMs = COOLDOWN_MINUTES * 60 * 1000;
-
-      if (timeSinceLastClaim < cooldownMs) {
-        const nextClaimAt = new Date(latestClaim.claimedAt.getTime() + cooldownMs);
-        return {
-          success: false,
-          error: '아직 수확할 수 없습니다',
-          nextClaimAt: nextClaimAt.toISOString(),
-        };
-      }
-    }
-
-    // Generate random reward
+    // Generate random reward before entering transaction
     const pointsEarned = getRandomReward();
-    const nextClaimAt = new Date(now.getTime() + COOLDOWN_MINUTES * 60 * 1000);
 
-    // Execute in transaction
-    await db.transaction(async (tx: any) => {
+    // Execute in transaction — cooldown check is INSIDE to prevent double-claim
+    const result = await db.transaction(async (tx: any) => {
+      // Lock the latest cooldown record for this user
+      const [latestClaim] = await tx
+        .select()
+        .from(cooldownRewards)
+        .where(eq(cooldownRewards.userId, userId))
+        .orderBy(desc(cooldownRewards.claimedAt))
+        .limit(1)
+        .for('update');
+
+      // Check cooldown inside transaction
+      if (latestClaim) {
+        const timeSinceLastClaim = now.getTime() - latestClaim.claimedAt.getTime();
+        const cooldownMs = COOLDOWN_MINUTES * 60 * 1000;
+
+        if (timeSinceLastClaim < cooldownMs) {
+          const nextClaimAt = new Date(latestClaim.claimedAt.getTime() + cooldownMs);
+          return {
+            success: false as const,
+            error: '아직 수확할 수 없습니다',
+            nextClaimAt: nextClaimAt.toISOString(),
+          };
+        }
+      }
+
       // Insert cooldown reward record
       await tx.insert(cooldownRewards).values({
         userId,
@@ -150,7 +150,7 @@ export async function claimCooldownReward() {
         claimedAt: now,
       });
 
-      // Update user points
+      // Update user points atomically
       const [updatedUser] = await tx
         .update(users)
         .set({ points: sql`${users.points} + ${pointsEarned}` })
@@ -165,13 +165,16 @@ export async function claimCooldownReward() {
         type: 'earn_harvest',
         description: '쿨다운 보상',
       });
+
+      const nextClaimAt = new Date(now.getTime() + COOLDOWN_MINUTES * 60 * 1000);
+      return {
+        success: true as const,
+        pointsEarned,
+        nextClaimAt: nextClaimAt.toISOString(),
+      };
     });
 
-    return {
-      success: true,
-      pointsEarned,
-      nextClaimAt: nextClaimAt.toISOString(),
-    };
+    return result;
   } catch (error) {
     console.error('Error claiming cooldown reward:', error);
     return { success: false, error: '포인트 수확에 실패했습니다' };
@@ -189,35 +192,40 @@ export async function buyLotteryTicket() {
 
     const userId = session.userId;
 
-    // Get user points
-    const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
-
-    if (!user) {
-      return { success: false, error: '사용자를 찾을 수 없습니다' };
-    }
-
-    if (user.points < LOTTERY_COST) {
-      return { success: false, error: '포인트가 부족합니다' };
-    }
-
-    // Check daily limit (tickets purchased today)
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const [{ todayCount }] = await db
-      .select({ todayCount: count() })
-      .from(lotteryTickets)
-      .where(and(eq(lotteryTickets.userId, userId), gte(lotteryTickets.createdAt, today)));
-
-    if (todayCount >= DAILY_LOTTERY_LIMIT) {
-      return { success: false, error: '오늘의 구매 한도를 초과했습니다 (5장/일)' };
-    }
-
-    // Determine ticket tier and prize
+    // Determine ticket tier and prize before entering transaction
     const { tier, prize } = determineLotteryTier();
 
-    // Execute in transaction
-    const [ticket] = await db.transaction(async (tx: any) => {
+    // Execute in transaction — daily limit check is INSIDE to prevent bypass
+    const result = await db.transaction(async (tx: any) => {
+      // Check user points inside transaction
+      const [user] = await tx
+        .select({ points: users.points })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1)
+        .for('update');
+
+      if (!user) {
+        return { success: false as const, error: '사용자를 찾을 수 없습니다' };
+      }
+
+      if (user.points < LOTTERY_COST) {
+        return { success: false as const, error: '포인트가 부족합니다' };
+      }
+
+      // Check daily limit inside transaction to prevent bypass via rapid requests
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const [{ todayCount }] = await tx
+        .select({ todayCount: count() })
+        .from(lotteryTickets)
+        .where(and(eq(lotteryTickets.userId, userId), gte(lotteryTickets.createdAt, today)));
+
+      if (todayCount >= DAILY_LOTTERY_LIMIT) {
+        return { success: false as const, error: '오늘의 구매 한도를 초과했습니다 (5장/일)' };
+      }
+
       // Insert lottery ticket
       const [newTicket] = await tx
         .insert(lotteryTickets)
@@ -230,7 +238,7 @@ export async function buyLotteryTicket() {
         })
         .returning();
 
-      // Deduct cost from user
+      // Deduct cost from user atomically
       const [afterSpend] = await tx
         .update(users)
         .set({ points: sql`${users.points} - ${LOTTERY_COST}` })
@@ -267,17 +275,17 @@ export async function buyLotteryTicket() {
         });
       }
 
-      return [newTicket];
+      return {
+        success: true as const,
+        ticket: {
+          id: newTicket.id,
+          tier: newTicket.tier,
+          prizeAmount: newTicket.prizeAmount,
+        },
+      };
     });
 
-    return {
-      success: true,
-      ticket: {
-        id: ticket.id,
-        tier: ticket.tier,
-        prizeAmount: ticket.prizeAmount,
-      },
-    };
+    return result;
   } catch (error: any) {
     if (error?.message === 'INSUFFICIENT_POINTS') {
       return { success: false, error: '포인트가 부족합니다' };

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Leaf, Clock, Coins, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { claimCooldownReward } from '@/app/(games)/actions';
@@ -23,6 +23,10 @@ export function CooldownRewardWidget() {
     totalToday: 0,
   });
   const [showCelebration, setShowCelebration] = useState(false);
+  const celebrationTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  // Cleanup celebration timer on unmount
+  useEffect(() => () => { if (celebrationTimer.current) clearTimeout(celebrationTimer.current); }, []);
 
   // Load stats from localStorage
   useEffect(() => {
@@ -108,7 +112,7 @@ export function CooldownRewardWidget() {
         setShowCelebration(true);
 
         // Hide celebration after 2 seconds
-        setTimeout(() => setShowCelebration(false), 2000);
+        celebrationTimer.current = setTimeout(() => setShowCelebration(false), 2000);
       } else {
         console.error('Failed to claim reward:', result.error);
       }

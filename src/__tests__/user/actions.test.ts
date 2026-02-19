@@ -100,26 +100,37 @@ describe('toggleFollow', () => {
 
   it('successfully follows a user when no existing follow record', async () => {
     getSession.mockResolvedValue(mockUserSession);
-    // select returns empty (not yet following)
-    mockSelectSequence([[]]);
-    mockInsertChain(mockDb, []);
+
+    // Source uses insert-first transaction pattern:
+    // tx.insert(userFollows).values(...).onConflictDoNothing().returning(...)
+    // → [row] means newly inserted → isFollowing: true
+    const tx = {
+      insert: vi.fn().mockReturnValue(createChainableMock([{ followerId: mockUserSession.userId }])),
+    };
+    mockDb.transaction.mockImplementationOnce((cb: (tx: any) => any) => cb(tx));
 
     const result = await toggleFollow('target-user-id');
 
     expect(result).toEqual({ success: true, isFollowing: true });
-    expect(mockDb.insert).toHaveBeenCalledOnce();
+    expect(tx.insert).toHaveBeenCalledOnce();
   });
 
   it('successfully unfollows a user when existing follow record found', async () => {
     getSession.mockResolvedValue(mockUserSession);
-    // select returns an existing follow row
-    mockSelectSequence([[{ followerId: mockUserSession.userId, followingId: 'target-user-id' }]]);
-    mockDeleteChain(mockDb, []);
+
+    // Source uses insert-first transaction pattern:
+    // tx.insert(...).onConflictDoNothing().returning() → [] means conflict (already following)
+    // tx.delete(...).returning() → [row] means deleted → isFollowing: false (deleted.length === 0 is false → isFollowing = false)
+    const tx = {
+      insert: vi.fn().mockReturnValue(createChainableMock([])),
+      delete: vi.fn().mockReturnValue(createChainableMock([{ followerId: mockUserSession.userId }])),
+    };
+    mockDb.transaction.mockImplementationOnce((cb: (tx: any) => any) => cb(tx));
 
     const result = await toggleFollow('target-user-id');
 
     expect(result).toEqual({ success: true, isFollowing: false });
-    expect(mockDb.delete).toHaveBeenCalledOnce();
+    expect(tx.delete).toHaveBeenCalledOnce();
   });
 });
 

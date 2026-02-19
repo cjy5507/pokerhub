@@ -42,8 +42,8 @@ export const mockUser2Session: MockSession = {
 export function createChainableMock(resolveValue: any = []) {
   const chain: any = {};
   const methods = [
-    'select', 'from', 'where', 'orderBy', 'limit', 'offset',
-    'insert', 'values', 'returning', 'onConflictDoUpdate',
+    'select', 'from', 'where', 'orderBy', 'limit', 'offset', 'for',
+    'insert', 'values', 'returning', 'onConflictDoNothing', 'onConflictDoUpdate',
     'update', 'set', 'delete',
     'innerJoin', 'leftJoin', 'rightJoin',
     'groupBy', 'having',
@@ -250,6 +250,6 @@ export function createTestThread(overrides: Record<string, any> = {}) {
 }
 
 export function resetMocks() {
-  vi.clearAllMocks();
+  vi.resetAllMocks();
   idCounter = 0;
 }

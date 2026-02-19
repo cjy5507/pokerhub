@@ -73,33 +73,28 @@ async function awardXP(userId: string, amount: number, type: string, referenceId
 async function awardPoints(userId: string, amount: number, type: string, referenceId?: string, description?: string) {
   if (!db) return;
   try {
-    // Get current balance
-    const user = await db.query.users.findFirst({
-      where: eq(users.id, userId),
-      columns: { points: true },
+    await db.transaction(async (tx: any) => {
+      // Atomically update user points and capture new balance in a single statement
+      const [updated] = await tx
+        .update(users)
+        .set({
+          points: sql`${users.points} + ${amount}`,
+        })
+        .where(eq(users.id, userId))
+        .returning({ points: users.points });
+
+      if (!updated) return;
+
+      // Record transaction with the post-update balance
+      await tx.insert(pointTransactions).values({
+        userId,
+        amount,
+        balanceAfter: updated.points,
+        type: type as any,
+        referenceId,
+        description,
+      });
     });
-
-    if (!user) return;
-
-    const newBalance = user.points + amount;
-
-    // Add points transaction
-    await db.insert(pointTransactions).values({
-      userId,
-      amount,
-      balanceAfter: newBalance,
-      type: type as any,
-      referenceId,
-      description,
-    });
-
-    // Update user points
-    await db
-      .update(users)
-      .set({
-        points: newBalance,
-      })
-      .where(eq(users.id, userId));
   } catch (error) {
     console.error('Failed to award points:', error);
   }
@@ -323,61 +318,55 @@ export async function togglePostLike(input: TogglePostLikeInput) {
     const session = await requireAuth();
     const validated = togglePostLikeSchema.parse(input);
 
-    // Check if already liked
-    const existingLike = await db.query.postLikes.findFirst({
-      where: and(
-        eq(postLikes.postId, validated.postId),
-        eq(postLikes.userId, session.userId)
-      ),
-    });
-
-    if (existingLike) {
-      // Unlike
-      await db
+    const result = await db.transaction(async (tx: any) => {
+      // Attempt delete first; RETURNING tells us if a row was actually removed
+      const deleted = await tx
         .delete(postLikes)
         .where(
           and(
             eq(postLikes.postId, validated.postId),
             eq(postLikes.userId, session.userId)
           )
-        );
+        )
+        .returning({ userId: postLikes.userId });
 
-      // Decrement like count
-      await db
+      if (deleted.length > 0) {
+        // Row existed — decrement atomically
+        await tx
+          .update(posts)
+          .set({ likeCount: sql`${posts.likeCount} - 1` })
+          .where(eq(posts.id, validated.postId));
+
+        return { liked: false, authorId: null as string | null };
+      }
+
+      // Row did not exist — insert, ignoring a race-condition duplicate
+      await tx
+        .insert(postLikes)
+        .values({ postId: validated.postId, userId: session.userId })
+        .onConflictDoNothing();
+
+      // Increment atomically
+      await tx
         .update(posts)
-        .set({
-          likeCount: sql`${posts.likeCount} - 1`,
-        })
+        .set({ likeCount: sql`${posts.likeCount} + 1` })
         .where(eq(posts.id, validated.postId));
 
-      return { success: true, liked: false };
-    } else {
-      // Like
-      await db.insert(postLikes).values({
-        postId: validated.postId,
-        userId: session.userId,
-      });
-
-      // Increment like count
-      await db
-        .update(posts)
-        .set({
-          likeCount: sql`${posts.likeCount} + 1`,
-        })
-        .where(eq(posts.id, validated.postId));
-
-      // Award points to post author
-      const post = await db.query.posts.findFirst({
+      // Fetch author for points award (still inside tx for consistency)
+      const post = await tx.query.posts.findFirst({
         where: eq(posts.id, validated.postId),
         columns: { authorId: true },
       });
 
-      if (post && post.authorId !== session.userId) {
-        await awardPoints(post.authorId, 5, 'earn_like', validated.postId, '게시글 좋아요 받음');
-      }
+      return { liked: true, authorId: post?.authorId ?? null };
+    });
 
-      return { success: true, liked: true };
+    // Award points outside the transaction so a failure doesn't roll back the like
+    if (result.liked && result.authorId && result.authorId !== session.userId) {
+      await awardPoints(result.authorId, 5, 'earn_like', validated.postId, '게시글 좋아요 받음');
     }
+
+    return { success: true, liked: result.liked };
   } catch (error) {
     console.error('Toggle post like error:', error);
     if (error instanceof Error) {
@@ -396,51 +385,44 @@ export async function toggleBookmark(input: ToggleBookmarkInput) {
     const session = await requireAuth();
     const validated = toggleBookmarkSchema.parse(input);
 
-    // Check if already bookmarked
-    const existingBookmark = await db.query.bookmarks.findFirst({
-      where: and(
-        eq(bookmarks.postId, validated.postId),
-        eq(bookmarks.userId, session.userId)
-      ),
-    });
-
-    if (existingBookmark) {
-      // Remove bookmark
-      await db
+    const { bookmarked } = await db.transaction(async (tx: any) => {
+      // Attempt delete; RETURNING tells us if a row was actually removed
+      const deleted = await tx
         .delete(bookmarks)
         .where(
           and(
             eq(bookmarks.postId, validated.postId),
             eq(bookmarks.userId, session.userId)
           )
-        );
+        )
+        .returning({ userId: bookmarks.userId });
 
-      // Decrement bookmark count
-      await db
+      if (deleted.length > 0) {
+        // Row existed — decrement atomically
+        await tx
+          .update(posts)
+          .set({ bookmarkCount: sql`${posts.bookmarkCount} - 1` })
+          .where(eq(posts.id, validated.postId));
+
+        return { bookmarked: false };
+      }
+
+      // Row did not exist — insert, ignoring a race-condition duplicate
+      await tx
+        .insert(bookmarks)
+        .values({ postId: validated.postId, userId: session.userId })
+        .onConflictDoNothing();
+
+      // Increment atomically
+      await tx
         .update(posts)
-        .set({
-          bookmarkCount: sql`${posts.bookmarkCount} - 1`,
-        })
+        .set({ bookmarkCount: sql`${posts.bookmarkCount} + 1` })
         .where(eq(posts.id, validated.postId));
 
-      return { success: true, bookmarked: false };
-    } else {
-      // Add bookmark
-      await db.insert(bookmarks).values({
-        postId: validated.postId,
-        userId: session.userId,
-      });
+      return { bookmarked: true };
+    });
 
-      // Increment bookmark count
-      await db
-        .update(posts)
-        .set({
-          bookmarkCount: sql`${posts.bookmarkCount} + 1`,
-        })
-        .where(eq(posts.id, validated.postId));
-
-      return { success: true, bookmarked: true };
-    }
+    return { success: true, bookmarked };
   } catch (error) {
     console.error('Toggle bookmark error:', error);
     if (error instanceof Error) {
@@ -519,51 +501,44 @@ export async function toggleCommentLike(input: ToggleCommentLikeInput) {
     const session = await requireAuth();
     const validated = toggleCommentLikeSchema.parse(input);
 
-    // Check if already liked
-    const existingLike = await db.query.commentLikes.findFirst({
-      where: and(
-        eq(commentLikes.commentId, validated.commentId),
-        eq(commentLikes.userId, session.userId)
-      ),
-    });
-
-    if (existingLike) {
-      // Unlike
-      await db
+    const { liked } = await db.transaction(async (tx: any) => {
+      // Attempt delete; RETURNING tells us if a row was actually removed
+      const deleted = await tx
         .delete(commentLikes)
         .where(
           and(
             eq(commentLikes.commentId, validated.commentId),
             eq(commentLikes.userId, session.userId)
           )
-        );
+        )
+        .returning({ userId: commentLikes.userId });
 
-      // Decrement like count
-      await db
+      if (deleted.length > 0) {
+        // Row existed — decrement atomically
+        await tx
+          .update(comments)
+          .set({ likeCount: sql`${comments.likeCount} - 1` })
+          .where(eq(comments.id, validated.commentId));
+
+        return { liked: false };
+      }
+
+      // Row did not exist — insert, ignoring a race-condition duplicate
+      await tx
+        .insert(commentLikes)
+        .values({ commentId: validated.commentId, userId: session.userId })
+        .onConflictDoNothing();
+
+      // Increment atomically
+      await tx
         .update(comments)
-        .set({
-          likeCount: sql`${comments.likeCount} - 1`,
-        })
+        .set({ likeCount: sql`${comments.likeCount} + 1` })
         .where(eq(comments.id, validated.commentId));
 
-      return { success: true, liked: false };
-    } else {
-      // Like
-      await db.insert(commentLikes).values({
-        commentId: validated.commentId,
-        userId: session.userId,
-      });
+      return { liked: true };
+    });
 
-      // Increment like count
-      await db
-        .update(comments)
-        .set({
-          likeCount: sql`${comments.likeCount} + 1`,
-        })
-        .where(eq(comments.id, validated.commentId));
-
-      return { success: true, liked: true };
-    }
+    return { success: true, liked };
   } catch (error) {
     console.error('Toggle comment like error:', error);
     if (error instanceof Error) {

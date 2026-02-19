@@ -155,7 +155,8 @@ export async function getPointHistoryAction(page: number = 1, limit: number = 20
   }
 
   try {
-    const result = await getPointHistory(session.userId, page, limit);
+    const safeLimitValue = Math.min(limit, 100);
+    const result = await getPointHistory(session.userId, page, safeLimitValue);
     return {
       success: true,
       data: result,

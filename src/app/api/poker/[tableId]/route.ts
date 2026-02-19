@@ -171,19 +171,38 @@ export async function GET(
             if (elapsed >= TURN_TIMEOUT_SECONDS && !isProcessingTimeout) {
               isProcessingTimeout = true;
               try {
-                const [timedOutSeat] = await db!
-                  .select({ userId: pokerTableSeats.userId })
-                  .from(pokerTableSeats)
-                  .where(
-                    and(
-                      eq(pokerTableSeats.tableId, tableId),
-                      eq(pokerTableSeats.seatNumber, hand.currentSeat)
-                    )
-                  )
-                  .limit(1);
+                // Re-fetch hand state to confirm this connection should handle the fold.
+                // Multiple SSE connections can all detect the timeout simultaneously;
+                // the fresh SELECT lets us verify the current player hasn't already
+                // acted (or been folded by another connection) since we last polled.
+                const freshHand = await db!
+                  .select()
+                  .from(pokerGameHands)
+                  .where(eq(pokerGameHands.id, hand.id))
+                  .limit(1)
+                  .then((rows: any) => rows[0] ?? null);
 
-                if (timedOutSeat) {
-                  await processAction(tableId, timedOutSeat.userId, 'fold');
+                if (
+                  freshHand &&
+                  freshHand.status !== 'complete' &&
+                  freshHand.currentSeat === hand.currentSeat &&
+                  freshHand.turnStartedAt &&
+                  (Date.now() - new Date(freshHand.turnStartedAt).getTime()) / 1000 >= TURN_TIMEOUT_SECONDS
+                ) {
+                  const [timedOutSeat] = await db!
+                    .select({ userId: pokerTableSeats.userId })
+                    .from(pokerTableSeats)
+                    .where(
+                      and(
+                        eq(pokerTableSeats.tableId, tableId),
+                        eq(pokerTableSeats.seatNumber, freshHand.currentSeat)
+                      )
+                    )
+                    .limit(1);
+
+                  if (timedOutSeat) {
+                    await processAction(tableId, timedOutSeat.userId, 'fold');
+                  }
                 }
               } catch (err) {
                 console.error('Auto-fold timeout error:', err);

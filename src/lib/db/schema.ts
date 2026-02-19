@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, text, timestamp, integer, boolean, pgEnum, jsonb, date, primaryKey, index, uniqueIndex } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, text, timestamp, integer, boolean, pgEnum, jsonb, date, primaryKey, index, uniqueIndex, type AnyPgColumn } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
 // ==================== ENUMS ====================
@@ -122,11 +122,11 @@ export const posts = pgTable('posts', {
   createdAtIdx: index('posts_created_at_idx').on(table.createdAt),
 }));
 
-export const comments: any = pgTable('comments', {
+export const comments = pgTable('comments', {
   id: uuid('id').defaultRandom().primaryKey(),
   postId: uuid('post_id').notNull().references(() => posts.id, { onDelete: 'cascade' }),
   authorId: uuid('author_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  parentId: uuid('parent_id').references((): any => comments.id, { onDelete: 'cascade' }),
+  parentId: uuid('parent_id').references((): AnyPgColumn => comments.id, { onDelete: 'cascade' }),
   content: text('content').notNull(),
   likeCount: integer('like_count').notNull().default(0),
   status: commentStatusEnum('status').notNull().default('published'),

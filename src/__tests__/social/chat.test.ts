@@ -6,9 +6,10 @@
  *  - @/lib/auth/session → getSession returns null | session
  *  - next/cache      → revalidatePath is a no-op spy
  *
- * getChatRooms makes N+2 selects (one for all rooms, one for participant counts,
- * then one per room for lastMessage). We use mockReturnValueOnce for precise
- * control of each call in sequence.
+ * getChatRooms makes 2 selects + 1 db.execute:
+ *   1. select rooms
+ *   2. select participant counts
+ *   3. db.execute (DISTINCT ON query for last messages)
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -83,11 +84,16 @@ function makeChatMessage(overrides: Record<string, any> = {}) {
   };
 }
 
+/**
+ * Builds a raw row as returned by db.execute (DISTINCT ON query).
+ * Fields use snake_case matching the SQL column aliases.
+ */
 function makeLastMessageRow(overrides: Record<string, any> = {}) {
   return {
+    room_id: createTestUUID(),
     content: '마지막 메시지입니다.',
-    senderNickname: mockUserSession.nickname,
-    createdAt: new Date('2024-01-02T09:00:00.000Z'),
+    sender_nickname: mockUserSession.nickname,
+    created_at: new Date('2024-01-02T09:00:00.000Z').toISOString(),
     ...overrides,
   };
 }
@@ -110,6 +116,7 @@ describe('getChatRooms', () => {
   it('returns empty rooms array when no active rooms exist', async () => {
     // 1. select rooms → []
     // 2. select participant counts → []
+    // (db.execute not called because roomIds.length === 0)
     mockDb.select
       .mockReturnValueOnce(createChainableMock([]))   // rooms
       .mockReturnValueOnce(createChainableMock([]));  // participant counts
@@ -123,10 +130,13 @@ describe('getChatRooms', () => {
   it('returns rooms with participantCount from last 24 hours', async () => {
     const room = makeChatRoom({ id: 'room-1' });
 
+    // 1. select rooms
+    // 2. select participant counts
+    // 3. db.execute → raw rows (array format)
     mockDb.select
-      .mockReturnValueOnce(createChainableMock([room]))                        // rooms
-      .mockReturnValueOnce(createChainableMock([{ roomId: 'room-1', count: 5 }])) // participant counts
-      .mockReturnValueOnce(createChainableMock([]));                            // lastMessage for room-1
+      .mockReturnValueOnce(createChainableMock([room]))
+      .mockReturnValueOnce(createChainableMock([{ roomId: 'room-1', count: 5 }]));
+    mockDb.execute.mockResolvedValueOnce([]);  // no last messages
 
     const result = await getChatRooms();
 
@@ -139,9 +149,9 @@ describe('getChatRooms', () => {
     const room = makeChatRoom({ id: 'room-no-participants' });
 
     mockDb.select
-      .mockReturnValueOnce(createChainableMock([room]))  // rooms
-      .mockReturnValueOnce(createChainableMock([]))      // no participant counts
-      .mockReturnValueOnce(createChainableMock([]));     // no lastMessage
+      .mockReturnValueOnce(createChainableMock([room]))
+      .mockReturnValueOnce(createChainableMock([]));
+    mockDb.execute.mockResolvedValueOnce([]);
 
     const result = await getChatRooms();
 
@@ -150,28 +160,35 @@ describe('getChatRooms', () => {
 
   it('includes lastMessage data when the room has messages', async () => {
     const room = makeChatRoom({ id: 'room-with-msg' });
-    const lastMsg = makeLastMessageRow();
+    const lastMsg = makeLastMessageRow({
+      room_id: 'room-with-msg',
+      content: '마지막 메시지입니다.',
+      sender_nickname: mockUserSession.nickname,
+      created_at: new Date('2024-01-02T09:00:00.000Z').toISOString(),
+    });
 
     mockDb.select
-      .mockReturnValueOnce(createChainableMock([room]))   // rooms
-      .mockReturnValueOnce(createChainableMock([]))       // participant counts
-      .mockReturnValueOnce(createChainableMock([lastMsg])); // lastMessage for room
+      .mockReturnValueOnce(createChainableMock([room]))
+      .mockReturnValueOnce(createChainableMock([]));
+    mockDb.execute.mockResolvedValueOnce([lastMsg]);
 
     const result = await getChatRooms();
 
     expect(result.rooms[0].lastMessage).not.toBeNull();
     expect(result.rooms[0].lastMessage?.content).toBe(lastMsg.content);
-    expect(result.rooms[0].lastMessage?.senderNickname).toBe(lastMsg.senderNickname);
-    expect(result.rooms[0].lastMessage?.createdAt).toBe(lastMsg.createdAt.toISOString());
+    expect(result.rooms[0].lastMessage?.senderNickname).toBe(lastMsg.sender_nickname);
+    expect(result.rooms[0].lastMessage?.createdAt).toBe(
+      new Date(lastMsg.created_at).toISOString()
+    );
   });
 
   it('sets lastMessage to null when room has no messages', async () => {
     const room = makeChatRoom({ id: 'empty-room' });
 
     mockDb.select
-      .mockReturnValueOnce(createChainableMock([room]))  // rooms
-      .mockReturnValueOnce(createChainableMock([]))      // participant counts
-      .mockReturnValueOnce(createChainableMock([]));     // no lastMessage
+      .mockReturnValueOnce(createChainableMock([room]))
+      .mockReturnValueOnce(createChainableMock([]));
+    mockDb.execute.mockResolvedValueOnce([]);
 
     const result = await getChatRooms();
 
@@ -182,14 +199,20 @@ describe('getChatRooms', () => {
     const roomA = makeChatRoom({ id: 'room-a', slug: 'room-a' });
     const roomB = makeChatRoom({ id: 'room-b', slug: 'room-b' });
 
-    const olderMsg = makeLastMessageRow({ createdAt: new Date('2024-01-01T08:00:00.000Z') });
-    const newerMsg = makeLastMessageRow({ createdAt: new Date('2024-01-02T08:00:00.000Z') });
+    const olderMsgRow = makeLastMessageRow({
+      room_id: 'room-a',
+      created_at: new Date('2024-01-01T08:00:00.000Z').toISOString(),
+    });
+    const newerMsgRow = makeLastMessageRow({
+      room_id: 'room-b',
+      created_at: new Date('2024-01-02T08:00:00.000Z').toISOString(),
+    });
 
     mockDb.select
-      .mockReturnValueOnce(createChainableMock([roomA, roomB]))  // rooms (A first)
-      .mockReturnValueOnce(createChainableMock([]))              // participant counts
-      .mockReturnValueOnce(createChainableMock([olderMsg]))      // roomA lastMessage
-      .mockReturnValueOnce(createChainableMock([newerMsg]));     // roomB lastMessage
+      .mockReturnValueOnce(createChainableMock([roomA, roomB]))
+      .mockReturnValueOnce(createChainableMock([]));
+    // execute returns both rows; one per room (DISTINCT ON)
+    mockDb.execute.mockResolvedValueOnce([olderMsgRow, newerMsgRow]);
 
     const result = await getChatRooms();
 
@@ -202,13 +225,15 @@ describe('getChatRooms', () => {
     const roomWithMsg = makeChatRoom({ id: 'room-msg' });
     const roomNoMsg = makeChatRoom({ id: 'room-no-msg' });
 
-    const msg = makeLastMessageRow({ createdAt: new Date('2024-01-01T12:00:00.000Z') });
+    const msgRow = makeLastMessageRow({
+      room_id: 'room-msg',
+      created_at: new Date('2024-01-01T12:00:00.000Z').toISOString(),
+    });
 
     mockDb.select
-      .mockReturnValueOnce(createChainableMock([roomNoMsg, roomWithMsg]))  // rooms
-      .mockReturnValueOnce(createChainableMock([]))                        // participant counts
-      .mockReturnValueOnce(createChainableMock([]))                        // roomNoMsg: no message
-      .mockReturnValueOnce(createChainableMock([msg]));                    // roomWithMsg: has message
+      .mockReturnValueOnce(createChainableMock([roomNoMsg, roomWithMsg]))
+      .mockReturnValueOnce(createChainableMock([]));
+    mockDb.execute.mockResolvedValueOnce([msgRow]);
 
     const result = await getChatRooms();
 
@@ -226,6 +251,26 @@ describe('getChatRooms', () => {
     expect(result.success).toBe(false);
     expect(result.rooms).toHaveLength(0);
     expect(result.error).toBeDefined();
+  });
+
+  it('handles db.execute returning rows via .rows property (alternate driver format)', async () => {
+    const room = makeChatRoom({ id: 'room-rows' });
+    const lastMsg = makeLastMessageRow({
+      room_id: 'room-rows',
+      content: 'alternate driver msg',
+      created_at: new Date('2024-01-03T10:00:00.000Z').toISOString(),
+    });
+
+    mockDb.select
+      .mockReturnValueOnce(createChainableMock([room]))
+      .mockReturnValueOnce(createChainableMock([]));
+    // Simulate postgres driver wrapping rows in { rows: [...] }
+    mockDb.execute.mockResolvedValueOnce({ rows: [lastMsg] });
+
+    const result = await getChatRooms();
+
+    expect(result.success).toBe(true);
+    expect(result.rooms[0].lastMessage?.content).toBe('alternate driver msg');
   });
 });
 
@@ -246,6 +291,11 @@ describe('getChatRoom', () => {
 
   it('returns full room data on successful retrieval', async () => {
     const room = makeChatRoom({ id: 'room-ok' });
+    const lastMsg = {
+      content: '마지막 메시지입니다.',
+      senderNickname: mockUserSession.nickname,
+      createdAt: new Date('2024-01-02T09:00:00.000Z'),
+    };
 
     // 1. select room → [room]
     // 2. select participant count → [{ count: 3 }]
@@ -253,7 +303,7 @@ describe('getChatRoom', () => {
     mockDb.select
       .mockReturnValueOnce(createChainableMock([room]))
       .mockReturnValueOnce(createChainableMock([{ count: 3 }]))
-      .mockReturnValueOnce(createChainableMock([makeLastMessageRow()]));
+      .mockReturnValueOnce(createChainableMock([lastMsg]));
 
     const result = await getChatRoom('room-ok');
 

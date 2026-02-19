@@ -76,39 +76,53 @@ export async function getChatRooms() {
       participantCounts.map((pc: any) => [pc.roomId, Number(pc.count)])
     );
 
-    // Get last message for each room
-    const roomsWithData: ChatRoomData[] = await Promise.all(
-      rooms.map(async (room: any) => {
-        const lastMessageResult = await db
-          .select({
-            content: chatMessages.content,
-            senderNickname: users.nickname,
-            createdAt: chatMessages.createdAt,
-          })
-          .from(chatMessages)
-          .innerJoin(users, eq(chatMessages.senderId, users.id))
-          .where(eq(chatMessages.roomId, room.id))
-          .orderBy(desc(chatMessages.createdAt))
-          .limit(1);
+    // Get last message for each room in a single query using DISTINCT ON
+    const roomIds = rooms.map((r: any) => r.id);
 
-        return {
-          id: room.id,
-          slug: room.slug,
-          nameKo: room.nameKo,
-          type: room.type,
-          minLevel: room.minLevel,
-          participantCount: participantCountMap.get(room.id) || 0,
-          lastMessage: lastMessageResult[0]
-            ? {
-                content: lastMessageResult[0].content,
-                senderNickname: lastMessageResult[0].senderNickname,
-                createdAt: lastMessageResult[0].createdAt.toISOString(),
-              }
-            : null,
-          createdAt: room.createdAt.toISOString(),
-        };
-      })
+    let lastMessageRows: any[] = [];
+    if (roomIds.length > 0) {
+      const rawResult = await db.execute(
+        sql`
+          SELECT DISTINCT ON (cm.room_id)
+            cm.room_id,
+            cm.content,
+            cm.created_at,
+            u.nickname AS sender_nickname
+          FROM chat_messages cm
+          INNER JOIN users u ON cm.sender_id = u.id
+          WHERE cm.room_id IN (${sql.join(roomIds.map((id: string) => sql`${id}::uuid`), sql`, `)})
+          ORDER BY cm.room_id, cm.created_at DESC
+        `
+      );
+      // postgres-js driver returns rows directly as an array; some wrappers use .rows
+      lastMessageRows = Array.isArray(rawResult)
+        ? rawResult
+        : Array.isArray((rawResult as any)?.rows)
+          ? (rawResult as any).rows
+          : [];
+    }
+
+    const lastMessageMap = new Map(
+      lastMessageRows.map((row: any) => [
+        row.room_id,
+        {
+          content: row.content as string,
+          senderNickname: row.sender_nickname as string,
+          createdAt: new Date(row.created_at as string).toISOString(),
+        },
+      ])
     );
+
+    const roomsWithData: ChatRoomData[] = rooms.map((room: any) => ({
+      id: room.id,
+      slug: room.slug,
+      nameKo: room.nameKo,
+      type: room.type,
+      minLevel: room.minLevel,
+      participantCount: participantCountMap.get(room.id) || 0,
+      lastMessage: lastMessageMap.get(room.id) ?? null,
+      createdAt: room.createdAt.toISOString(),
+    }));
 
     // Sort by last message time
     roomsWithData.sort((a, b) => {

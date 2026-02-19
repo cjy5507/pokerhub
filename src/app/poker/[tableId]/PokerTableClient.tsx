@@ -631,6 +631,7 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
   const prevLastActionRef = useRef<string | null>(null);
   const prevPotRef = useRef(0);
   const prevTimeLeftRef = useRef(30);
+  const lastActionTimers = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
 
   // Sound system
   const sounds = usePokerSounds();
@@ -850,13 +851,17 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
               const text = ACTION_LABELS_KR[actionKey] ?? la.action;
               const display = la.amount > 0 ? `${text} ${la.amount.toLocaleString()}` : text;
               setLastActions(prev => ({ ...prev, [la.seatNumber]: display }));
-              setTimeout(() => {
+              const prevTimer = lastActionTimers.current.get(la.seatNumber);
+              if (prevTimer) clearTimeout(prevTimer);
+              const timer = setTimeout(() => {
                 setLastActions(prev => {
                   const next = { ...prev };
                   delete next[la.seatNumber];
                   return next;
                 });
+                lastActionTimers.current.delete(la.seatNumber);
               }, 3000);
+              lastActionTimers.current.set(la.seatNumber, timer);
             }
           } else if (data.type === 'heartbeat' && data.turnTimeLeft !== undefined) {
             setTurnTimeLeft(data.turnTimeLeft);
@@ -883,6 +888,8 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
     return () => {
       eventSource?.close();
       if (reconnectTimeout) clearTimeout(reconnectTimeout);
+      lastActionTimers.current.forEach(t => clearTimeout(t));
+      lastActionTimers.current.clear();
     };
   }, [tableId, userId, sounds]);
 

@@ -26,7 +26,13 @@ const cache = new Map<string, CacheEntry>();
 const parser = new Parser({
   timeout: 10000,
   headers: {
-    'User-Agent': 'OpenPoker/1.0 RSS Reader',
+    'User-Agent': 'Mozilla/5.0 (compatible; OpenPoker/1.0; +https://pokerhub-eight.vercel.app)',
+  },
+  customFields: {
+    item: [['media:content', 'mediaContent']],
+  },
+  requestOptions: {
+    rejectUnauthorized: false,
   },
 });
 

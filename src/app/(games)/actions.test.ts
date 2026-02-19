@@ -55,7 +55,7 @@ import {
 // ─── Helpers ────────────────────────────────────────────────────────
 
 function chainMock(result: unknown[]) {
-  const chain: Record<string, unknown> = {};
+  const chain: Record<string | symbol, unknown> = {};
   const self = () => chain;
   chain.from = self;
   chain.where = self;

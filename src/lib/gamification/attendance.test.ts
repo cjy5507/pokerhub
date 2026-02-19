@@ -45,7 +45,7 @@ import { createNotification } from '@/app/notifications/actions';
 
 /** Build a chained mock: select().from().where().orderBy().limit() etc. */
 function chainMock(result: unknown[]) {
-  const chain: Record<string, unknown> = {};
+  const chain: Record<string | symbol, unknown> = {};
   const self = () => chain;
   chain.from = self;
   chain.where = self;

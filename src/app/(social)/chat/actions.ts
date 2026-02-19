@@ -86,7 +86,8 @@ export async function getChatRooms() {
     // Get last message for each room in a single query using DISTINCT ON
     const roomIds = rooms.map((r: any) => r.id);
 
-    let lastMessageRows: any[] = [];
+    type LastMessageRow = { room_id: string; content: string; created_at: string; sender_nickname: string };
+    let lastMessageRows: LastMessageRow[] = [];
     if (roomIds.length > 0) {
       const rawResult = await db.execute(
         sql`
@@ -103,19 +104,19 @@ export async function getChatRooms() {
       );
       // postgres-js driver returns rows directly as an array; some wrappers use .rows
       lastMessageRows = Array.isArray(rawResult)
-        ? rawResult
-        : Array.isArray((rawResult as any)?.rows)
-          ? (rawResult as any).rows
+        ? (rawResult as LastMessageRow[])
+        : Array.isArray((rawResult as Record<string, unknown>)?.rows)
+          ? ((rawResult as Record<string, unknown>).rows as LastMessageRow[])
           : [];
     }
 
     const lastMessageMap = new Map(
-      lastMessageRows.map((row: any) => [
+      lastMessageRows.map((row) => [
         row.room_id,
         {
-          content: row.content as string,
-          senderNickname: row.sender_nickname as string,
-          createdAt: new Date(row.created_at as string).toISOString(),
+          content: row.content,
+          senderNickname: row.sender_nickname,
+          createdAt: new Date(row.created_at).toISOString(),
         },
       ])
     );

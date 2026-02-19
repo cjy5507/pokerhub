@@ -54,8 +54,8 @@ export default function AdminUsersPage() {
       try {
         await updateUserRole(userId, role);
         fetchUsers(page, search);
-      } catch (err: any) {
-        alert(err.message);
+      } catch (err) {
+        alert(err instanceof Error ? err.message : String(err));
       }
     });
   };
@@ -66,8 +66,8 @@ export default function AdminUsersPage() {
       try {
         await toggleUserBan(userId);
         fetchUsers(page, search);
-      } catch (err: any) {
-        alert(err.message);
+      } catch (err) {
+        alert(err instanceof Error ? err.message : String(err));
       }
     });
   };
@@ -86,8 +86,8 @@ export default function AdminUsersPage() {
         setPointAmount('');
         setPointReason('');
         fetchUsers(page, search);
-      } catch (err: any) {
-        alert(err.message);
+      } catch (err) {
+        alert(err instanceof Error ? err.message : String(err));
       }
     });
   };
@@ -143,7 +143,7 @@ export default function AdminUsersPage() {
                   <td className="px-4 py-3">
                     <select
                       value={user.role}
-                      onChange={(e) => handleRoleChange(user.id, e.target.value as any)}
+                      onChange={(e) => handleRoleChange(user.id, e.target.value as 'user' | 'admin' | 'moderator')}
                       disabled={isPending}
                       className="rounded border border-op-border bg-op-bg px-2 py-1 text-xs text-op-text focus:border-op-gold focus:outline-none"
                     >

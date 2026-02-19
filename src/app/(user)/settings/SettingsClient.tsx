@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Save, Loader2, ShoppingBag, Award, Type } from 'lucide-react';
 import { getUserSettings, updateUserSettings, updateProfile, changePassword, deleteAccount } from '../actions';
@@ -63,7 +63,7 @@ export default function SettingsClient() {
   const [customTitle, setCustomTitle] = useState('');
   const [currentTitle, setCurrentTitle] = useState<string | null>(null);
 
-  async function loadSettings() {
+  const loadSettings = useCallback(async () => {
     const result = await getUserSettings();
     if (result.success && result.settings) {
       setNotifyComments(result.settings.notifyComments);
@@ -72,9 +72,9 @@ export default function SettingsClient() {
       setNotifyMentions(result.settings.notifyMentions);
       setShowOnlineStatus(result.settings.showOnlineStatus);
     }
-  }
+  }, []);
 
-  async function loadShop() {
+  const loadShop = useCallback(async () => {
     setShopLoading(true);
     const result = await getBadgeShop();
     if (result.success && result.badges) {
@@ -83,19 +83,17 @@ export default function SettingsClient() {
       setCurrentTitle(result.customTitle ?? null);
     }
     setShopLoading(false);
-  }
+  }, []);
 
   useEffect(() => {
     loadSettings();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [loadSettings]);
 
   useEffect(() => {
     if (activeTab === 'shop') {
       loadShop();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]);
+  }, [activeTab, loadShop]);
 
   async function handleProfileSave() {
     setLoading(true);

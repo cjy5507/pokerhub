@@ -34,6 +34,35 @@ export interface ThreadReplyData {
   createdAt: string;
 }
 
+// Internal shapes matching Drizzle select projections (db is typed as any due to nullable fallback)
+interface ThreadRow {
+  id: string;
+  content: string;
+  contentHtml: string | null;
+  imageUrl: string | null;
+  likesCount: number;
+  repliesCount: number;
+  createdAt: Date;
+  authorId: string;
+  authorNickname: string;
+  authorAvatarUrl: string | null;
+  authorLevel: number;
+}
+
+interface LikeRow {
+  threadId: string;
+}
+
+interface ReplyRow {
+  id: string;
+  content: string;
+  createdAt: Date;
+  authorId: string;
+  authorNickname: string;
+  authorAvatarUrl: string | null;
+  authorLevel: number;
+}
+
 // ==================== HELPER FUNCTIONS ====================
 
 async function requireAuth() {
@@ -132,6 +161,8 @@ export async function toggleThreadLike(threadId: string) {
     const session = await requireAuth();
 
     // Atomic toggle inside a transaction: insert-or-delete, then update counter
+    // tx is any because db is typed as any (nullable fallback in lib/db/index.ts)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { liked, likesCount } = await db.transaction(async (tx: any) => {
       // Attempt insert; composite PK suppresses duplicate inserts
       const inserted = await tx
@@ -252,7 +283,7 @@ export async function getThreadFeed(page: number = 1) {
     const pageSize = 10;
     const offset = (page - 1) * pageSize;
 
-    const result = await db
+    const result = (await db
       .select({
         id: threads.id,
         content: threads.content,
@@ -270,7 +301,7 @@ export async function getThreadFeed(page: number = 1) {
       .innerJoin(users, eq(threads.authorId, users.id))
       .orderBy(desc(threads.createdAt))
       .limit(pageSize + 1)
-      .offset(offset);
+      .offset(offset)) as ThreadRow[];
 
     const hasMore = result.length > pageSize;
     const threadsData = result.slice(0, pageSize);
@@ -278,8 +309,8 @@ export async function getThreadFeed(page: number = 1) {
     // Get liked status if user is logged in
     let likedThreadIds: Set<string> = new Set();
     if (session && threadsData.length > 0) {
-      const threadIds = threadsData.map((t: any) => t.id);
-      const likes = await db
+      const threadIds = threadsData.map((t) => t.id);
+      const likes = (await db
         .select({ threadId: threadLikes.threadId })
         .from(threadLikes)
         .where(
@@ -287,11 +318,11 @@ export async function getThreadFeed(page: number = 1) {
             eq(threadLikes.userId, session.userId),
             inArray(threadLikes.threadId, threadIds)
           )
-        );
-      likedThreadIds = new Set(likes.map((l: any) => l.threadId));
+        )) as LikeRow[];
+      likedThreadIds = new Set(likes.map((l) => l.threadId));
     }
 
-    const threadsResult: ThreadData[] = threadsData.map((t: any) => ({
+    const threadsResult: ThreadData[] = threadsData.map((t) => ({
       id: t.id,
       author: {
         id: t.authorId,
@@ -325,7 +356,7 @@ export async function getUserThreads(userId: string, page: number = 1) {
     const pageSize = 10;
     const offset = (page - 1) * pageSize;
 
-    const result = await db
+    const result = (await db
       .select({
         id: threads.id,
         content: threads.content,
@@ -344,7 +375,7 @@ export async function getUserThreads(userId: string, page: number = 1) {
       .where(eq(threads.authorId, userId))
       .orderBy(desc(threads.createdAt))
       .limit(pageSize + 1)
-      .offset(offset);
+      .offset(offset)) as ThreadRow[];
 
     const hasMore = result.length > pageSize;
     const threadsData = result.slice(0, pageSize);
@@ -352,8 +383,8 @@ export async function getUserThreads(userId: string, page: number = 1) {
     // Get liked status if user is logged in
     let likedThreadIds: Set<string> = new Set();
     if (session && threadsData.length > 0) {
-      const threadIds = threadsData.map((t: any) => t.id);
-      const likes = await db
+      const threadIds = threadsData.map((t) => t.id);
+      const likes = (await db
         .select({ threadId: threadLikes.threadId })
         .from(threadLikes)
         .where(
@@ -361,11 +392,11 @@ export async function getUserThreads(userId: string, page: number = 1) {
             eq(threadLikes.userId, session.userId),
             inArray(threadLikes.threadId, threadIds)
           )
-        );
-      likedThreadIds = new Set(likes.map((l: any) => l.threadId));
+        )) as LikeRow[];
+      likedThreadIds = new Set(likes.map((l) => l.threadId));
     }
 
-    const threadsResult: ThreadData[] = threadsData.map((t: any) => ({
+    const threadsResult: ThreadData[] = threadsData.map((t) => ({
       id: t.id,
       author: {
         id: t.authorId,
@@ -455,7 +486,7 @@ export async function getThreadDetail(threadId: string) {
     };
 
     // Get replies with author info (capped at 50 to prevent unbounded fetch)
-    const repliesResult = await db
+    const repliesResult = (await db
       .select({
         id: threadReplies.id,
         content: threadReplies.content,
@@ -469,9 +500,9 @@ export async function getThreadDetail(threadId: string) {
       .innerJoin(users, eq(threadReplies.authorId, users.id))
       .where(eq(threadReplies.threadId, threadId))
       .orderBy(threadReplies.createdAt)
-      .limit(50);
+      .limit(50)) as ReplyRow[];
 
-    const replies: ThreadReplyData[] = repliesResult.map((r: any) => ({
+    const replies: ThreadReplyData[] = repliesResult.map((r) => ({
       id: r.id,
       author: {
         id: r.authorId,
@@ -493,7 +524,7 @@ export async function getThreadDetail(threadId: string) {
 export async function getThreadReplies(threadId: string): Promise<ThreadReplyData[]> {
   if (!db) return [];
   try {
-    const repliesResult = await db
+    const repliesResult = (await db
       .select({
         id: threadReplies.id,
         content: threadReplies.content,
@@ -507,9 +538,9 @@ export async function getThreadReplies(threadId: string): Promise<ThreadReplyDat
       .innerJoin(users, eq(threadReplies.authorId, users.id))
       .where(eq(threadReplies.threadId, threadId))
       .orderBy(threadReplies.createdAt)
-      .limit(50);
+      .limit(50)) as ReplyRow[];
 
-    return repliesResult.map((r: any) => ({
+    return repliesResult.map((r) => ({
       id: r.id,
       author: {
         id: r.authorId,

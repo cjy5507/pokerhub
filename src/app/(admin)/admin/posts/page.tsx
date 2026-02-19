@@ -50,8 +50,8 @@ export default function AdminPostsPage() {
       try {
         await deleteAdminPost(postId);
         fetchPosts(page, search);
-      } catch (err: any) {
-        alert(err.message);
+      } catch (err) {
+        alert(err instanceof Error ? err.message : String(err));
       }
     });
   };

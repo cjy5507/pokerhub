@@ -180,7 +180,7 @@ export async function createHand(formData: FormData) {
     // Insert players
     if (players && players.length > 0) {
       await tx.insert(pokerHandPlayers).values(
-        players.map((player: any) => ({
+        players.map((player) => ({
           handId: hand.id,
           position: mapPositionToDb(player.position) as any,
           stackSize: player.stackSize,
@@ -193,7 +193,7 @@ export async function createHand(formData: FormData) {
     // Insert actions
     if (actions && actions.length > 0) {
       await tx.insert(pokerHandActions).values(
-        actions.map((action: any) => ({
+        actions.map((action) => ({
           handId: hand.id,
           street: action.street as Street,
           sequence: action.sequence,
@@ -374,13 +374,13 @@ export async function getHands(filters?: {
       potRiver: hand.potRiver ?? undefined,
       result: mapResultFromDb(hand.result),
       analysisNotes: hand.analysisNotes ?? undefined,
-      players: players.map((p: any) => ({
+      players: players.map((p) => ({
         position: mapPositionFromDb(p.position),
         stackSize: p.stackSize,
         cards: stringToCards(p.cards),
         isHero: p.isHero,
       })),
-      actions: actions.map((a: any) => ({
+      actions: actions.map((a) => ({
         street: a.street as Street,
         sequence: a.sequence,
         position: mapPositionFromDb(a.position),
@@ -711,7 +711,7 @@ export async function convertGameHandToHistory(
     // 13. Create action records, skipping post_sb/post_bb blinds
     const actionValues = gameActions
       .filter((a: any) => !['post_sb', 'post_bb'].includes(a.actionType))
-      .map((action: any, idx: number) => {
+      .map((action: any, idx: any) => {
         const posStr = seatToPosition(action.seatNumber, gameHand.dealerSeat, maxSeats);
         return {
           handId: newHand.id,

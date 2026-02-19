@@ -122,6 +122,8 @@ describe('createPost', () => {
     title: '테스트 게시글 제목',
     content: '테스트 게시글 내용입니다.',
     contentHtml: '<p>테스트 게시글 내용입니다.</p>',
+    isPinned: false,
+    isFeatured: false,
   };
 
   it('returns error when not authenticated', async () => {
@@ -221,6 +223,8 @@ describe('createPost', () => {
       boardId: createTestUUID(),
       title: '',
       content: '내용',
+      isPinned: false,
+      isFeatured: false,
     });
 
     expect(result.success).toBe(false);
@@ -235,6 +239,8 @@ describe('createPost', () => {
       boardId: 'not-a-uuid',
       title: '제목',
       content: '내용',
+      isPinned: false,
+      isFeatured: false,
     });
 
     expect(result.success).toBe(false);

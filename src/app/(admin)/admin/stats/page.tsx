@@ -57,7 +57,7 @@ export default async function AdminStatsPage() {
               </tr>
             </thead>
             <tbody>
-              {data.dailySignups.map((row: any, i: number) => (
+              {(data.dailySignups as Array<{ date: string; count: number }>).map((row, i) => (
                 <tr key={i} className="border-b border-op-border/50 hover:bg-op-border/30">
                   <td className="py-2 pr-4">{row.date}</td>
                   <td className="py-2 text-right text-op-gold font-medium">{row.count}</td>
@@ -85,7 +85,7 @@ export default async function AdminStatsPage() {
               </tr>
             </thead>
             <tbody>
-              {data.dailyPosts.map((row: any, i: number) => (
+              {(data.dailyPosts as Array<{ date: string; count: number }>).map((row, i) => (
                 <tr key={i} className="border-b border-op-border/50 hover:bg-op-border/30">
                   <td className="py-2 pr-4">{row.date}</td>
                   <td className="py-2 text-right text-op-gold font-medium">{row.count}</td>

@@ -4,6 +4,22 @@ import { db } from '@/lib/db';
 import { pokerTables, pokerTableSeats, users, pokerGameHands, pokerGameActions, pokerGameResults, pointTransactions } from '@/lib/db/schema';
 import { getSession } from '@/lib/auth/session';
 import { eq, sql, desc, ne, and } from 'drizzle-orm';
+
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT = 30;
+const RATE_WINDOW = 60_000;
+
+function checkRateLimit(userId: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(userId);
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(userId, { count: 1, resetAt: now + RATE_WINDOW });
+    return true;
+  }
+  if (entry.count >= RATE_LIMIT) return false;
+  entry.count++;
+  return true;
+}
 import { redirect } from 'next/navigation';
 import type { GameState, SeatState, PlayerAction } from '@/lib/poker/types';
 import { processAction as processGameAction, startNewHand as startHand } from '@/lib/poker/gameLoop';
@@ -96,6 +112,7 @@ export async function createPokerTable(data: CreateTableData) {
   if (!session?.userId) {
     throw new Error('Unauthorized');
   }
+  if (!checkRateLimit(session.userId)) throw new Error('Too many requests');
 
   // Validation
   if (!data.name || data.name.length < 2 || data.name.length > 20) {
@@ -111,6 +128,16 @@ export async function createPokerTable(data: CreateTableData) {
   }
   if (data.ante > data.bigBlind) {
     throw new Error('앤티는 빅블라인드 이하여야 합니다');
+  }
+
+  if (![2, 6, 9].includes(data.maxSeats)) {
+    throw new Error('좌석 수는 2, 6, 9 중 하나여야 합니다');
+  }
+  if (data.bigBlind < data.smallBlind * 2) {
+    throw new Error('빅블라인드는 스몰블라인드의 2배 이상이어야 합니다');
+  }
+  if (!/^[\p{L}\p{N}\s\-_.!]+$/u.test(data.name)) {
+    throw new Error('테이블 이름에 허용되지 않는 문자가 포함되어 있습니다');
   }
 
   const minBuyIn = data.bigBlind * 20;
@@ -189,16 +216,11 @@ export async function getTableState(tableId: string): Promise<GameState | null> 
     if (handData.length > 0) {
       currentHand = handData[0];
 
-      results = await db
-        .select()
-        .from(pokerGameResults)
-        .where(eq(pokerGameResults.handId, currentHand.id));
-
-      actions = await db
-        .select()
-        .from(pokerGameActions)
-        .where(eq(pokerGameActions.handId, currentHand.id))
-        .orderBy(pokerGameActions.createdAt);
+      [results, actions] = await Promise.all([
+        db.select().from(pokerGameResults).where(eq(pokerGameResults.handId, currentHand.id)),
+        db.select().from(pokerGameActions).where(eq(pokerGameActions.handId, currentHand.id))
+          .orderBy(pokerGameActions.createdAt),
+      ]);
     }
   }
 
@@ -294,11 +316,14 @@ export async function joinTable(tableId: string, seatNumber: number, buyIn: numb
   if (!session?.userId) {
     throw new Error('로그인이 필요합니다');
   }
+  if (!checkRateLimit(session.userId)) throw new Error('Too many requests');
 
   // Track whether we should auto-start after transaction commits
   let shouldStartHand = false;
 
   await db.transaction(async (tx: any) => {
+    await tx.execute(sql`SELECT 1 FROM poker_tables WHERE id = ${tableId} FOR UPDATE`);
+
     const table = await tx
       .select()
       .from(pokerTables)
@@ -397,11 +422,7 @@ export async function leaveTable(tableId: string) {
   if (!session?.userId) {
     throw new Error('로그인이 필요합니다');
   }
-
-  // Track whether the leaving player was the current-seat actor so we can
-  // advance the turn via processGameAction AFTER the transaction commits.
-  // processGameAction uses its own DB connection and cannot run inside a tx.
-  let advanceTurnAfterTx: (() => Promise<void>) | null = null;
+  if (!checkRateLimit(session.userId)) throw new Error('Too many requests');
 
   const result = await db.transaction(async (tx: any) => {
     // 1. Read table + seat + active hand atomically
@@ -536,35 +557,26 @@ export async function leaveTable(tableId: string) {
               })
               .where(eq(pokerGameHands.id, hand.id));
           }
-          // Turn handled within tx — skip post-tx processGameAction
-          advanceTurnAfterTx = null;
         }
       }
     }
 
     // 3. Return remaining chips to user points (atomic)
-    const [user] = await tx
-      .select({ points: users.points })
-      .from(users)
+    const [updatedUser] = await tx
+      .update(users)
+      .set({ points: sql`points + ${seat.chipStack}` })
       .where(eq(users.id, session.userId))
-      .limit(1);
+      .returning({ points: users.points });
+    const updatedPoints = updatedUser.points;
 
-    if (user) {
-      const updatedPoints = user.points + seat.chipStack;
-      await tx
-        .update(users)
-        .set({ points: updatedPoints })
-        .where(eq(users.id, session.userId));
-
-      if (seat.chipStack > 0) {
-        await tx.insert(pointTransactions).values({
-          userId: session.userId,
-          amount: seat.chipStack,
-          balanceAfter: updatedPoints,
-          type: 'earn_game',
-          description: `포커 테이블 칩 반환 ${seat.chipStack}P`,
-        });
-      }
+    if (seat.chipStack > 0) {
+      await tx.insert(pointTransactions).values({
+        userId: session.userId,
+        amount: seat.chipStack,
+        balanceAfter: updatedPoints,
+        type: 'earn_game',
+        description: `포커 테이블 칩 반환 ${seat.chipStack}P`,
+      });
     }
 
     // 4. Remove the seat and update activity timestamp
@@ -649,19 +661,10 @@ export async function leaveTable(tableId: string) {
         .update(pokerTables)
         .set({ status: 'waiting', currentHandId: null })
         .where(eq(pokerTables.id, tableId));
-      // No need to advance turn — hand is being closed
-      advanceTurnAfterTx = null;
     }
 
     return { success: true, chipsReturned: seat.chipStack };
   });
-
-  // Advance turn outside the transaction (processGameAction manages its own connection).
-  // Cast needed: TypeScript narrows the let-binding to `never` after the async transaction boundary.
-  const pendingTurnAdvance = advanceTurnAfterTx as (() => Promise<void>) | null;
-  if (pendingTurnAdvance) {
-    await pendingTurnAdvance();
-  }
 
   await broadcastGameState(tableId);
 
@@ -711,6 +714,7 @@ export async function performAction(tableId: string, action: PlayerAction, amoun
   if (!session?.userId) {
     throw new Error('로그인이 필요합니다');
   }
+  if (!checkRateLimit(session.userId)) throw new Error('Too many requests');
 
   try {
     const result = await processGameAction(tableId, session.userId, action, amount);

@@ -8,11 +8,18 @@ dotenv.config({ path: '.env.local' });
 async function seed() {
   console.log('🌱 Seeding database...');
 
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('Seed script should not be run in production');
+  }
+
   try {
     // Seed admin user (bootstrap)
     console.log('👤 Seeding admin user...');
     const adminEmail = 'admin@openpoker.kr';
-    const adminPassword = 'admin1234!';
+    const adminPassword = process.env.ADMIN_SEED_PASSWORD;
+    if (!adminPassword) {
+      throw new Error('ADMIN_SEED_PASSWORD environment variable is required for seeding');
+    }
     const adminPasswordHash = await bcrypt.hash(adminPassword, 10);
 
     const [adminUser] = await db

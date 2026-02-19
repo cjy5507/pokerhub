@@ -61,6 +61,7 @@ export async function processAction(
   amount?: number
 ): Promise<ActionResult> {
   if (!db) return { success: false, error: 'Database not available' };
+  let actingSeatNumber: number | null = null;
   try {
     const result = await db.transaction(async (tx: any) => {
       // 1. Load current game state
@@ -124,6 +125,7 @@ export async function processAction(
       if (!userSeat) {
         return { success: false, error: 'You are not seated at this table' };
       }
+      actingSeatNumber = userSeat.seatNumber;
 
       // Rebuild seats array with hole cards
       const seatsArray = buildSeatsArray(dbSeats, table.maxSeats, holeCardsMap);
@@ -553,7 +555,10 @@ export async function processAction(
 
     // Broadcast after transaction commits
     if (result.success) {
-      await broadcastGameState(tableId);
+      const lastActionPayload = actingSeatNumber !== null
+        ? { seatNumber: actingSeatNumber, action: action as string, amount: amount ?? 0 }
+        : null;
+      await broadcastGameState(tableId, lastActionPayload);
     }
 
     return result;

@@ -623,6 +623,7 @@ function mergeHoleCards(state: GameState, myCards: string[] | null, oddsUserId: 
 export function PokerTableClient({ tableId, initialState, userId, nickname }: PokerTableClientProps) {
   const [gameState, setGameState] = useState<GameState>(initialState);
   const [heroHoleCards, setHeroHoleCards] = useState<string[] | null>(null);
+  const heroHoleCardsRef = useRef<string[] | null>(null);
   const [actionLog, setActionLog] = useState<ActionLogEntry[]>([]);
   const [lastActions, setLastActions] = useState<Record<number, string>>({});
   const [showHistory, setShowHistory] = useState(false);
@@ -818,6 +819,11 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
     setGameState(newState);
   }, [userId, sounds]);
 
+  // Sync heroHoleCards into ref so subscription callback doesn't need it as a dep
+  useEffect(() => {
+    heroHoleCardsRef.current = heroHoleCards;
+  }, [heroHoleCards]);
+
   useEffect(() => {
     const supabase = createClient();
     const channel = supabase.channel(`poker:${tableId}`);
@@ -830,7 +836,7 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
         lastUpdateTime = Date.now();
         const broadcastState = msg.payload?.state as GameState;
         if (broadcastState) {
-          const merged = mergeHoleCards(broadcastState, heroHoleCards, userId);
+          const merged = mergeHoleCards(broadcastState, heroHoleCardsRef.current, userId);
           handleStateUpdate(merged);
         }
       })
@@ -864,7 +870,7 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
       lastActionTimers.current.forEach(t => clearTimeout(t));
       lastActionTimers.current.clear();
     };
-  }, [tableId, handleStateUpdate, heroHoleCards, userId]);
+  }, [tableId, handleStateUpdate, userId]);
 
   // ─── Client-side Turn Timer ────────────────────────────────────
   useEffect(() => {

@@ -9,7 +9,7 @@ import {
   pokerGameResults,
 } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
-import type { GameState, SeatState } from '@/lib/poker/types';
+import type { GameState, SeatState, PlayerAction } from '@/lib/poker/types';
 
 export type PokerEvent =
   | 'action'
@@ -24,10 +24,20 @@ export async function broadcastTableUpdate(tableId: string, event: PokerEvent) {
     const supabase = createAdminClient();
     const channel = supabase.channel(`poker:${tableId}`);
 
+    await new Promise<void>((resolve) => {
+      const timeout = setTimeout(() => resolve(), 2000);
+      channel.subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          clearTimeout(timeout);
+          resolve();
+        }
+      });
+    });
+
     await channel.send({
       type: 'broadcast',
       event: 'state_changed',
-      payload: { event, timestamp: Date.now() },
+      payload: { state: { event, timestamp: Date.now() } },
     });
 
     await supabase.removeChannel(channel);
@@ -42,7 +52,10 @@ export async function broadcastTableUpdate(tableId: string, event: PokerEvent) {
  * Hole cards are always null except during showdown/complete status.
  * Falls back silently on error — clients have fallback polling.
  */
-export async function broadcastGameState(tableId: string): Promise<void> {
+export async function broadcastGameState(
+  tableId: string,
+  lastAction?: { seatNumber: number; action: string; amount: number } | null
+): Promise<void> {
   if (!db) return;
 
   try {
@@ -101,6 +114,17 @@ export async function broadcastGameState(tableId: string): Promise<void> {
     const isShowdown =
       currentHand?.status === 'complete' || currentHand?.status === 'showdown';
 
+    // Pre-compute folded seats from action history so the showdown reveal check
+    // can correctly exclude folded players before the main loop sets isFolded.
+    const foldedSeatNumbers = new Set<number>();
+    if (currentHand && actions.length > 0) {
+      for (const action of actions) {
+        if (action.actionType === 'fold') {
+          foldedSeatNumbers.add(action.seatNumber);
+        }
+      }
+    }
+
     for (const s of seatsData) {
       const seatState: SeatState = {
         seatNumber: s.seatNumber,
@@ -110,14 +134,14 @@ export async function broadcastGameState(tableId: string): Promise<void> {
         holeCards: null, // always null for broadcast (security)
         betInRound: 0,
         totalBetInHand: 0,
-        isFolded: false,
+        isFolded: foldedSeatNumbers.has(s.seatNumber),
         isAllIn: false,
         isSittingOut: s.isSittingOut,
         isActive: s.isActive,
       };
 
-      // Reveal hole cards only at showdown/complete
-      if (isShowdown && currentHand && results.length > 0) {
+      // Reveal hole cards only at showdown/complete for non-folded players
+      if (isShowdown && currentHand && results.length > 0 && !seatState.isFolded) {
         const result = results.find((r) => r.seatNumber === s.seatNumber);
         if (result) {
           seatState.holeCards = result.holeCards;
@@ -172,7 +196,9 @@ export async function broadcastGameState(tableId: string): Promise<void> {
       minRaise: currentHand?.minRaise ?? t.bigBlind,
       dealerSeat: currentHand?.dealerSeat ?? 0,
       seats,
-      lastAction: null,
+      lastAction: lastAction
+        ? { seat: lastAction.seatNumber, action: lastAction.action as PlayerAction, amount: lastAction.amount }
+        : null,
       actionClosedBySeat: null,
       turnTimeLeft: 30,
       turnStartedAt: currentHand?.turnStartedAt?.toISOString() ?? null,
@@ -183,10 +209,20 @@ export async function broadcastGameState(tableId: string): Promise<void> {
     const supabase = createAdminClient();
     const channel = supabase.channel(`poker:${tableId}`);
 
+    await new Promise<void>((resolve) => {
+      const timeout = setTimeout(() => resolve(), 2000);
+      channel.subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          clearTimeout(timeout);
+          resolve();
+        }
+      });
+    });
+
     await channel.send({
       type: 'broadcast',
       event: 'game_state',
-      payload: gameState,
+      payload: { state: gameState },
     });
 
     await supabase.removeChannel(channel);

@@ -1,7 +1,7 @@
 import { db } from '@/lib/db';
 import { users, posts, pokerHands, postLikes } from '@/lib/db/schema';
 import { getSession } from '@/lib/auth/session';
-import { desc, eq, sql, and } from 'drizzle-orm';
+import { desc, eq, sql, and, inArray } from 'drizzle-orm';
 import Link from 'next/link';
 
 interface RankedUser {
@@ -15,6 +15,17 @@ interface RankedUser {
   handCount: number;
   likesReceived: number;
 }
+
+type UserRow = {
+  id: string;
+  nickname: string;
+  avatarUrl: string | null;
+  level: number;
+  xp: number;
+  points: number;
+};
+
+type CountRow = { authorId: string; count: number };
 
 type TabKey = 'level' | 'points' | 'posts' | 'hands' | 'likes';
 
@@ -55,6 +66,32 @@ function getStatValue(user: RankedUser, tab: TabKey): string {
   }
 }
 
+function buildMaps(
+  postCounts: CountRow[],
+  handCounts: CountRow[],
+  likesCounts: CountRow[],
+) {
+  return {
+    postCountMap: new Map(postCounts.map((r) => [r.authorId, r.count])),
+    handCountMap: new Map(handCounts.map((r) => [r.authorId, r.count])),
+    likesCountMap: new Map(likesCounts.map((r) => [r.authorId, r.count])),
+  };
+}
+
+function mergeUserCounts(
+  userRows: UserRow[],
+  postCountMap: Map<string, number>,
+  handCountMap: Map<string, number>,
+  likesCountMap: Map<string, number>,
+): RankedUser[] {
+  return userRows.map((user) => ({
+    ...user,
+    postCount: postCountMap.get(user.id) ?? 0,
+    handCount: handCountMap.get(user.id) ?? 0,
+    likesReceived: likesCountMap.get(user.id) ?? 0,
+  }));
+}
+
 export default async function RankingsPage({
   searchParams,
 }: {
@@ -76,7 +113,8 @@ export default async function RankingsPage({
   let rankedUsers: RankedUser[] = [];
 
   if (activeTab === 'posts' || activeTab === 'hands' || activeTab === 'likes') {
-    const allUsers = await db
+    // 4 parallel queries instead of N*3 — one user fetch + three GROUP BY aggregations
+    const allUsers: UserRow[] = await db
       .select({
         id: users.id,
         nickname: users.nickname,
@@ -89,34 +127,42 @@ export default async function RankingsPage({
       .where(eq(users.status, 'active'))
       .limit(1000);
 
-    const usersWithCounts = await Promise.all(
-      allUsers.map(async (user: any) => {
-        const [postCountResult] = await db
-          .select({ count: sql<number>`count(*)` })
+    const [postCounts, handCounts, likesCounts]: [CountRow[], CountRow[], CountRow[]] =
+      await Promise.all([
+        db
+          .select({
+            authorId: posts.authorId,
+            count: sql<number>`cast(count(*) as int)`,
+          })
           .from(posts)
-          .where(and(eq(posts.authorId, user.id), eq(posts.status, 'published')));
+          .where(eq(posts.status, 'published'))
+          .groupBy(posts.authorId),
 
-        const [handCountResult] = await db
-          .select({ count: sql<number>`count(*)` })
+        db
+          .select({
+            authorId: pokerHands.authorId,
+            count: sql<number>`cast(count(*) as int)`,
+          })
           .from(pokerHands)
-          .where(eq(pokerHands.authorId, user.id));
+          .groupBy(pokerHands.authorId),
 
-        const [likesReceivedResult] = await db
-          .select({ count: sql<number>`count(*)` })
+        db
+          .select({
+            authorId: posts.authorId,
+            count: sql<number>`cast(count(*) as int)`,
+          })
           .from(postLikes)
           .innerJoin(posts, eq(posts.id, postLikes.postId))
-          .where(eq(posts.authorId, user.id));
+          .groupBy(posts.authorId),
+      ]);
 
-        return {
-          ...user,
-          postCount: Number(postCountResult.count),
-          handCount: Number(handCountResult.count),
-          likesReceived: Number(likesReceivedResult.count),
-        };
-      })
+    const { postCountMap, handCountMap, likesCountMap } = buildMaps(
+      postCounts,
+      handCounts,
+      likesCounts,
     );
 
-    rankedUsers = usersWithCounts
+    rankedUsers = mergeUserCounts(allUsers, postCountMap, handCountMap, likesCountMap)
       .sort((a, b) => {
         switch (activeTab) {
           case 'posts':
@@ -136,7 +182,8 @@ export default async function RankingsPage({
         ? [desc(users.level), desc(users.xp)]
         : [desc(users.points)];
 
-    const topUsers = await db
+    // Fetch top 50 first, then 3 parallel aggregations scoped to those user IDs (4 queries total)
+    const topUsers: UserRow[] = await db
       .select({
         id: users.id,
         nickname: users.nickname,
@@ -150,32 +197,50 @@ export default async function RankingsPage({
       .orderBy(...orderBy)
       .limit(50);
 
-    rankedUsers = await Promise.all(
-      topUsers.map(async (user: any) => {
-        const [postCountResult] = await db
-          .select({ count: sql<number>`count(*)` })
-          .from(posts)
-          .where(and(eq(posts.authorId, user.id), eq(posts.status, 'published')));
+    const userIds = topUsers.map((u) => u.id);
 
-        const [handCountResult] = await db
-          .select({ count: sql<number>`count(*)` })
-          .from(pokerHands)
-          .where(eq(pokerHands.authorId, user.id));
+    if (userIds.length === 0) {
+      rankedUsers = [];
+    } else {
+      const [postCounts, handCounts, likesCounts]: [CountRow[], CountRow[], CountRow[]] =
+        await Promise.all([
+          db
+            .select({
+              authorId: posts.authorId,
+              count: sql<number>`cast(count(*) as int)`,
+            })
+            .from(posts)
+            .where(and(eq(posts.status, 'published'), inArray(posts.authorId, userIds)))
+            .groupBy(posts.authorId),
 
-        const [likesReceivedResult] = await db
-          .select({ count: sql<number>`count(*)` })
-          .from(postLikes)
-          .innerJoin(posts, eq(posts.id, postLikes.postId))
-          .where(eq(posts.authorId, user.id));
+          db
+            .select({
+              authorId: pokerHands.authorId,
+              count: sql<number>`cast(count(*) as int)`,
+            })
+            .from(pokerHands)
+            .where(inArray(pokerHands.authorId, userIds))
+            .groupBy(pokerHands.authorId),
 
-        return {
-          ...user,
-          postCount: Number(postCountResult.count),
-          handCount: Number(handCountResult.count),
-          likesReceived: Number(likesReceivedResult.count),
-        };
-      })
-    );
+          db
+            .select({
+              authorId: posts.authorId,
+              count: sql<number>`cast(count(*) as int)`,
+            })
+            .from(postLikes)
+            .innerJoin(posts, eq(posts.id, postLikes.postId))
+            .where(inArray(posts.authorId, userIds))
+            .groupBy(posts.authorId),
+        ]);
+
+      const { postCountMap, handCountMap, likesCountMap } = buildMaps(
+        postCounts,
+        handCounts,
+        likesCounts,
+      );
+
+      rankedUsers = mergeUserCounts(topUsers, postCountMap, handCountMap, likesCountMap);
+    }
   }
 
   const currentUserId = session?.userId || null;
@@ -184,12 +249,8 @@ export default async function RankingsPage({
     <div className="container max-w-4xl mx-auto px-4 py-6 pb-20 lg:pb-0 lg:py-8">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl lg:text-3xl font-bold text-op-text mb-2">
-          랭킹
-        </h1>
-        <p className="text-sm text-op-text-secondary">
-          TOP 50 유저 랭킹을 확인하세요
-        </p>
+        <h1 className="text-2xl lg:text-3xl font-bold text-op-text mb-2">랭킹</h1>
+        <p className="text-sm text-op-text-secondary">TOP 50 유저 랭킹을 확인하세요</p>
       </div>
 
       {/* Tabs */}
@@ -220,9 +281,7 @@ export default async function RankingsPage({
             <div
               key={user.id}
               className={`flex items-center gap-3 lg:gap-4 p-3 lg:p-4 rounded-lg border transition-colors ${
-                isMe
-                  ? 'border-op-success bg-op-success/10'
-                  : getRankColor(rank)
+                isMe ? 'border-op-success bg-op-success/10' : getRankColor(rank)
               }`}
             >
               {/* Rank */}
@@ -250,18 +309,14 @@ export default async function RankingsPage({
               {/* User Info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-op-text truncate">
-                    {user.nickname}
-                  </span>
+                  <span className="font-semibold text-op-text truncate">{user.nickname}</span>
                   {isMe && (
                     <span className="text-xs px-1.5 py-0.5 rounded bg-op-success/20 text-op-success font-medium">
                       나
                     </span>
                   )}
                 </div>
-                <div className="text-xs text-op-text-muted">
-                  Lv.{user.level}
-                </div>
+                <div className="text-xs text-op-text-muted">Lv.{user.level}</div>
               </div>
 
               {/* Stat Value */}

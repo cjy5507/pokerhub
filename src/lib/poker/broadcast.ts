@@ -1,4 +1,4 @@
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createOptionalAdminClient } from '@/lib/supabase/admin';
 import { db } from '@/lib/db';
 import {
   pokerTables,
@@ -8,8 +8,9 @@ import {
   pokerGameActions,
   pokerGameResults,
 } from '@/lib/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import type { GameState, SeatState, PlayerAction } from '@/lib/poker/types';
+import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js';
 
 export type PokerEvent =
   | 'action'
@@ -19,28 +20,116 @@ export type PokerEvent =
   | 'player_leave'
   | 'table_closed';
 
+type CachedBroadcastChannel = {
+  supabase: SupabaseClient;
+  channel: RealtimeChannel;
+};
+
+const SUBSCRIBE_TIMEOUT_MS = 2000;
+const cachedChannels = new Map<string, Promise<CachedBroadcastChannel | null>>();
+
+async function subscribeChannel(channel: RealtimeChannel): Promise<boolean> {
+  return new Promise<boolean>((resolve) => {
+    const timeout = setTimeout(() => resolve(false), SUBSCRIBE_TIMEOUT_MS);
+    channel.subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        clearTimeout(timeout);
+        resolve(true);
+        return;
+      }
+
+      if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+        clearTimeout(timeout);
+        resolve(false);
+      }
+    });
+  });
+}
+
+async function getOrCreateChannel(tableId: string): Promise<CachedBroadcastChannel | null> {
+  const cached = cachedChannels.get(tableId);
+  if (cached) return cached;
+
+  const pendingChannel = (async () => {
+    const supabase = createOptionalAdminClient();
+    if (!supabase) return null;
+
+    const channel = supabase.channel(`poker:${tableId}`);
+    const subscribed = await subscribeChannel(channel);
+    if (!subscribed) {
+      await supabase.removeChannel(channel);
+      return null;
+    }
+
+    return { supabase, channel };
+  })();
+
+  cachedChannels.set(tableId, pendingChannel);
+
+  try {
+    const connected = await pendingChannel;
+    if (!connected) {
+      cachedChannels.delete(tableId);
+    }
+    return connected;
+  } catch (error) {
+    cachedChannels.delete(tableId);
+    throw error;
+  }
+}
+
+async function releaseChannel(tableId: string): Promise<void> {
+  const cached = cachedChannels.get(tableId);
+  if (!cached) return;
+  cachedChannels.delete(tableId);
+
+  const connected = await cached.catch(() => null);
+  if (!connected) return;
+
+  await connected.supabase.removeChannel(connected.channel);
+}
+
+async function sendBroadcast(
+  tableId: string,
+  event: 'state_changed' | 'game_state',
+  payload: Record<string, unknown>
+): Promise<void> {
+  let connected = await getOrCreateChannel(tableId);
+  if (!connected) return;
+
+  let sendStatus = await connected.channel.send({
+    type: 'broadcast',
+    event,
+    payload,
+  });
+
+  if (sendStatus === 'ok') return;
+
+  await releaseChannel(tableId);
+  connected = await getOrCreateChannel(tableId);
+  if (!connected) return;
+
+  sendStatus = await connected.channel.send({
+    type: 'broadcast',
+    event,
+    payload,
+  });
+
+  if (sendStatus !== 'ok') {
+    await releaseChannel(tableId);
+    throw new Error(`Realtime broadcast failed (${event}): ${sendStatus}`);
+  }
+}
+
 export async function broadcastTableUpdate(tableId: string, event: PokerEvent) {
   try {
-    const supabase = createAdminClient();
-    const channel = supabase.channel(`poker:${tableId}`);
-
-    await new Promise<void>((resolve) => {
-      const timeout = setTimeout(() => resolve(), 2000);
-      channel.subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          clearTimeout(timeout);
-          resolve();
-        }
-      });
+    await sendBroadcast(tableId, 'state_changed', {
+      state: { event, timestamp: Date.now() },
     });
 
-    await channel.send({
-      type: 'broadcast',
-      event: 'state_changed',
-      payload: { state: { event, timestamp: Date.now() } },
-    });
-
-    await supabase.removeChannel(channel);
+    if (event === 'table_closed') {
+      await releaseChannel(tableId);
+    }
   } catch (err) {
     console.error('Broadcast error:', err);
     // Non-fatal: clients will still get updates via SSE watchdog fallback
@@ -84,8 +173,8 @@ export async function broadcastGameState(
     const seats: (SeatState | null)[] = Array.from({ length: t.maxSeats }, () => null);
 
     let currentHand = null;
-    let results: any[] = [];
-    let actions: any[] = [];
+    let results: typeof pokerGameResults.$inferSelect[] = [];
+    let actions: typeof pokerGameActions.$inferSelect[] = [];
 
     if (t.currentHandId) {
       const handData = await db
@@ -97,16 +186,17 @@ export async function broadcastGameState(
       if (handData.length > 0) {
         currentHand = handData[0];
 
-        results = await db
-          .select()
-          .from(pokerGameResults)
-          .where(eq(pokerGameResults.handId, currentHand.id));
-
-        actions = await db
-          .select()
-          .from(pokerGameActions)
-          .where(eq(pokerGameActions.handId, currentHand.id))
-          .orderBy(pokerGameActions.createdAt);
+        [results, actions] = await Promise.all([
+          db
+            .select()
+            .from(pokerGameResults)
+            .where(eq(pokerGameResults.handId, currentHand.id)),
+          db
+            .select()
+            .from(pokerGameActions)
+            .where(eq(pokerGameActions.handId, currentHand.id))
+            .orderBy(pokerGameActions.createdAt),
+        ]);
       }
     }
 
@@ -144,7 +234,7 @@ export async function broadcastGameState(
       if (isShowdown && currentHand && results.length > 0 && !seatState.isFolded) {
         const result = results.find((r) => r.seatNumber === s.seatNumber);
         if (result) {
-          seatState.holeCards = result.holeCards;
+          seatState.holeCards = result.holeCards as SeatState['holeCards'];
         }
       }
 
@@ -206,26 +296,7 @@ export async function broadcastGameState(
         t.status === 'closed' ? 'paused' : (t.status as 'waiting' | 'playing' | 'paused'),
     };
 
-    const supabase = createAdminClient();
-    const channel = supabase.channel(`poker:${tableId}`);
-
-    await new Promise<void>((resolve) => {
-      const timeout = setTimeout(() => resolve(), 2000);
-      channel.subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          clearTimeout(timeout);
-          resolve();
-        }
-      });
-    });
-
-    await channel.send({
-      type: 'broadcast',
-      event: 'game_state',
-      payload: { state: gameState },
-    });
-
-    await supabase.removeChannel(channel);
+    await sendBroadcast(tableId, 'game_state', { state: gameState });
   } catch (err) {
     console.error('broadcastGameState error:', err);
     // Non-fatal: clients fall back to SSE/polling

@@ -315,7 +315,7 @@ export default function RoulettePage() {
                   : "bg-gradient-to-r from-op-gold to-op-gold-hover text-black hover:shadow-[0_0_30px_rgba(201,162,39,0.5)] hover:scale-[1.02]"
               )}
             >
-              {isSpinning ? "스핀 중..." : currentPoints < betAmount ? "포인트 부족" : "SPIN"}
+              {isSpinning ? "스핀 중..." : currentPoints < betAmount ? "포인트 부족" : "돌리기"}
             </button>
           </div>
 
@@ -431,6 +431,10 @@ export default function RoulettePage() {
             )}
           </div>
         </div>
+      </div>
+      <div className="text-center py-4 text-xs text-op-text-muted">
+        <p>본 룰렛은 실제 금전적 가치가 없는 가상 포인트로만 운영됩니다.</p>
+        <p>포인트는 현금으로 교환할 수 없으며, 서비스 내 활동에만 사용됩니다.</p>
       </div>
     </div>
   );

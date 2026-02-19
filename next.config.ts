@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
   images: {
@@ -8,6 +9,9 @@ const nextConfig: NextConfig = {
     ],
   },
   experimental: {},
+  turbopack: {
+    root: __dirname,
+  },
   async headers() {
     return [{
       source: '/(.*)',
@@ -24,4 +28,10 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  // Suppress source map upload warnings when no auth token
+  silent: true,
+  // Don't upload source maps without auth token
+  org: process.env.SENTRY_ORG || '',
+  project: process.env.SENTRY_PROJECT || '',
+});

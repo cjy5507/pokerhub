@@ -22,16 +22,11 @@ interface LotteryTicket {
   prizeAmount: number;
 }
 
-// Mock data with Korean names
-const MOCK_WINNERS = [
-  { nickname: '김민수', tier: 'first' as const, prize: 5000, time: '2분 전' },
-  { nickname: '박지영', tier: 'third' as const, prize: 200, time: '5분 전' },
-  { nickname: '이준호', tier: 'second' as const, prize: 500, time: '12분 전' },
-  { nickname: '최수진', tier: 'fourth' as const, prize: 100, time: '23분 전' },
-  { nickname: '정태웅', tier: 'fourth' as const, prize: 100, time: '34분 전' },
-  { nickname: '강서연', tier: 'first' as const, prize: 5000, time: '1시간 전' },
-  { nickname: '윤재현', tier: 'third' as const, prize: 200, time: '1시간 전' },
-  { nickname: '한유진', tier: 'second' as const, prize: 500, time: '2시간 전' },
+const MOCK_WINNERS: { tier: TierType; nickname: string; prize: number; time: string }[] = [
+  { tier: 'first', nickname: '포커왕', prize: 5000, time: '2분 전' },
+  { tier: 'second', nickname: '에이스', prize: 500, time: '15분 전' },
+  { tier: 'third', nickname: '행운아', prize: 200, time: '1시간 전' },
+  { tier: 'fourth', nickname: '럭키가이', prize: 100, time: '2시간 전' },
 ];
 
 export default function LotteryPage() {
@@ -335,30 +330,7 @@ export default function LotteryPage() {
             <Trophy className="text-op-gold" size={24} />
             최근 당첨자
           </h2>
-          <div className="space-y-2">
-            {MOCK_WINNERS.map((winner, idx) => (
-              <div
-                key={idx}
-                className="flex items-center justify-between p-3 rounded-lg bg-op-elevated hover:bg-op-elevated transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <div className={cn(
-                    "w-2 h-2 rounded-full",
-                    winner.tier === 'first' && "bg-red-500",
-                    winner.tier === 'second' && "bg-purple-500",
-                    winner.tier === 'third' && "bg-blue-500",
-                    winner.tier === 'fourth' && "bg-green-500"
-                  )} />
-                  <span className="font-medium text-op-text">{winner.nickname}</span>
-                  <span className="text-sm text-op-text-secondary">{getTierInfo(winner.tier).name}</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="font-bold text-op-gold">{winner.prize.toLocaleString()}P</span>
-                  <span className="text-xs text-op-text-secondary">{winner.time}</span>
-                </div>
-              </div>
-            ))}
-          </div>
+          <p className="text-sm text-op-text-secondary text-center py-4">실제 당첨 기록은 준비 중입니다</p>
         </div>
 
         {/* My History */}
@@ -389,6 +361,10 @@ export default function LotteryPage() {
             </div>
           </div>
         )}
+        <div className="text-center py-4 text-xs text-op-text-muted">
+          <p>본 복권은 실제 금전적 가치가 없는 가상 포인트로만 운영됩니다.</p>
+          <p>포인트는 현금으로 교환할 수 없으며, 서비스 내 활동에만 사용됩니다.</p>
+        </div>
       </div>
 
       <style jsx>{`

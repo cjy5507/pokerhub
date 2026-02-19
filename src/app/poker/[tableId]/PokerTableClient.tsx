@@ -10,7 +10,7 @@ import { LogOut, MessageSquare, ChevronDown, Volume2, VolumeX, ArrowLeft, Users,
 import Link from 'next/link';
 import { usePokerSounds } from '@/lib/poker/sounds';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { createOptionalClient } from '@/lib/supabase/client';
 import { getTableState, getMyHoleCards } from '../actions';
 
 // ─── Types ────────────────────────────────────────────────────────
@@ -825,50 +825,74 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
   }, [heroHoleCards]);
 
   useEffect(() => {
-    const supabase = createClient();
-    const channel = supabase.channel(`poker:${tableId}`);
+    const supabase = createOptionalClient();
+    const channel = supabase?.channel(`poker:${tableId}`) ?? null;
     let fallbackTimer: ReturnType<typeof setInterval> | null = null;
     let lastUpdateTime = Date.now();
+    let pollingIntervalMs = 1000;
 
-    // Full state broadcast handler (new - instant)
-    channel
-      .on('broadcast', { event: 'game_state' }, (msg) => {
-        lastUpdateTime = Date.now();
-        const broadcastState = msg.payload?.state as GameState;
-        if (broadcastState) {
-          const merged = mergeHoleCards(broadcastState, heroHoleCardsRef.current, userId);
-          handleStateUpdate(merged);
-        }
-      })
-      // Legacy signal handler (backward compat)
-      .on('broadcast', { event: 'state_changed' }, async () => {
-        lastUpdateTime = Date.now();
+    const fetchAndApplyLatestState = async () => {
+      try {
         const freshState = await getTableState(tableId);
-        if (freshState) handleStateUpdate(freshState);
-      })
-      .subscribe();
-
-    // Reduced fallback polling: 15s, only when no recent updates
-    fallbackTimer = setInterval(async () => {
-      if (Date.now() - lastUpdateTime > 15000) {
-        try {
-          const freshState = await getTableState(tableId);
-          if (freshState) handleStateUpdate(freshState);
+        if (freshState) {
+          handleStateUpdate(freshState);
           lastUpdateTime = Date.now();
-        } catch {}
+        }
+      } catch {
+        // noop
       }
-    }, 15000);
+    };
+
+    const setPollingInterval = (nextMs: number) => {
+      if (pollingIntervalMs === nextMs && fallbackTimer) return;
+      pollingIntervalMs = nextMs;
+      if (fallbackTimer) clearInterval(fallbackTimer);
+      fallbackTimer = setInterval(async () => {
+        if (Date.now() - lastUpdateTime > pollingIntervalMs) {
+          await fetchAndApplyLatestState();
+        }
+      }, pollingIntervalMs);
+    };
+
+    // Start with fast polling. If realtime subscribes successfully, relax to 15s fallback.
+    setPollingInterval(1000);
+
+    if (channel) {
+      channel
+        .on('broadcast', { event: 'game_state' }, (msg) => {
+          lastUpdateTime = Date.now();
+          const broadcastState = msg.payload?.state as GameState;
+          if (broadcastState) {
+            const merged = mergeHoleCards(broadcastState, heroHoleCardsRef.current, userId);
+            handleStateUpdate(merged);
+          }
+        })
+        .on('broadcast', { event: 'state_changed' }, async () => {
+          await fetchAndApplyLatestState();
+        })
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            setPollingInterval(15000);
+            return;
+          }
+
+          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+            setPollingInterval(1000);
+          }
+        });
+    }
 
     // Initial fetch
-    getTableState(tableId).then(state => {
-      if (state) handleStateUpdate(state);
-    });
+    fetchAndApplyLatestState();
 
+    const actionTimers = lastActionTimers.current;
     return () => {
-      supabase.removeChannel(channel);
+      if (supabase && channel) {
+        supabase.removeChannel(channel);
+      }
       if (fallbackTimer) clearInterval(fallbackTimer);
-      lastActionTimers.current.forEach(t => clearTimeout(t));
-      lastActionTimers.current.clear();
+      actionTimers.forEach(t => clearTimeout(t));
+      actionTimers.clear();
     };
   }, [tableId, handleStateUpdate, userId]);
 

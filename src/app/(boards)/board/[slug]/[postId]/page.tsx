@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import DOMPurify from 'isomorphic-dompurify';
 import { getPost, getComments, getRelatedPosts, getBoards } from '@/lib/queries/boards';
 import { getSession } from '@/lib/auth/session';
 import { incrementViewCount } from '@/app/(boards)/actions';
@@ -95,8 +96,8 @@ export default async function PostPage({ params }: PostPageProps) {
         <div className="p-4 sm:p-6 border-b border-op-border">
           {post.contentHtml ? (
             <div
-              className="prose prose-invert max-w-none"
-              dangerouslySetInnerHTML={{ __html: post.contentHtml }}
+              className="prose dark:prose-invert max-w-none"
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.contentHtml) }}
             />
           ) : (
             <div className="whitespace-pre-wrap text-op-text">{post.content}</div>

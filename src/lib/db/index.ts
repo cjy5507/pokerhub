@@ -13,7 +13,13 @@ if (!isValidDatabaseUrl && process.env.NODE_ENV !== 'production') {
 }
 
 // For query purposes - only create connection if URL is valid
-const queryClient = isValidDatabaseUrl ? postgres(databaseUrl) : null as any;
+const queryClient = isValidDatabaseUrl
+  ? postgres(databaseUrl, {
+      max: 10,           // max pool size
+      idle_timeout: 20,  // close idle connections after 20s
+      connect_timeout: 10, // connection timeout 10s
+    })
+  : null as any;
 export const db = queryClient ? drizzle(queryClient, { schema: { ...schema, ...relations } }) : null as any;
 
 // For migrations

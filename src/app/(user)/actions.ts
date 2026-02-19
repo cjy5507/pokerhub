@@ -7,6 +7,7 @@ import { getSession } from '@/lib/auth/session';
 import { eq, and, sql, count, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import { hashPassword, verifyPassword } from '@/lib/auth/password';
+import { createSession } from '@/lib/auth/session';
 
 /**
  * Toggle follow/unfollow a user
@@ -444,13 +445,18 @@ export async function changePassword(
       return { success: false, error: '로그인이 필요합니다' };
     }
 
+    // B9: Validate new password length (minimum 8 characters)
+    if (newPassword.length < 8) {
+      return { success: false, error: '비밀번호는 최소 8자 이상이어야 합니다' };
+    }
+
     if (currentPassword === newPassword) {
       return { success: false, error: '새 비밀번호는 현재 비밀번호와 달라야 합니다' };
     }
 
-    // Fetch only the passwordHash column — no over-fetch
+    // Fetch only the columns needed — no over-fetch
     const [user] = await db
-      .select({ passwordHash: users.passwordHash })
+      .select({ passwordHash: users.passwordHash, email: users.email, nickname: users.nickname, role: users.role })
       .from(users)
       .where(eq(users.id, session.userId))
       .limit(1);
@@ -468,14 +474,29 @@ export async function changePassword(
     // Hash new password
     const newPasswordHash = await hashPassword(newPassword);
 
-    // Update password
+    // B10: Record the exact time of password change so we can invalidate
+    // any JWTs issued before this timestamp (on other devices/sessions).
+    const passwordChangedAt = new Date();
+
+    // Update password and record change timestamp atomically
     await db
       .update(users)
       .set({
         passwordHash: newPasswordHash,
-        updatedAt: new Date(),
+        passwordChangedAt,
+        updatedAt: passwordChangedAt,
       })
       .where(eq(users.id, session.userId));
+
+    // Re-issue a fresh session cookie for the current device so the user
+    // stays logged in. All other devices will be rejected by
+    // getSessionVerified() because their tokens pre-date passwordChangedAt.
+    await createSession({
+      userId: session.userId,
+      email: user.email,
+      nickname: user.nickname,
+      role: user.role,
+    });
 
     return { success: true };
   } catch (error) {

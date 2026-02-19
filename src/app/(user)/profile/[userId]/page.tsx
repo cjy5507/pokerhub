@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { db } from '@/lib/db';
-import { users, userFollows, userBlocks, posts, pokerHands } from '@/lib/db/schema';
+import { users, userFollows, userBlocks, posts, pokerHands, boards } from '@/lib/db/schema';
 import { getSession } from '@/lib/auth/session';
 import { eq, and, sql, desc } from 'drizzle-orm';
 import { getXPForNextLevel, getLevelTier } from '@/lib/gamification/levels';
@@ -10,6 +10,53 @@ import { ProfileStats } from '@/components/user/ProfileStats';
 import { ProfileTabs } from '@/components/user/ProfileTabs';
 import { BadgeList } from '@/components/user/BadgeList';
 import { CooldownRewardWidget } from '@/components/games/CooldownRewardWidget';
+
+type RecentPostRow = {
+  id: string;
+  title: string;
+  boardSlug: string;
+  createdAt: Date;
+  viewCount: number;
+  likeCount: number;
+  commentCount: number;
+};
+
+type RecentHandRow = {
+  id: string;
+  gameType: string;
+  stakes: string;
+  result: string;
+  createdAt: Date;
+  likeCount: number;
+  commentCount: number;
+};
+
+function formatSeoulDate(date: Date): string {
+  const parts = new Intl.DateTimeFormat('ko-KR', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+  }).formatToParts(new Date(date));
+
+  const lookup = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${lookup.year}.${Number(lookup.month)}.${Number(lookup.day)}`;
+}
+
+function formatSeoulDateTime(date: Date): string {
+  const parts = new Intl.DateTimeFormat('ko-KR', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(new Date(date));
+
+  const lookup = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${lookup.year}.${lookup.month}.${lookup.day} ${lookup.hour}:${lookup.minute}`;
+}
 
 export default async function ProfilePage({ params }: { params: Promise<{ userId: string }> }) {
   const session = await getSession();
@@ -106,25 +153,32 @@ export default async function ProfilePage({ params }: { params: Promise<{ userId
   }
 
   // Get recent posts
-  const recentPosts = await db
+  const recentPosts = (await db
     .select({
       id: posts.id,
       title: posts.title,
+      boardSlug: boards.slug,
       createdAt: posts.createdAt,
       viewCount: posts.viewCount,
       likeCount: posts.likeCount,
       commentCount: posts.commentCount,
     })
     .from(posts)
+    .innerJoin(boards, eq(posts.boardId, boards.id))
     .where(and(
       eq(posts.authorId, userId),
       eq(posts.status, 'published')
     ))
     .orderBy(desc(posts.createdAt))
-    .limit(10);
+    .limit(10)) as RecentPostRow[];
+
+  const recentPostsWithLabels = recentPosts.map((post) => ({
+    ...post,
+    createdAtLabel: formatSeoulDateTime(post.createdAt),
+  }));
 
   // Get recent poker hands
-  const recentHands = await db
+  const recentHands = (await db
     .select({
       id: pokerHands.id,
       gameType: pokerHands.gameType,
@@ -137,7 +191,12 @@ export default async function ProfilePage({ params }: { params: Promise<{ userId
     .from(pokerHands)
     .where(eq(pokerHands.authorId, userId))
     .orderBy(desc(pokerHands.createdAt))
-    .limit(10);
+    .limit(10)) as RecentHandRow[];
+
+  const recentHandsWithLabels = recentHands.map((hand) => ({
+    ...hand,
+    createdAtLabel: formatSeoulDateTime(hand.createdAt),
+  }));
 
   // Get user badges
   const userBadges = await getUserBadges(userId);
@@ -156,7 +215,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userId
           xp: user.xp,
           points: user.points,
           customTitle: user.customTitle,
-          createdAt: user.createdAt,
+          joinedAtLabel: formatSeoulDate(user.createdAt),
         }}
         levelInfo={levelInfo}
         levelTier={levelTier}
@@ -185,9 +244,8 @@ export default async function ProfilePage({ params }: { params: Promise<{ userId
         <BadgeList badges={userBadges} />
 
         <ProfileTabs
-          userId={userId}
-          recentPosts={recentPosts}
-          recentHands={recentHands}
+          recentPosts={recentPostsWithLabels}
+          recentHands={recentHandsWithLabels}
         />
       </div>
     </div>

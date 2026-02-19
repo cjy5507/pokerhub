@@ -5,8 +5,6 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { UserCircle, Settings, UserPlus, UserMinus, Ban } from 'lucide-react';
 import { toggleFollow, toggleBlock } from '@/app/(user)/actions';
-import { format } from 'date-fns';
-import { ko } from 'date-fns/locale';
 
 type ProfileHeaderProps = {
   user: {
@@ -20,7 +18,7 @@ type ProfileHeaderProps = {
     xp: number;
     points: number;
     customTitle: string | null;
-    createdAt: Date;
+    joinedAtLabel: string;
   };
   levelInfo: {
     currentLevel: number;
@@ -148,7 +146,7 @@ export function ProfileHeader({
                 </span>
               )}
               <p className="text-[11px] sm:text-sm text-muted-foreground mt-0.5 truncate">
-                가입일 {format(new Date(user.createdAt), 'yyyy.M.d', { locale: ko })}
+                가입일 {user.joinedAtLabel}
               </p>
             </div>
 

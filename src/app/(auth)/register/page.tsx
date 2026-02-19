@@ -10,6 +10,7 @@ const registerSchema = z.object({
   nickname: z.string().min(2, '닉네임은 2자 이상이어야 합니다').max(50, '닉네임은 50자 이하여야 합니다'),
   password: z.string().min(8, '비밀번호는 8자 이상이어야 합니다'),
   confirmPassword: z.string(),
+  agreePrivacy: z.literal(true, { error: '개인정보처리방침에 동의해주세요' }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: '비밀번호가 일치하지 않습니다',
   path: ['confirmPassword'],
@@ -17,11 +18,18 @@ const registerSchema = z.object({
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    email: string;
+    nickname: string;
+    password: string;
+    confirmPassword: string;
+    agreePrivacy: boolean;
+  }>({
     email: '',
     nickname: '',
     password: '',
     confirmPassword: '',
+    agreePrivacy: false,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -155,6 +163,24 @@ export default function RegisterPage() {
               <p className="mt-1 text-sm text-op-error">{errors.confirmPassword}</p>
             )}
           </div>
+
+          <div className="flex items-start gap-2">
+            <input
+              id="agreePrivacy"
+              type="checkbox"
+              checked={formData.agreePrivacy}
+              onChange={(e) => setFormData({ ...formData, agreePrivacy: e.target.checked })}
+              className="mt-1 w-4 h-4 accent-op-gold"
+              disabled={isLoading}
+            />
+            <label htmlFor="agreePrivacy" className="text-sm text-op-text-secondary">
+              <a href="/privacy" target="_blank" className="text-op-gold hover:underline">개인정보처리방침</a>
+              {'과 '}
+              <a href="/terms" target="_blank" className="text-op-gold hover:underline">이용약관</a>
+              에 동의합니다. <span className="text-op-error">*</span>
+            </label>
+          </div>
+          {errors.agreePrivacy && <p className="mt-1 text-sm text-op-error">{errors.agreePrivacy}</p>}
 
           <button
             type="submit"

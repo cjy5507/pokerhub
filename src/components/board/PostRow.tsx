@@ -39,16 +39,18 @@ export function PostRow({
   const timeAgo = getTimeAgo(createdAt);
 
   return (
-    <>
-      {/* Desktop: Table row layout */}
-      <Link
-        href={`/board/${boardSlug}/${postId}`}
-        className={cn(
-          'hidden lg:grid lg:grid-cols-[auto_1fr_150px_100px_80px_80px] gap-4 items-center',
-          'px-4 py-2 border-b border-op-border hover:bg-op-elevated transition-colors',
-          className
-        )}
-      >
+    <Link
+      href={`/board/${boardSlug}/${postId}`}
+      className={cn(
+        // Mobile: card layout (default)
+        'block bg-op-surface rounded-lg p-4 hover:bg-op-elevated transition-colors',
+        // Desktop: table row layout
+        'lg:bg-transparent lg:rounded-none lg:p-0 lg:px-4 lg:py-2 lg:border-b lg:border-op-border',
+        className
+      )}
+    >
+      {/* Desktop: table row layout */}
+      <div className="hidden lg:grid lg:grid-cols-[auto_1fr_150px_100px_80px_80px] gap-4 items-center">
         {/* Pinned icon */}
         <div className="w-6 flex items-center justify-center">
           {isPinned && <Pin className="w-4 h-4 text-op-gold" />}
@@ -91,16 +93,10 @@ export function PostRow({
           <Heart className="w-3.5 h-3.5" />
           <span>{formatNumber(likes)}</span>
         </div>
-      </Link>
+      </div>
 
-      {/* Mobile: Card layout */}
-      <Link
-        href={`/board/${boardSlug}/${postId}`}
-        className={cn(
-          'block lg:hidden bg-op-surface rounded-lg p-4 hover:bg-op-elevated transition-colors',
-          className
-        )}
-      >
+      {/* Mobile: card layout */}
+      <div className="lg:hidden">
         {/* Title */}
         <div className="flex items-start gap-2 mb-2">
           {isPinned && (
@@ -147,8 +143,8 @@ export function PostRow({
             <span>{formatNumber(commentCount)}</span>
           </div>
         </div>
-      </Link>
-    </>
+      </div>
+    </Link>
   );
 }
 

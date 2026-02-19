@@ -2,15 +2,13 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { format } from 'date-fns';
-import { ko } from 'date-fns/locale';
 import { Eye, Heart, MessageSquare } from 'lucide-react';
 
 type Post = {
   id: string;
   title: string;
   boardSlug: string;
-  createdAt: Date;
+  createdAtLabel: string;
   viewCount: number;
   likeCount: number;
   commentCount: number;
@@ -21,18 +19,17 @@ type PokerHand = {
   gameType: string;
   stakes: string;
   result: string;
-  createdAt: Date;
+  createdAtLabel: string;
   likeCount: number;
   commentCount: number;
 };
 
 type ProfileTabsProps = {
-  userId: string;
   recentPosts: Post[];
   recentHands: PokerHand[];
 };
 
-export function ProfileTabs({ userId, recentPosts, recentHands }: ProfileTabsProps) {
+export function ProfileTabs({ recentPosts, recentHands }: ProfileTabsProps) {
   const [activeTab, setActiveTab] = useState<'posts' | 'hands'>('posts');
 
   return (
@@ -85,9 +82,7 @@ export function ProfileTabs({ userId, recentPosts, recentHands }: ProfileTabsPro
               >
                 <h3 className="font-medium mb-2">{post.title}</h3>
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <span>
-                    {format(new Date(post.createdAt), 'yyyy.MM.dd HH:mm', { locale: ko })}
-                  </span>
+                  <span>{post.createdAtLabel}</span>
                   <div className="flex items-center gap-3">
                     <span className="flex items-center gap-1">
                       <Eye className="w-4 h-4" />
@@ -140,9 +135,7 @@ export function ProfileTabs({ userId, recentPosts, recentHands }: ProfileTabsPro
                   </span>
                 </div>
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <span>
-                    {format(new Date(hand.createdAt), 'yyyy.MM.dd HH:mm', { locale: ko })}
-                  </span>
+                  <span>{hand.createdAtLabel}</span>
                   <div className="flex items-center gap-3">
                     <span className="flex items-center gap-1">
                       <Heart className="w-4 h-4" />

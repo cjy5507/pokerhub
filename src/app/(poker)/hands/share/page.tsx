@@ -21,6 +21,219 @@ interface ActionInput {
   amount?: number;
 }
 
+const ACTION_TYPES: ActionType[] = ['fold', 'check', 'call', 'bet', 'raise', 'all-in'];
+const ACTION_LABELS: Record<ActionType, string> = {
+  fold: '폴드',
+  check: '체크',
+  call: '콜',
+  bet: '벳',
+  raise: '레이즈',
+  'all-in': '올인',
+};
+const AMOUNT_REQUIRED: ActionType[] = ['bet', 'raise', 'all-in'];
+
+interface ActionInputStepProps {
+  positions: Position[];
+  flopCards: Card[];
+  turnCard: Card[];
+  riverCard: Card[];
+  preflopActions: ActionInput[];
+  setPreflopActions: (v: ActionInput[]) => void;
+  flopActions: ActionInput[];
+  setFlopActions: (v: ActionInput[]) => void;
+  turnActions: ActionInput[];
+  setTurnActions: (v: ActionInput[]) => void;
+  riverActions: ActionInput[];
+  setRiverActions: (v: ActionInput[]) => void;
+}
+
+function StreetActionPanel({
+  actions,
+  setActions,
+  positions,
+}: {
+  actions: ActionInput[];
+  setActions: (v: ActionInput[]) => void;
+  positions: Position[];
+}) {
+  const [position, setPosition] = useState<Position>(positions[0]);
+  const [actionType, setActionType] = useState<ActionType>('fold');
+  const [amount, setAmount] = useState('');
+
+  const needsAmount = AMOUNT_REQUIRED.includes(actionType);
+
+  function addAction() {
+    const entry: ActionInput = { position, action: actionType };
+    if (needsAmount && amount) entry.amount = Number(amount);
+    setActions([...actions, entry]);
+    setAmount('');
+  }
+
+  function removeAction(idx: number) {
+    setActions(actions.filter((_, i) => i !== idx));
+  }
+
+  return (
+    <div className="space-y-3">
+      {/* Recorded actions list */}
+      {actions.length > 0 && (
+        <div className="space-y-1">
+          {actions.map((a, i) => (
+            <div key={i} className="flex items-center justify-between bg-op-elevated rounded-lg px-3 py-2 text-sm">
+              <span className="text-op-text">
+                <span className="font-semibold text-op-gold">{a.position}</span>
+                <span className="mx-1 text-op-text-secondary">—</span>
+                <span>{ACTION_LABELS[a.action]}</span>
+                {a.amount != null && (
+                  <span className="ml-1 text-op-text-secondary">{a.amount.toLocaleString()}</span>
+                )}
+              </span>
+              <button
+                onClick={() => removeAction(i)}
+                className="ml-2 text-op-text-muted hover:text-red-400 transition-colors font-bold leading-none"
+                aria-label="삭제"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Add action form */}
+      <div className="bg-op-elevated border border-op-border rounded-lg p-3 space-y-3">
+        {/* Position dropdown */}
+        <div>
+          <label className="block text-xs text-op-text-secondary mb-1">포지션</label>
+          <select
+            value={position}
+            onChange={(e) => setPosition(e.target.value as Position)}
+            className="w-full px-3 py-2 bg-op-surface border border-op-border rounded-lg text-op-text text-sm focus:border-op-gold focus:outline-none"
+          >
+            {positions.map((p) => (
+              <option key={p} value={p}>{p}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Action type buttons */}
+        <div>
+          <label className="block text-xs text-op-text-secondary mb-1">액션</label>
+          <div className="flex flex-wrap gap-1.5">
+            {ACTION_TYPES.map((a) => (
+              <button
+                key={a}
+                onClick={() => setActionType(a)}
+                className={cn(
+                  'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
+                  actionType === a
+                    ? 'bg-op-gold text-black'
+                    : 'bg-op-surface border border-op-border text-op-text hover:border-op-gold'
+                )}
+              >
+                {ACTION_LABELS[a]}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Amount input (conditional) */}
+        {needsAmount && (
+          <div>
+            <label className="block text-xs text-op-text-secondary mb-1">금액</label>
+            <input
+              type="number"
+              min={0}
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="0"
+              className="w-full px-3 py-2 bg-op-surface border border-op-border rounded-lg text-op-text text-sm focus:border-op-gold focus:outline-none"
+            />
+          </div>
+        )}
+
+        {/* Add button */}
+        <button
+          onClick={addAction}
+          disabled={needsAmount && !amount}
+          className="w-full py-2 rounded-lg text-sm font-semibold bg-op-gold text-black hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+        >
+          추가
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ActionInputStep({
+  positions,
+  flopCards,
+  turnCard,
+  riverCard,
+  preflopActions,
+  setPreflopActions,
+  flopActions,
+  setFlopActions,
+  turnActions,
+  setTurnActions,
+  riverActions,
+  setRiverActions,
+}: ActionInputStepProps) {
+  const streets = [
+    { key: 'preflop', label: '프리플랍', always: true },
+    { key: 'flop',    label: '플랍',     always: flopCards.length === 3 },
+    { key: 'turn',    label: '턴',       always: turnCard.length === 1 },
+    { key: 'river',   label: '리버',     always: riverCard.length === 1 },
+  ].filter((s) => s.always);
+
+  const [activeStreet, setActiveStreet] = useState<string>(streets[0].key);
+
+  const actionMap: Record<string, { actions: ActionInput[]; setActions: (v: ActionInput[]) => void }> = {
+    preflop: { actions: preflopActions, setActions: setPreflopActions },
+    flop:    { actions: flopActions,    setActions: setFlopActions },
+    turn:    { actions: turnActions,    setActions: setTurnActions },
+    river:   { actions: riverActions,   setActions: setRiverActions },
+  };
+
+  const current = actionMap[activeStreet];
+
+  return (
+    <div className="space-y-4">
+      <h2 className="text-xl font-bold">액션 추가 (선택사항)</h2>
+      <p className="text-sm text-op-text-secondary">각 스트릿별로 액션을 기록하세요</p>
+
+      {/* Street tabs */}
+      <div className="flex gap-1.5 flex-wrap">
+        {streets.map((s) => (
+          <button
+            key={s.key}
+            onClick={() => setActiveStreet(s.key)}
+            className={cn(
+              'px-4 py-1.5 rounded-lg text-sm font-medium transition-colors',
+              activeStreet === s.key
+                ? 'bg-op-gold text-black'
+                : 'bg-op-elevated border border-op-border text-op-text hover:border-op-gold'
+            )}
+          >
+            {s.label}
+            {actionMap[s.key].actions.length > 0 && (
+              <span className="ml-1.5 text-xs opacity-70">({actionMap[s.key].actions.length})</span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Active street panel */}
+      <StreetActionPanel
+        key={activeStreet}
+        actions={current.actions}
+        setActions={current.setActions}
+        positions={positions}
+      />
+    </div>
+  );
+}
+
 export default function ShareHandPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
@@ -325,14 +538,20 @@ export default function ShareHandPage() {
 
             {/* Step 5: Actions */}
             {step === 5 && (
-              <div className="space-y-4">
-                <h2 className="text-xl font-bold">액션 추가 (선택사항)</h2>
-                <p className="text-sm text-op-text-secondary">각 스트릿별로 액션을 기록하세요</p>
-
-                <div className="text-sm text-op-text-muted bg-op-elevated p-3 rounded-lg">
-                  나중에 추가 예정 - 현재는 건너뛸 수 있습니다
-                </div>
-              </div>
+              <ActionInputStep
+                positions={positions}
+                flopCards={flopCards}
+                turnCard={turnCard}
+                riverCard={riverCard}
+                preflopActions={preflopActions}
+                setPreflopActions={setPreflopActions}
+                flopActions={flopActions}
+                setFlopActions={setFlopActions}
+                turnActions={turnActions}
+                setTurnActions={setTurnActions}
+                riverActions={riverActions}
+                setRiverActions={setRiverActions}
+              />
             )}
 
             {/* Step 6: Analysis Notes */}

@@ -387,6 +387,29 @@ export async function createHandComment(handId: string, street: string, content:
   return { success: true, commentId: comment.id };
 }
 
+export async function getHandComments(handId: string) {
+  if (!db) return [];
+
+  const comments = await db
+    .select({
+      comment: pokerHandComments,
+      author: users,
+    })
+    .from(pokerHandComments)
+    .leftJoin(users, eq(pokerHandComments.authorId, users.id))
+    .where(eq(pokerHandComments.handId, handId))
+    .orderBy(desc(pokerHandComments.createdAt));
+
+  return comments.map(({ comment, author }: any) => ({
+    id: comment.id,
+    content: comment.content,
+    street: comment.street,
+    authorNickname: author?.nickname ?? '익명',
+    authorLevel: author?.level ?? 1,
+    createdAt: comment.createdAt.toISOString(),
+  }));
+}
+
 export async function deleteHand(handId: string) {
   if (!db) return { success: false, error: 'Database not available' };
   const session = await getSession();

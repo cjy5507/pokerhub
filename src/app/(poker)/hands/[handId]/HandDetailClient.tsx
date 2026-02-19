@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PokerHand } from '@/types/poker';
-import { Heart, MessageSquare, Eye, Play, BarChart2 } from 'lucide-react';
+import { Heart, MessageSquare, Eye, Play, BarChart2, Send } from 'lucide-react';
+import { getHandComments, createHandComment } from '../../actions';
 import { cn } from '@/lib/utils';
 import { StreetNavigator, type StreetData } from '@/components/poker/StreetNavigator';
 import { HandReplayer } from '@/components/poker/HandReplayer';
@@ -79,6 +80,30 @@ function buildReplayerActions(hand: PokerHand) {
 
 export function HandDetailClient({ hand }: HandDetailClientProps) {
   const [view, setView] = useState<'analysis' | 'replay'>('analysis');
+  const [comments, setComments] = useState<any[]>([]);
+  const [newComment, setNewComment] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    getHandComments(hand.id).then(setComments);
+  }, [hand.id]);
+
+  const handleSubmitComment = async () => {
+    if (!newComment.trim() || isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      const result = await createHandComment(hand.id, 'preflop', newComment.trim());
+      if (result.success) {
+        setNewComment('');
+        const updated = await getHandComments(hand.id);
+        setComments(updated);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const streetData = buildStreetData(hand);
   const replayerPlayers = buildReplayerPlayers(hand);
@@ -232,6 +257,58 @@ export function HandDetailClient({ hand }: HandDetailClientProps) {
           </p>
         </div>
       )}
+
+      {/* ── Comments Section ─────────────────────────────── */}
+      <div className="bg-op-elevated rounded-xl p-5 border border-op-border">
+        <h2 className="text-sm font-semibold text-op-text mb-4">
+          댓글 ({comments.length})
+        </h2>
+
+        {/* Comment input */}
+        <div className="flex gap-2 mb-4">
+          <input
+            type="text"
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSubmitComment()}
+            placeholder="댓글을 입력하세요..."
+            className="flex-1 px-3 py-2 bg-op-surface border border-op-border rounded-lg text-sm text-op-text placeholder:text-op-text-muted focus:border-op-gold focus:outline-none"
+          />
+          <button
+            onClick={handleSubmitComment}
+            disabled={isSubmitting || !newComment.trim()}
+            className="px-4 py-2 bg-op-gold text-black rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-op-gold-hover transition-colors"
+          >
+            <Send className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Comment list */}
+        {comments.length > 0 ? (
+          <div className="space-y-3">
+            {comments.map((c: any) => (
+              <div key={c.id} className="flex gap-3">
+                <div className="w-7 h-7 rounded-full bg-op-gold/20 flex items-center justify-center text-op-gold font-bold text-xs flex-shrink-0">
+                  {c.authorNickname?.charAt(0)?.toUpperCase() ?? 'P'}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="text-xs font-semibold text-op-text">{c.authorNickname}</span>
+                    <span className="text-xs text-op-text-muted">
+                      {new Date(c.createdAt).toLocaleDateString('ko-KR')}
+                    </span>
+                  </div>
+                  <p className="text-sm text-op-text-secondary">{c.content}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-op-text-muted text-center py-4">
+            첫 번째 댓글을 남겨보세요
+          </p>
+        )}
+      </div>
 
       {/* ── View toggle — 분석 보기 / 리플레이 ──────────────── */}
       {(streetData.length > 0 || replayerPlayers.length > 0) && (

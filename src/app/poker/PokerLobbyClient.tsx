@@ -3,9 +3,10 @@
 import { useState, useTransition, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Users, Plus, Coins, Hash, RefreshCw } from 'lucide-react';
+import { Users, Plus, Coins, Hash, RefreshCw, Zap, Trophy, Flame } from 'lucide-react';
 import { createPokerTable } from './actions';
 import type { PokerTableWithSeats } from './actions';
+import { cn } from '@/lib/utils';
 
 type BlindFilter = {
   label: string;
@@ -39,10 +40,10 @@ const BLIND_OPTIONS: BlindOption[] = [
   { sb: 500, bb: 1000, label: '500/1000' },
 ];
 
-const STATUS_BADGE: Record<string, { label: string; color: string }> = {
-  waiting: { label: '대기 중', color: 'text-op-warning bg-op-warning-dim' },
-  playing: { label: '게임 중', color: 'text-op-success bg-op-success-dim' },
-  paused: { label: '일시정지', color: 'text-op-text-muted bg-op-elevated' },
+const STATUS_BADGE: Record<string, { label: string; bg: string; text: string; ring: string }> = {
+  waiting: { label: '대기 중', bg: 'bg-yellow-500/20', text: 'text-yellow-400', ring: 'ring-yellow-500/30' },
+  playing: { label: '게임 중', bg: 'bg-emerald-500/20', text: 'text-emerald-400', ring: 'ring-emerald-500/30' },
+  paused: { label: '일시정지', bg: 'bg-white/10', text: 'text-white/60', ring: 'ring-white/20' },
 };
 
 type PokerLobbyClientProps = {
@@ -132,146 +133,187 @@ export function PokerLobbyClient({ tables, myTableId }: PokerLobbyClientProps) {
       );
 
   return (
-    <div className="min-h-screen bg-op-deep text-op-text p-3 md:p-8 pb-20 lg:pb-8">
+    <div className="min-h-screen bg-[#0a0a0a] text-op-text p-4 md:p-8 pb-24 relative overflow-hidden">
+      {/* Ambient background glows */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-op-gold/10 blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-emerald-600/10 blur-[120px] pointer-events-none" />
+
       {/* Header */}
-      <div className="max-w-7xl mx-auto mb-3 md:mb-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-4 mb-3 md:mb-4">
-          <div>
-            <h1 className="text-xl md:text-4xl font-bold text-op-gold flex items-center gap-2 md:gap-3 mb-1 md:mb-2">
-              <Coins className="w-6 h-6 md:w-10 md:h-10" />
-              포인트 포커
-            </h1>
-            <p className="text-op-text-secondary text-xs md:text-base">
-              실시간 텍사스 홀덤 - 포인트로 즐기는 진짜 포커
-            </p>
+      <div className="max-w-7xl mx-auto mb-8 relative z-10">
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex items-center gap-5">
+            <div className="p-4 bg-gradient-to-br from-op-gold/40 to-op-gold-hover/10 rounded-2xl shadow-[0_0_20px_rgba(201,162,39,0.3)] border border-op-gold/30">
+              <Flame className="w-8 h-8 md:w-10 md:h-10 text-op-gold drop-shadow-md" />
+            </div>
+            <div>
+              <h1 className="text-3xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-gray-400 tracking-tight drop-shadow-sm mb-1">
+                텍사스 홀덤 라운지
+              </h1>
+              <p className="text-white/50 text-sm md:text-base font-medium flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                실시간 라이브 테이블
+              </p>
+            </div>
           </div>
+          
           <button
             onClick={() => setIsModalOpen(true)}
-            className="bg-op-gold hover:bg-op-gold-hover text-black font-semibold px-4 py-2 md:px-6 md:py-3 rounded-lg flex items-center gap-1.5 md:gap-2 transition-colors text-sm md:text-base w-full sm:w-auto"
+            className="group relative overflow-hidden bg-gradient-to-r from-op-gold to-op-gold-hover text-black font-black px-6 py-4 rounded-2xl flex items-center justify-center gap-2 transition-transform hover:scale-105 shadow-[0_0_20px_rgba(201,162,39,0.3)]"
           >
-            <Plus className="w-4 h-4 md:w-5 md:h-5" />
-            테이블 만들기
-          </button>
-        </div>
-
-        {/* Blind Filters */}
-        <div className="flex flex-wrap gap-2">
-          {BLIND_FILTERS.map((filter) => (
-            <button
-              key={filter.label}
-              onClick={() => setActiveFilter(filter)}
-              className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-colors ${
-                activeFilter.label === filter.label
-                  ? 'bg-op-gold text-black'
-                  : 'bg-op-surface text-op-text-secondary border border-op-border hover:border-op-border-medium'
-              }`}
-            >
-              {filter.label}
-            </button>
-          ))}
-          <button
-            onClick={() => router.refresh()}
-            className="ml-auto px-3 py-2 rounded-lg text-sm text-op-text-secondary bg-op-surface border border-op-border hover:border-op-border-medium transition-colors flex items-center gap-1"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            새로고침
+            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out" />
+            <Plus className="w-5 h-5 relative z-10" />
+            <span className="relative z-10">테이블 만들기</span>
           </button>
         </div>
       </div>
 
-      {/* Table List */}
-      <div className="max-w-7xl mx-auto">
+      {/* Filter Bar */}
+      <div className="max-w-7xl mx-auto mb-8 relative z-10">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2 bg-black/40 p-2 rounded-2xl border border-white/5 backdrop-blur-md overflow-x-auto w-full md:w-auto scrollbar-hide">
+            <span className="text-sm font-semibold text-white/40 px-3 hidden sm:block">블라인드</span>
+            {BLIND_FILTERS.map((filter) => (
+              <button
+                key={filter.label}
+                onClick={() => setActiveFilter(filter)}
+                className={`whitespace-nowrap px-4 py-2 rounded-xl text-sm font-bold transition-all duration-200 ${
+                  activeFilter.label === filter.label
+                    ? 'bg-gradient-to-b from-white/20 to-white/5 text-op-gold shadow-[0_0_15px_rgba(201,162,39,0.2)] border border-op-gold/30 scale-105'
+                    : 'bg-transparent text-white/50 hover:bg-white/5 hover:text-white'
+                }`}
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
+          
+          <button
+            onClick={() => router.refresh()}
+            className="ml-auto px-4 py-3 rounded-2xl text-sm font-medium text-white/60 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors flex items-center gap-2 active:scale-95 shadow-lg backdrop-blur-md"
+          >
+            <RefreshCw className="w-4 h-4" />
+            <span className="hidden sm:inline">새로고침</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Table Grid */}
+      <div className="max-w-7xl mx-auto relative z-10">
         {filteredTables.length === 0 ? (
-          <div className="bg-op-surface border border-op-border rounded-lg p-6 md:p-12 text-center">
-            <Coins className="w-10 h-10 md:w-16 md:h-16 text-op-gold mx-auto mb-3 md:mb-4 opacity-50" />
-            <p className="text-op-text-secondary text-base md:text-lg mb-1 md:mb-2">테이블이 없습니다</p>
-            <p className="text-op-text-dim text-sm">첫 번째 테이블을 만들어보세요!</p>
+          <div className="bg-white/5 backdrop-blur-xl border border-white/5 rounded-3xl p-16 text-center shadow-2xl flex flex-col items-center">
+            <div className="w-24 h-24 bg-black/50 rounded-full flex items-center justify-center mb-6 shadow-inner border border-white/5">
+              <Trophy className="w-12 h-12 text-white/20" />
+            </div>
+            <h3 className="text-2xl font-bold text-white mb-2 tracking-tight">현재 열려있는 테이블이 없습니다</h3>
+            <p className="text-white/40 mb-8 max-w-sm">블라인드를 변경하거나 직접 새로운 테이블을 만들어 게임을 시작해보세요.</p>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="bg-white/10 hover:bg-white/20 text-white font-bold px-6 py-3 rounded-xl transition-all border border-white/10"
+            >
+              새 테이블 생성하기
+            </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {filteredTables.map((table) => {
               const isMyTable = table.id === myTableId;
               const badge = STATUS_BADGE[table.status] || STATUS_BADGE.paused;
+              const fullness = table.activePlayers / table.maxSeats;
+              const isFull = table.activePlayers === table.maxSeats;
 
               return (
                 <div
                   key={table.id}
-                  className={`bg-op-surface border rounded-lg p-4 sm:p-6 transition-colors ${
+                  className={cn(
+                    "group relative bg-[#111111] backdrop-blur-xl border rounded-[24px] p-6 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 overflow-hidden",
                     isMyTable
-                      ? 'ring-2 ring-op-gold/50 border-op-gold/30'
-                      : 'border-op-border hover:border-op-gold'
-                  }`}
+                      ? "border-op-gold/50 shadow-[0_0_30px_rgba(201,162,39,0.15)]"
+                      : "border-white/10 hover:border-white/20"
+                  )}
                 >
-                  {/* My Table Badge */}
+                  {/* Premium internal glow top right */}
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 blur-3xl rounded-full" />
+                  
                   {isMyTable && (
-                    <div className="mb-3">
-                      <span className="text-xs font-semibold text-op-warning bg-op-warning-dim px-2 py-1 rounded">
-                        참여 중
-                      </span>
-                    </div>
+                    <div className="absolute -top-[1px] -left-[1px] -right-[1px] h-1 bg-gradient-to-r from-op-gold/0 via-op-gold to-op-gold/0" />
                   )}
 
-                  {/* Table Name + Status */}
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-bold text-op-text truncate">{table.name}</h3>
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold ${badge.color}`}
-                    >
+                  <div className="flex items-start justify-between mb-5 relative z-10">
+                    <div className="pr-4">
+                      {isMyTable && (
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <Zap className="w-3.5 h-3.5 text-op-gold fill-op-gold animate-pulse" />
+                          <span className="text-xs font-bold text-op-gold tracking-wider uppercase">내 테이블</span>
+                        </div>
+                      )}
+                      <h3 className={cn(
+                        "text-2xl font-black tracking-tight truncate",
+                        isMyTable ? "text-white" : "text-gray-200"
+                      )}>{table.name}</h3>
+                    </div>
+                    
+                    <span className={cn(
+                      "shrink-0 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider ring-1",
+                      badge.bg, badge.text, badge.ring
+                    )}>
                       {badge.label}
                     </span>
                   </div>
 
-                  {/* Blinds */}
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-op-text-secondary text-sm">SB/BB:</span>
-                    <span className="text-op-gold font-semibold">
-                      {table.smallBlind}/{table.bigBlind}
-                    </span>
-                  </div>
-
-                  {/* Buy-in Range */}
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-op-text-secondary text-sm">바이인:</span>
-                    <span className="text-op-text text-sm">
-                      {table.minBuyIn.toLocaleString()} - {table.maxBuyIn.toLocaleString()}P
-                    </span>
-                  </div>
-
-                  {/* Seats + Dot Visualization */}
-                  <div className="flex items-center gap-2 mb-3">
-                    <Users className="w-4 h-4 text-op-text-secondary" />
-                    <span className="text-op-text text-sm">
-                      {table.activePlayers}/{table.maxSeats}
-                    </span>
-                    <div className="flex gap-1 ml-2">
-                      {Array.from({ length: table.maxSeats }).map((_, i) => (
-                        <div
-                          key={i}
-                          className={`w-2 h-2 rounded-full ${
-                            i < table.seatCount ? 'bg-op-success' : 'bg-white/20'
-                          }`}
-                        />
-                      ))}
+                  <div className="grid grid-cols-2 gap-4 mb-6 relative z-10">
+                    <div className="bg-black/40 rounded-xl p-3 border border-white/5">
+                      <div className="text-[10px] text-white/40 uppercase tracking-widest font-bold mb-1">Blinds</div>
+                      <div className="font-mono text-lg font-black text-white/90">
+                        {table.smallBlind}<span className="text-white/30">/</span>{table.bigBlind}
+                      </div>
+                    </div>
+                    <div className="bg-black/40 rounded-xl p-3 border border-white/5">
+                      <div className="text-[10px] text-white/40 uppercase tracking-widest font-bold mb-1">Min Buy-in</div>
+                      <div className="font-mono text-lg font-black text-op-gold drop-shadow-sm">
+                        {table.minBuyIn > 1000 ? `${table.minBuyIn / 1000}k` : table.minBuyIn}
+                      </div>
                     </div>
                   </div>
 
-                  {/* Hand Count */}
-                  <div className="flex items-center gap-1 text-op-text-secondary text-sm mb-4">
-                    <Hash className="w-4 h-4" />
-                    <span>{table.handCount} 핸드</span>
-                  </div>
+                  <div className="flex items-end justify-between relative z-10">
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Users className={cn("w-4 h-4", isFull ? "text-red-400" : "text-white/50")} />
+                        <span className="text-sm font-bold text-white/80">
+                          {table.activePlayers} <span className="text-white/30">/</span> {table.maxSeats}
+                        </span>
+                      </div>
+                      
+                      {/* Visual Seat Indicators */}
+                      <div className="flex gap-1.5 align-middle">
+                        {Array.from({ length: table.maxSeats }).map((_, i) => (
+                          <div
+                            key={i}
+                            className={cn(
+                              "w-8 h-1.5 rounded-full transition-all duration-300",
+                              i < table.activePlayers 
+                                ? isMyTable ? "bg-op-gold shadow-[0_0_8px_rgba(201,162,39,0.5)]" : "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.3)]"
+                                : "bg-white/10"
+                            )}
+                          />
+                        ))}
+                      </div>
+                    </div>
 
-                  {/* Enter Button */}
-                  <Link
-                    href={`/poker/${table.id}`}
-                    className={`block w-full font-semibold py-2 rounded-lg text-center transition-colors ${
-                      isMyTable
-                        ? 'bg-yellow-500 hover:bg-yellow-600 text-black'
-                        : 'bg-op-enter hover:bg-op-enter-hover text-white'
-                    }`}
-                  >
-                    {isMyTable ? '돌아가기' : '입장'}
-                  </Link>
+                    <Link
+                      href={`/poker/${table.id}`}
+                      className={cn(
+                        "px-6 py-3 rounded-xl font-bold text-sm tracking-wide transition-all",
+                        isMyTable
+                          ? "bg-gradient-to-br from-gray-700 to-gray-800 text-white hover:from-gray-600 hover:to-gray-700 border border-gray-600/50 shadow-lg"
+                          : isFull && !isMyTable
+                          ? "bg-red-500/10 text-red-400 border border-red-500/20"
+                          : "bg-white/10 hover:bg-white/20 text-white border border-white/10 shadow-lg backdrop-blur-sm"
+                      )}
+                    >
+                      {isMyTable ? '테이블로' : isFull ? '관전' : '입장하기'}
+                    </Link>
+                  </div>
                 </div>
               );
             })}
@@ -279,208 +321,195 @@ export function PokerLobbyClient({ tables, myTableId }: PokerLobbyClientProps) {
         )}
       </div>
 
-      {/* Create Table Modal */}
+      {/* Modern Modal Overlay */}
       {isModalOpen && (
-        <div
-          className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50"
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
           onClick={() => setIsModalOpen(false)}
         >
-          <div
-            className="bg-op-surface border border-op-border rounded-lg p-6 max-w-md w-full"
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200" />
+          
+          {/* Modal Content */}
+          <div 
+            className="relative w-full max-w-lg bg-[#0f0f0f] border border-white/10 rounded-[32px] overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.8)] animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="text-xl sm:text-2xl font-bold text-op-gold mb-6">테이블 만들기</h2>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Table Name */}
-              <div>
-                <label className="block text-sm font-medium text-op-text mb-2">
-                  테이블 이름
-                </label>
-                <input
-                  type="text"
-                  value={tableName}
-                  onChange={(e) => setTableName(e.target.value)}
-                  className="w-full bg-op-deep border border-op-border rounded-lg px-4 py-2 text-op-text focus:border-op-gold focus:outline-none"
-                  placeholder="나의 포커테이블"
-                  maxLength={20}
-                />
+            {/* Top accent line */}
+            <div className="h-1.5 w-full bg-gradient-to-r from-op-gold via-yellow-200 to-op-gold" />
+            
+            <div className="p-6 sm:p-8">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-2xl font-black text-white tracking-tight flex items-center gap-3">
+                  <div className="p-2 bg-op-gold/20 rounded-lg">
+                    <Plus className="w-5 h-5 text-op-gold" />
+                  </div>
+                  새 테이블 생성
+                </h2>
+                <button 
+                  onClick={() => setIsModalOpen(false)}
+                  className="p-2 bg-white/5 hover:bg-white/10 rounded-full text-white/50 hover:text-white transition-colors"
+                >
+                  <Plus className="w-5 h-5 rotate-45" />
+                </button>
               </div>
 
-              {/* Blinds */}
-              <div>
-                <label className="block text-sm font-medium text-op-text mb-2">
-                  블라인드 (SB/BB)
-                </label>
-
-                {/* Toggle: Preset vs Custom */}
-                <div className="flex gap-2 mb-2">
-                  <button
-                    type="button"
-                    onClick={() => setUseCustomBlinds(false)}
-                    className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                      !useCustomBlinds ? 'bg-op-gold text-black' : 'bg-op-elevated text-op-text-secondary'
-                    }`}
-                  >
-                    프리셋
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setUseCustomBlinds(true)}
-                    className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                      useCustomBlinds ? 'bg-op-gold text-black' : 'bg-op-elevated text-op-text-secondary'
-                    }`}
-                  >
-                    커스텀
-                  </button>
-                </div>
-
-                {useCustomBlinds ? (
-                  <div className="flex gap-2 items-center">
-                    <input
-                      type="number"
-                      inputMode="numeric"
-                      value={customSB}
-                      onChange={(e) => setCustomSB(e.target.value)}
-                      className="flex-1 bg-op-deep border border-op-border rounded-lg px-3 py-2 text-op-text text-center focus:border-op-gold focus:outline-none"
-                      placeholder="SB"
-                      min={1}
-                    />
-                    <span className="text-op-text-muted">/</span>
-                    <input
-                      type="number"
-                      inputMode="numeric"
-                      value={customBB}
-                      onChange={(e) => setCustomBB(e.target.value)}
-                      className="flex-1 bg-op-deep border border-op-border rounded-lg px-3 py-2 text-op-text text-center focus:border-op-gold focus:outline-none"
-                      placeholder="BB"
-                      min={1}
-                    />
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-3 gap-1.5">
-                    {BLIND_OPTIONS.map((option) => (
-                      <button
-                        key={option.label}
-                        type="button"
-                        onClick={() => setSelectedBlinds(option)}
-                        className={`py-2 rounded-lg text-xs font-medium transition-colors ${
-                          selectedBlinds.label === option.label
-                            ? 'bg-op-gold text-black'
-                            : 'bg-op-elevated text-op-text-secondary hover:bg-op-border'
-                        }`}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Ante */}
-              <div>
-                <label className="block text-sm font-medium text-op-text mb-2">
-                  앤티
-                </label>
-                <div className="flex gap-2 items-center">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Table Name */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-white/50 uppercase tracking-widest pl-1">Table Name</label>
                   <input
-                    type="number"
-                    inputMode="numeric"
-                    value={ante}
-                    onChange={(e) => setAnte(Math.max(0, parseInt(e.target.value) || 0))}
-                    className="w-full bg-op-deep border border-op-border rounded-lg px-4 py-2 text-op-text focus:border-op-gold focus:outline-none"
-                    placeholder="0 (없음)"
-                    min={0}
+                    type="text"
+                    value={tableName}
+                    onChange={(e) => setTableName(e.target.value)}
+                    className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3.5 text-white font-medium focus:border-op-gold/50 focus:ring-1 focus:ring-op-gold/50 transition-all outline-none placeholder:text-white/20"
+                    placeholder="VIP 라운지"
+                    maxLength={20}
                   />
                 </div>
-                <p className="text-xs text-op-text-dim mt-1">
-                  0 = 앤티 없음. 앤티는 빅블라인드 이하로 설정하세요.
-                </p>
-              </div>
 
-              {/* Max Seats */}
-              <div>
-                <label className="block text-sm font-medium text-op-text mb-2">
-                  최대 인원
-                </label>
-                <div className="grid grid-cols-3 gap-2 sm:flex sm:gap-4">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="maxSeats"
-                      value={2}
-                      checked={maxSeats === 2}
-                      onChange={() => setMaxSeats(2 as 6 | 9)}
-                      className="w-4 h-4 text-op-gold focus:ring-op-gold"
-                    />
-                    <span className="text-op-text">2명 (헤즈업)</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="maxSeats"
-                      value={6}
-                      checked={maxSeats === 6}
-                      onChange={() => setMaxSeats(6)}
-                      className="w-4 h-4 text-op-gold focus:ring-op-gold"
-                    />
-                    <span className="text-op-text">6명</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="maxSeats"
-                      value={9}
-                      checked={maxSeats === 9}
-                      onChange={() => setMaxSeats(9)}
-                      className="w-4 h-4 text-op-gold focus:ring-op-gold"
-                    />
-                    <span className="text-op-text">9명</span>
-                  </label>
-                </div>
-              </div>
+                {/* Blinds */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between pl-1">
+                    <label className="text-xs font-bold text-white/50 uppercase tracking-widest">Blinds (SB/BB)</label>
+                    <div className="flex bg-black/50 rounded-lg p-0.5 border border-white/5">
+                      <button
+                        type="button"
+                        onClick={() => setUseCustomBlinds(false)}
+                        className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase transition-all ${
+                          !useCustomBlinds ? 'bg-white/15 text-white shadow-sm' : 'text-white/40 hover:text-white/60'
+                        }`}
+                      >
+                        Presets
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setUseCustomBlinds(true)}
+                        className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase transition-all ${
+                          useCustomBlinds ? 'bg-white/15 text-white shadow-sm' : 'text-white/40 hover:text-white/60'
+                        }`}
+                      >
+                        Custom
+                      </button>
+                    </div>
+                  </div>
 
-              {/* Buy-in Info */}
-              <div className="bg-op-deep border border-op-border rounded-lg p-3">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-op-text-secondary">바이인 범위</span>
-                  <span className="text-op-gold font-semibold">
-                    {calculateBuyInRange(useCustomBlinds ? (parseInt(customBB) || 0) : selectedBlinds.bb)}
-                  </span>
+                  {useCustomBlinds ? (
+                    <div className="flex gap-3">
+                      <div className="relative flex-1">
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 font-bold text-sm">SB</span>
+                        <input
+                          type="number"
+                          inputMode="numeric"
+                          value={customSB}
+                          onChange={(e) => setCustomSB(e.target.value)}
+                          className="w-full bg-black/50 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-white font-black text-lg focus:border-op-gold/50 focus:ring-1 focus:ring-op-gold/50 outline-none"
+                          placeholder="0"
+                          min={1}
+                        />
+                      </div>
+                      <div className="relative flex-1">
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 font-bold text-sm">BB</span>
+                        <input
+                          type="number"
+                          inputMode="numeric"
+                          value={customBB}
+                          onChange={(e) => setCustomBB(e.target.value)}
+                          className="w-full bg-black/50 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-white font-black text-lg focus:border-op-gold/50 focus:ring-1 focus:ring-op-gold/50 outline-none"
+                          placeholder="0"
+                          min={1}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-3 gap-2">
+                      {BLIND_OPTIONS.map((option) => (
+                        <button
+                          key={option.label}
+                          type="button"
+                          onClick={() => setSelectedBlinds(option)}
+                          className={cn(
+                            "py-2.5 rounded-xl text-sm font-bold border transition-all",
+                            selectedBlinds.label === option.label
+                              ? "bg-op-gold/10 border-op-gold/50 text-op-gold shadow-[inset_0_0_15px_rgba(201,162,39,0.1)]"
+                              : "bg-black/30 border-white/5 text-white/50 hover:bg-white/5 hover:text-white"
+                          )}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                {ante > 0 && (
-                  <div className="flex items-center justify-between text-sm mt-1">
-                    <span className="text-op-text-secondary">앤티</span>
-                    <span className="text-op-warning font-semibold">{ante}P / 핸드</span>
+
+                {/* Ante & Max Seats row */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-white/50 uppercase tracking-widest pl-1">Ante</label>
+                    <div className="relative">
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 font-bold text-sm">P</span>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        value={ante}
+                        onChange={(e) => setAnte(Math.max(0, parseInt(e.target.value) || 0))}
+                        className="w-full bg-black/50 border border-white/10 rounded-xl pl-4 pr-10 py-3 text-white font-bold focus:border-op-gold/50 focus:ring-1 focus:ring-op-gold/50 outline-none placeholder:text-white/20"
+                        placeholder="0"
+                        min={0}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-white/50 uppercase tracking-widest pl-1">Max Seats</label>
+                    <div className="grid grid-cols-3 gap-1 p-1 bg-black/50 border border-white/10 rounded-xl h-[50px]">
+                      {[2, 6, 9].map((seatCount) => (
+                        <button
+                          key={seatCount}
+                          type="button"
+                          onClick={() => setMaxSeats(seatCount as 2 | 6 | 9)}
+                          className={cn(
+                            "h-full rounded-lg text-sm font-bold flex flex-col items-center justify-center transition-all",
+                            maxSeats === seatCount
+                              ? "bg-white/15 text-white shadow-sm"
+                              : "text-white/40 hover:text-white/60"
+                          )}
+                        >
+                          {seatCount}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Summary Info Box */}
+                <div className="bg-gradient-to-br from-white/5 to-white/0 border border-white/10 rounded-xl p-4 flex justify-between items-center backdrop-blur-sm">
+                  <div>
+                    <div className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Buy-in Range</div>
+                    <div className="font-mono text-op-gold font-black shadow-sm">
+                      {calculateBuyInRange(useCustomBlinds ? (parseInt(customBB) || 0) : selectedBlinds.bb)}
+                    </div>
+                  </div>
+                  <Coins className="w-8 h-8 text-white/10" />
+                </div>
+
+                {error && (
+                  <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 flex items-center gap-3">
+                    <div className="w-2 h-2 rounded-full bg-red-400 animate-pulse shrink-0" />
+                    <p className="text-red-400 text-sm font-medium">{error}</p>
                   </div>
                 )}
-              </div>
 
-              {/* Error */}
-              {error && (
-                <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-3">
-                  <p className="text-red-400 text-sm">{error}</p>
-                </div>
-              )}
-
-              {/* Buttons */}
-              <div className="flex gap-3 mt-6">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="flex-1 bg-op-elevated hover:bg-op-border-medium text-op-text font-semibold py-2 rounded-lg transition-colors"
-                >
-                  취소
-                </button>
                 <button
                   type="submit"
                   disabled={isPending}
-                  className="flex-1 bg-op-gold hover:bg-op-gold-hover text-black font-semibold py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full group relative overflow-hidden bg-gradient-to-r from-op-gold to-yellow-500 text-black font-black py-4 rounded-xl flex items-center justify-center gap-2 transition-all hover:shadow-[0_0_30px_rgba(201,162,39,0.3)] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isPending ? '생성 중...' : '만들기'}
+                  <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out" />
+                  <span className="relative z-10">{isPending ? '테이블 편성 중...' : '게임 시작하기'}</span>
                 </button>
-              </div>
-            </form>
+              </form>
+            </div>
           </div>
         </div>
       )}

@@ -1,17 +1,17 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Ticket, Star, Crown, Zap, Trophy, X, TrendingUp, Gift } from 'lucide-react';
+import { Ticket, Star, Crown, Zap, Trophy, X, TrendingUp, Gift, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { buyLotteryTicket, getUserPoints } from '../actions';
 
 // Prize tiers configuration matching server-side tiers
 const PRIZE_TIERS = [
-  { id: 'first', name: '1등', prize: 5000, probability: 0.5, color: 'from-red-500 to-yellow-500', glow: 'shadow-red-500/50', icon: Crown },
-  { id: 'second', name: '2등', prize: 500, probability: 3, color: 'from-purple-500 to-pink-500', glow: 'shadow-purple-500/50', icon: Star },
-  { id: 'third', name: '3등', prize: 200, probability: 8, color: 'from-blue-500 to-cyan-500', glow: 'shadow-blue-500/50', icon: Zap },
-  { id: 'fourth', name: '4등', prize: 100, probability: 20, color: 'from-green-500 to-emerald-500', glow: 'shadow-green-500/50', icon: Trophy },
-  { id: 'none', name: '꽝', prize: 0, probability: 68.5, color: 'from-gray-600 to-gray-700', glow: 'shadow-gray-500/30', icon: X },
+  { id: 'first', name: '1등', prize: 5000, probability: 0.5, color: 'from-[#FFD700] via-[#FDB931] to-[#9F7928]', glow: 'shadow-[#FFD700]/60', icon: Crown },
+  { id: 'second', name: '2등', prize: 500, probability: 3, color: 'from-[#E2E2E2] via-[#C9D6FF] to-[#9CA3AF]', glow: 'shadow-[#C9D6FF]/60', icon: Star },
+  { id: 'third', name: '3등', prize: 200, probability: 8, color: 'from-[#CD7F32] via-[#F8B175] to-[#8C5013]', glow: 'shadow-[#CD7F32]/60', icon: Zap },
+  { id: 'fourth', name: '4등', prize: 100, probability: 20, color: 'from-emerald-400 via-teal-500 to-green-600', glow: 'shadow-emerald-500/60', icon: Trophy },
+  { id: 'none', name: '꽝', prize: 0, probability: 68.5, color: 'from-gray-600 via-gray-700 to-gray-900', glow: 'shadow-gray-900/40', icon: X },
 ] as const;
 
 type TierType = typeof PRIZE_TIERS[number]['id'];
@@ -122,253 +122,323 @@ export default function LotteryPage() {
   };
 
   return (
-    <div className="min-h-screen bg-op-bg text-op-text pb-20 lg:pb-0">
+    <div className="min-h-screen bg-[#0a0a0a] text-op-text pb-20 lg:pb-0 relative overflow-hidden">
+      {/* Background ambient glow matching roulette */}
+      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-purple-600/10 blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-op-gold/10 blur-[120px] pointer-events-none" />
+
       {/* Header */}
-      <div className="border-b border-op-border bg-op-surface">
-        <div className="max-w-4xl mx-auto px-4 py-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-3 bg-gradient-to-br from-op-gold to-op-gold-hover rounded-xl shadow-lg shadow-op-gold/20">
-              <Ticket size={28} className="text-black" />
+      <div className="border-b border-white/5 bg-white/5 backdrop-blur-xl relative z-10 shadow-lg">
+        <div className="max-w-5xl mx-auto px-4 py-6">
+          <div className="flex items-center gap-4 mb-6">
+            <div className="p-3 bg-gradient-to-br from-op-gold/40 to-op-gold-hover/10 rounded-2xl shadow-[0_0_20px_rgba(201,162,39,0.3)] backdrop-blur-md border border-op-gold/30">
+              <Ticket size={32} className="text-op-gold" />
             </div>
             <div>
-              <h1 className="text-3xl font-black tracking-tight text-op-text">복권</h1>
-              <p className="text-sm text-op-text-secondary">운을 시험해보세요</p>
+              <h1 className="text-4xl font-black tracking-tighter bg-gradient-to-r from-white via-gray-200 to-gray-400 text-transparent bg-clip-text drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                프리미엄 복권
+              </h1>
+              <p className="text-sm font-medium text-white/50 tracking-wide mt-1">오늘의 행운을 긁어보세요</p>
             </div>
           </div>
 
-          {/* Points Display */}
-          <div className="p-4 bg-op-surface border border-op-border rounded-xl flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Star className="text-op-gold" size={20} />
-              <span className="text-op-text-secondary">보유 포인트</span>
+          <div className="flex flex-col sm:flex-row gap-4">
+            {/* Points Display */}
+            <div className="flex-1 p-5 bg-black/40 border border-white/10 rounded-2xl flex items-center justify-between relative overflow-hidden group">
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-[shimmer_2s_infinite]" />
+              <div className="flex items-center gap-2 relative z-10">
+                <Crown className="text-op-gold" size={24} />
+                <span className="text-sm font-medium text-white/50">보유 포인트</span>
+              </div>
+              <span className="text-3xl font-black text-op-gold drop-shadow-[0_0_15px_rgba(201,162,39,0.5)] relative z-10">
+                {isLoadingPoints ? '...' : `${userPoints.toLocaleString()}P`}
+              </span>
             </div>
-            <span className="text-2xl font-bold text-op-gold">{isLoadingPoints ? '...' : `${userPoints.toLocaleString()}P`}</span>
-          </div>
 
-          {/* Daily Limit */}
-          <div className="mt-3 flex items-center justify-between text-sm">
-            <span className="text-op-text-secondary">오늘의 구매</span>
-            <span className={cn(
-              "font-medium",
-              todayCount >= DAILY_LIMIT ? "text-red-400" : "text-op-gold"
-            )}>
-              {todayCount} / {DAILY_LIMIT}
-            </span>
+            {/* Daily Limit */}
+            <div className="sm:w-64 p-5 bg-black/40 border border-white/10 rounded-2xl flex flex-col justify-center">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-white/50">오늘의 구매 한도</span>
+                <span className={cn(
+                  "font-black text-lg",
+                  todayCount >= DAILY_LIMIT ? "text-red-400" : "text-op-gold"
+                )}>
+                  {todayCount} / {DAILY_LIMIT}
+                </span>
+              </div>
+              <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden">
+                <div 
+                  className={cn(
+                    "h-full rounded-full transition-all duration-500",
+                    todayCount >= DAILY_LIMIT ? "bg-red-500" : "bg-gradient-to-r from-op-gold to-[#fff4cc]"
+                  )}
+                  style={{ width: `${(todayCount / DAILY_LIMIT) * 100}%` }}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
-        {/* Card Flip Area */}
-        <div className="bg-op-surface border border-op-border rounded-2xl p-6">
-          <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-op-text">
-            <Gift className="text-op-gold" size={24} />
-            복권 카드
-          </h2>
-
-          {!currentTicket ? (
-            <div className="flex flex-col items-center justify-center py-12">
-              <div className="w-full max-w-[320px] h-96 mx-auto rounded-2xl bg-gradient-to-br from-op-elevated to-op-surface border-2 border-dashed border-op-border-medium flex items-center justify-center mb-6">
-                <div className="text-center">
-                  <Ticket size={64} className="text-op-border-medium mx-auto mb-4" />
-                  <p className="text-op-text-secondary">복권을 구매하세요</p>
-                </div>
-              </div>
-              {errorMessage && (
-                <p className="mb-4 text-sm text-red-400 text-center">{errorMessage}</p>
-              )}
-              <button
-                onClick={handleBuyTicket}
-                disabled={isPurchasing || userPoints < TICKET_COST || todayCount >= DAILY_LIMIT}
-                className={cn(
-                  "px-6 py-3 sm:px-8 sm:py-4 rounded-xl font-bold text-base sm:text-lg transition-all transform hover:scale-105 active:scale-95",
-                  "bg-gradient-to-r from-op-gold to-op-gold-hover text-black shadow-lg shadow-op-gold/30",
-                  "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-                )}
-              >
-                {isPurchasing ? '구매 중...' : `복권 구매 (${TICKET_COST}P)`}
-              </button>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-8">
-              <div className="card-container" style={{ perspective: '1000px' }}>
-                <div
-                  className={cn(
-                    "card-flip w-full max-w-[320px] h-96 relative cursor-pointer",
-                    isRevealed && "flipped"
-                  )}
-                  onClick={handleFlip}
-                  style={{
-                    transformStyle: 'preserve-3d',
-                    transition: 'transform 0.8s',
-                    transform: isRevealed ? 'rotateY(180deg)' : 'rotateY(0deg)'
-                  }}
-                >
-                  {/* Card Back (Hidden state) */}
-                  <div
-                    className="absolute inset-0 rounded-2xl overflow-hidden border-4 border-op-gold shadow-2xl"
-                    style={{
-                      backfaceVisibility: 'hidden',
-                      transform: 'rotateY(0deg)',
-                      background: 'linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 50%, #2a2a2a 100%)',
-                    }}
-                  >
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="text-center">
-                        <div className="relative mb-4">
-                          <Star size={80} className="text-op-gold mx-auto animate-pulse" />
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="w-20 h-20 bg-op-gold/20 rounded-full blur-xl animate-pulse" />
-                          </div>
-                        </div>
-                        <p className="text-2xl font-black text-op-gold tracking-wider">클릭하여 공개</p>
-                        <p className="text-sm text-op-text-secondary mt-2">카드를 뒤집어보세요</p>
-                      </div>
-                    </div>
-                    {/* Decorative pattern */}
-                    <div className="absolute inset-0 opacity-10">
-                      <div className="grid grid-cols-4 h-full">
-                        {Array.from({ length: 16 }).map((_, i) => (
-                          <div key={i} className="border border-op-gold/30" />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Card Front (Revealed state) */}
-                  <div
-                    className={cn(
-                      "absolute inset-0 rounded-2xl overflow-hidden flex items-center justify-center transition-all duration-500",
-                      "bg-gradient-to-br border-4 shadow-2xl",
-                      getTierInfo(currentTicket.tier).color,
-                      isRevealed && getTierInfo(currentTicket.tier).glow,
-                      currentTicket.tier === 'none' && "border-gray-500",
-                      currentTicket.tier !== 'none' && "border-white glow-burst"
-                    )}
-                    style={{
-                      backfaceVisibility: 'hidden',
-                      transform: 'rotateY(180deg)',
-                    }}
-                  >
-                    <div className="text-center relative z-10">
-                      {currentTicket.tier !== 'none' ? (
-                        <>
-                          {(() => {
-                            const TierIcon = getTierInfo(currentTicket.tier).icon;
-                            return <TierIcon size={80} className="text-white mx-auto mb-4 drop-shadow-2xl animate-bounce-slow" />;
-                          })()}
-                          <p className="text-4xl font-black text-white mb-2 drop-shadow-lg">{getTierInfo(currentTicket.tier).name}</p>
-                          <p className="text-6xl font-black text-white drop-shadow-lg">{currentTicket.prizeAmount.toLocaleString()}P</p>
-                          <div className="mt-4 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-lg">
-                            <p className="text-sm text-white font-medium">당첨을 축하합니다!</p>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <X size={80} className="text-white mx-auto mb-4 drop-shadow-2xl" />
-                          <p className="text-5xl font-black text-white drop-shadow-lg">꽝</p>
-                          <p className="text-lg text-white/80 mt-4">다음 기회에...</p>
-                        </>
-                      )}
-                    </div>
-                    {/* Radial glow effect for winning tiers */}
-                    {currentTicket.tier !== 'none' && isRevealed && (
-                      <div className="absolute inset-0 bg-gradient-radial from-white/30 via-transparent to-transparent animate-pulse-slow" />
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-8 flex gap-3">
-                {isRevealed && (
+      <div className="max-w-5xl mx-auto px-4 py-8 space-y-6 lg:space-y-8 relative z-10">
+        <div className="grid lg:grid-cols-5 gap-6 lg:gap-8">
+          
+          {/* Card Flip Area - Takes up 3 cols on desktop */}
+          <div className="lg:col-span-3 space-y-6">
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[32px] p-6 sm:p-10 shadow-2xl relative overflow-hidden min-h-[500px] flex flex-col">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-2xl font-black flex items-center gap-3 text-white">
+                  <Gift className="text-op-gold w-7 h-7" />
+                  스페셜 티켓
+                </h2>
+                
+                {currentTicket && isRevealed && (
                   <button
                     onClick={handleReset}
-                    className="px-6 py-3 sm:px-8 sm:py-4 rounded-xl font-bold text-base sm:text-lg transition-all transform hover:scale-105 active:scale-95 bg-gradient-to-r from-op-gold to-op-gold-hover text-black shadow-lg shadow-op-gold/30"
+                    className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl text-sm font-bold text-white transition-colors border border-white/10"
                   >
-                    다시 구매하기
+                    <Ticket className="w-4 h-4" />새 복권
                   </button>
                 )}
               </div>
-            </div>
-          )}
-        </div>
 
-        {/* Prize Tiers with visual probability bars */}
-        <div className="bg-op-surface border border-op-border rounded-2xl p-6">
-          <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-op-text">
-            <TrendingUp className="text-op-gold" size={24} />
-            당첨 확률
-          </h2>
-          <div className="space-y-3">
-            {PRIZE_TIERS.map((tier) => {
-              const TierIcon = tier.icon;
-              return (
-                <div key={tier.id} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <TierIcon size={20} className="text-op-gold" />
-                      <span className="font-bold text-op-text">{tier.name}</span>
-                      <span className="text-xl sm:text-2xl font-black text-op-gold">
-                        {tier.prize > 0 ? `${tier.prize.toLocaleString()}P` : '0P'}
+              <div className="flex-1 flex flex-col items-center justify-center">
+                {!currentTicket ? (
+                  <div className="w-full flex flex-col items-center">
+                    {/* VIP Ticket Placeholder */}
+                    <div className="w-full max-w-[340px] aspect-[3/4] mx-auto rounded-2xl bg-gradient-to-br from-white/5 to-white/10 border border-white/10 flex items-center justify-center mb-8 relative group overflow-hidden shadow-[0_20px_40px_rgba(0,0,0,0.4)] transition-transform duration-500 hover:scale-[1.02]">
+                      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20 mix-blend-overlay"></div>
+                      <div className="absolute top-0 left-0 w-full h-[30%] bg-gradient-to-b from-white/10 to-transparent"></div>
+                      
+                      <div className="text-center relative z-10 p-8 flex flex-col items-center">
+                        <div className="w-20 h-20 rounded-full border-2 border-dashed border-white/20 flex items-center justify-center mb-6 group-hover:border-op-gold/50 transition-colors">
+                          <Ticket size={40} className="text-white/30 group-hover:text-op-gold transition-colors" />
+                        </div>
+                        <h3 className="text-xl font-bold text-white/70 mb-2">프리미엄 복권</h3>
+                        <p className="text-sm text-white/40 font-medium">티켓을 구매하고 행운을 확인하세요</p>
+                      </div>
+                    </div>
+                    
+                    {errorMessage && (
+                      <div className="mb-6 bg-red-500/10 border border-red-500/20 rounded-xl p-3 flex justify-center gap-2 items-center w-full max-w-[340px]">
+                        <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                        <p className="text-sm text-red-400 font-medium">{errorMessage}</p>
+                      </div>
+                    )}
+                    
+                    <button
+                      onClick={handleBuyTicket}
+                      disabled={isPurchasing || userPoints < TICKET_COST || todayCount >= DAILY_LIMIT}
+                      className={cn(
+                        "w-full max-w-[340px] py-5 rounded-2xl font-black text-xl transition-all duration-300 relative overflow-hidden shadow-2xl group",
+                        isPurchasing || userPoints < TICKET_COST || todayCount >= DAILY_LIMIT
+                          ? "bg-gray-800 text-gray-500 cursor-not-allowed border border-gray-700"
+                          : "bg-gradient-to-r from-[#d4af37] via-[#fff4cc] to-[#c9a227] text-black border border-op-gold/50 cursor-pointer shadow-[0_0_40px_rgba(201,162,39,0.4)]"
+                      )}
+                    >
+                      {!(isPurchasing || userPoints < TICKET_COST || todayCount >= DAILY_LIMIT) && (
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-[200%] group-hover:animate-[shimmer_1.5s_infinite]" />
+                      )}
+                      
+                      <div className={cn(
+                        "relative z-10 flex items-center justify-center gap-2",
+                        !(isPurchasing || userPoints < TICKET_COST || todayCount >= DAILY_LIMIT) && "group-hover:scale-105 transition-transform duration-300"
+                      )}>
+                        {isPurchasing ? "발급 중..." : `구매하기 (${TICKET_COST}P)`}
+                      </div>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="w-full flex-1 flex flex-col items-center justify-center">
+                    <div className="card-container relative w-full flex justify-center" style={{ perspective: '1200px' }}>
+                      <div
+                        className={cn(
+                          "card-flip w-full max-w-[340px] aspect-[3/4] relative cursor-pointer group",
+                          isRevealed && "flipped"
+                        )}
+                        onClick={handleFlip}
+                        style={{
+                          transformStyle: 'preserve-3d',
+                          transition: 'transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                          transform: isRevealed ? 'rotateY(180deg)' : 'rotateY(0deg)'
+                        }}
+                      >
+                        {/* Card Back (Hidden state) - Premium Holographic look */}
+                        <div
+                          className="absolute inset-0 rounded-[24px] overflow-hidden border border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+                          style={{
+                            backfaceVisibility: 'hidden',
+                            transform: 'rotateY(0deg)',
+                            background: 'linear-gradient(135deg, #1f1f1f 0%, #111 50%, #0a0a0a 100%)',
+                          }}
+                        >
+                          {/* Inner gold border */}
+                          <div className="absolute inset-[8px] border-2 border-dashed border-op-gold/40 rounded-[16px] pointer-events-none" />
+                          
+                          {/* Holographic overlay */}
+                          <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+                          
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="text-center relative z-10">
+                              <div className="relative mb-6">
+                                <Crown size={70} className="text-op-gold mx-auto drop-shadow-[0_0_15px_rgba(201,162,39,0.5)]" />
+                                <Sparkles className="absolute -top-4 -right-4 text-white/50 animate-pulse w-8 h-8" />
+                                <Sparkles className="absolute -bottom-2 -left-4 text-white/30 animate-pulse w-6 h-6 delay-150" />
+                              </div>
+                              <p className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400 tracking-wider mb-2">SCRATCH</p>
+                              <p className="text-sm font-medium text-white/40 bg-white/5 px-4 py-1.5 rounded-full inline-block border border-white/10">카드를 터치하여 긁기</p>
+                            </div>
+                          </div>
+                          
+                          <div className="absolute bottom-6 left-0 w-full text-center">
+                            <p className="text-[10px] text-white/20 font-bold uppercase tracking-[0.2em]">Premium Ticket</p>
+                          </div>
+                        </div>
+
+                        {/* Card Front (Revealed state) */}
+                        <div
+                          className={cn(
+                            "absolute inset-0 rounded-[24px] overflow-hidden flex items-center justify-center transition-all duration-500",
+                            "bg-gradient-to-br shadow-[0_20px_50px_rgba(0,0,0,0.5)] border-2",
+                            getTierInfo(currentTicket.tier).color,
+                            isRevealed && getTierInfo(currentTicket.tier).glow,
+                            currentTicket.tier === 'none' ? "border-gray-600/50" : "border-white/50"
+                          )}
+                          style={{
+                            backfaceVisibility: 'hidden',
+                            transform: 'rotateY(180deg)',
+                          }}
+                        >
+                          {/* Shine overlay */}
+                          <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent pointer-events-none" />
+
+                          <div className="text-center relative z-10 w-full px-8">
+                            {currentTicket.tier !== 'none' ? (
+                              <>
+                                <div className="bg-black/20 backdrop-blur-sm rounded-3xl p-6 mb-6 inline-block border border-white/20 shadow-xl">
+                                  {(() => {
+                                    const TierIcon = getTierInfo(currentTicket.tier).icon;
+                                    return <TierIcon size={70} className="text-white mx-auto drop-shadow-2xl animate-bounce-slow" />;
+                                  })()}
+                                </div>
+                                
+                                <p className="text-2xl font-bold text-white/90 mb-1 drop-shadow-md tracking-wider">
+                                  {getTierInfo(currentTicket.tier).name} 당첨!
+                                </p>
+                                
+                                <div className="bg-white/10 backdrop-blur-md rounded-2xl py-4 px-2 border border-white/20 mb-8 shadow-inner">
+                                  <p className="text-5xl font-black text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]">
+                                    {currentTicket.prizeAmount.toLocaleString()}P
+                                  </p>
+                                </div>
+                                
+                                <p className="text-sm text-white/80 font-bold uppercase tracking-widest">Congratulations</p>
+                              </>
+                            ) : (
+                              <>
+                                <div className="bg-black/30 backdrop-blur-sm rounded-full p-8 mb-6 inline-block border border-white/10">
+                                  <X size={60} className="text-white/80 mx-auto" />
+                                </div>
+                                <p className="text-4xl font-black text-white drop-shadow-lg mb-2">꽝</p>
+                                <p className="text-base font-medium text-white/60">다음 기회를 노려보세요...</p>
+                              </>
+                            )}
+                          </div>
+                          
+                          {/* Pattern overlay for premium feel */}
+                          <div className="absolute inset-0 opacity-10 mix-blend-overlay pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '20px 20px' }} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="lg:col-span-2 space-y-6 lg:space-y-8">
+            {/* Prize Tiers */}
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[32px] p-6 shadow-xl">
+              <h2 className="text-xl font-bold mb-6 flex items-center gap-3 text-white">
+                <TrendingUp className="text-op-gold w-6 h-6" />
+                당첨금 및 확률
+              </h2>
+              <div className="space-y-4">
+                {PRIZE_TIERS.map((tier) => {
+                  const TierIcon = tier.icon;
+                  return (
+                    <div key={tier.id} className="relative group p-3 rounded-xl hover:bg-white/5 transition-colors border border-transparent hover:border-white/10">
+                      <div className="flex items-center justify-between mb-2 relative z-10">
+                        <div className="flex items-center gap-3">
+                          <div className={cn(
+                            "w-8 h-8 rounded-full flex items-center justify-center border",
+                            tier.prize > 0 ? "bg-gradient-to-br border-white/40" : "bg-gray-800 border-gray-600",
+                            tier.prize > 0 ? tier.color : ""
+                          )}>
+                            <TierIcon size={14} className="text-white drop-shadow-md" />
+                          </div>
+                          <div>
+                            <span className="font-bold text-white block text-sm">{tier.name}</span>
+                            <span className="text-[11px] font-medium text-white/40">{tier.probability}%</span>
+                          </div>
+                        </div>
+                        <span className={cn(
+                          "text-lg font-black",
+                          tier.prize > 0 ? "text-op-gold drop-shadow-[0_0_8px_rgba(201,162,39,0.4)]" : "text-white/40"
+                        )}>
+                          {tier.prize > 0 ? `${tier.prize.toLocaleString()}P` : '0P'}
+                        </span>
+                      </div>
+                      
+                      {/* Subtle probability bar underneath */}
+                      <div className="absolute bottom-0 left-3 right-3 h-1 flex rounded-full overflow-hidden opacity-30">
+                         <div
+                          className={cn("h-full bg-gradient-to-r", tier.color)}
+                          style={{ width: `${Math.min(tier.probability * 3, 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* My History */}
+            {history.length > 0 && (
+              <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[32px] p-6 shadow-xl max-h-[350px] flex flex-col">
+                <h2 className="text-xl font-bold mb-4 flex items-center gap-3 text-white shrink-0">
+                  <History className="text-op-gold w-6 h-6" />
+                  최근 결과
+                </h2>
+                <div className="space-y-2 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                  {history.map((ticket, idx) => (
+                    <div
+                      key={ticket.id}
+                      className="flex items-center justify-between p-3 rounded-xl bg-black/40 border border-white/5 hover:bg-black/60 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="w-6 h-6 rounded-full bg-white/5 flex items-center justify-center text-[10px] font-bold text-white/40 border border-white/10">
+                          {history.length - idx}
+                        </span>
+                        <span className="font-bold text-white/80 text-sm">{getTierInfo(ticket.tier).name}</span>
+                      </div>
+                      <span className={cn(
+                        "font-black text-sm",
+                        ticket.prizeAmount > 0 ? "text-op-gold drop-shadow-[0_0_5px_rgba(201,162,39,0.4)]" : "text-white/30"
+                      )}>
+                        {ticket.prizeAmount > 0 ? `+${ticket.prizeAmount.toLocaleString()}P` : '꽝'}
                       </span>
                     </div>
-                    <span className="text-sm text-op-text-secondary font-medium">{tier.probability}%</span>
-                  </div>
-                  <div className="h-3 bg-op-elevated rounded-full overflow-hidden">
-                    <div
-                      className={cn("h-full bg-gradient-to-r", tier.color, "transition-all duration-500")}
-                      style={{ width: `${Math.min(tier.probability * 2, 100)}%` }}
-                    />
-                  </div>
+                  ))}
                 </div>
-              );
-            })}
-          </div>
-          <div className="mt-4 pt-4 border-t border-op-border">
-            <p className="text-sm text-op-text-secondary">1장당 {TICKET_COST}P / 일 {DAILY_LIMIT}장 한도</p>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Recent Winners */}
-        <div className="bg-op-surface border border-op-border rounded-2xl p-6">
-          <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-op-text">
-            <Trophy className="text-op-gold" size={24} />
-            최근 당첨자
-          </h2>
-          <p className="text-sm text-op-text-secondary text-center py-4">실제 당첨 기록은 준비 중입니다</p>
-        </div>
-
-        {/* My History */}
-        {history.length > 0 && (
-          <div className="bg-op-surface border border-op-border rounded-2xl p-6">
-            <h2 className="text-xl font-bold mb-4 flex items-center gap-2 text-op-text">
-              <Ticket className="text-op-gold" size={24} />
-              내 복권 기록
-            </h2>
-            <div className="space-y-2">
-              {history.map((ticket, idx) => (
-                <div
-                  key={ticket.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-op-elevated"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm text-op-text-secondary">#{history.length - idx}</span>
-                    <span className="font-medium text-op-text">{getTierInfo(ticket.tier).name}</span>
-                  </div>
-                  <span className={cn(
-                    "font-bold",
-                    ticket.prizeAmount > 0 ? "text-op-gold" : "text-op-text-secondary"
-                  )}>
-                    {ticket.prizeAmount > 0 ? `+${ticket.prizeAmount.toLocaleString()}P` : '꽝'}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-        <div className="text-center py-4 text-xs text-op-text-muted">
+        <div className="text-center pt-8 text-xs text-white/30 font-medium border-t border-white/5 mt-8">
           <p>본 복권은 실제 금전적 가치가 없는 가상 포인트로만 운영됩니다.</p>
-          <p>포인트는 현금으로 교환할 수 없으며, 서비스 내 활동에만 사용됩니다.</p>
+          <p className="mt-1">포인트는 현금으로 교환할 수 없으며, 서비스 내 활동에만 사용됩니다.</p>
         </div>
       </div>
 
@@ -378,37 +448,14 @@ export default function LotteryPage() {
           50% { transform: translateY(-10px); }
         }
 
-        @keyframes pulse-slow {
-          0%, 100% { opacity: 0.3; }
-          50% { opacity: 0.6; }
-        }
-
-        @keyframes glow-burst {
-          0% {
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
-          }
-          50% {
-            box-shadow: 0 0 60px rgba(255, 255, 255, 0.8), 0 0 100px rgba(255, 255, 255, 0.4);
-          }
-          100% {
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
-          }
-        }
-
         .animate-bounce-slow {
           animation: bounce-slow 2s ease-in-out infinite;
         }
 
-        .animate-pulse-slow {
-          animation: pulse-slow 2s ease-in-out infinite;
-        }
-
-        .glow-burst {
-          animation: glow-burst 2s ease-in-out infinite;
-        }
-
-        .bg-gradient-radial {
-          background: radial-gradient(circle, var(--tw-gradient-stops));
+        @keyframes shimmer {
+          100% {
+            transform: translateX(100%);
+          }
         }
       `}</style>
     </div>

@@ -106,9 +106,9 @@ const BET_POSITIONS_9: [number, number][] = [
 function CardBack({ size = 'sm' }: { size?: 'sm' | 'md' | 'lg' | 'xs' }) {
   const sizeClasses =
     size === 'xs' ? 'w-4 h-5' :
-    size === 'sm' ? 'w-7 h-10' :
-    size === 'md' ? 'w-12 h-[66px]' :
-    'w-[60px] h-[84px]';
+      size === 'sm' ? 'w-7 h-10' :
+        size === 'md' ? 'w-12 h-[66px]' :
+          'w-[60px] h-[84px]';
   return (
     <div
       className={cn(sizeClasses, 'rounded-[2px]')}
@@ -258,7 +258,7 @@ function SeatDisplay({
   hasNewCards?: boolean;
   isHandActive?: boolean;
 }) {
-  // Empty seat -- PokerNow: dashed rectangle, transparent bg, seat number only
+  // Empty seat -- Premium dashed rectangle, transparent bg, seat number
   if (!seat) {
     return (
       <button
@@ -266,13 +266,14 @@ function SeatDisplay({
         className="group relative flex flex-col items-center cursor-pointer"
       >
         <div
-          className="w-[72px] h-[52px] md:w-[84px] md:h-[60px] rounded-lg flex items-center justify-center relative transition-all duration-200 active:scale-[0.95]"
+          className="w-[72px] h-[52px] md:w-[84px] md:h-[60px] rounded-xl flex items-center justify-center relative transition-all duration-300 active:scale-[0.95] backdrop-blur-sm"
           style={{
-            border: '2px dashed rgba(255,255,255,0.15)',
+            border: '2px dashed rgba(255,255,255,0.1)',
+            background: 'rgba(0,0,0,0.2)',
           }}
         >
-          <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200" style={{ background: 'rgba(74,140,92,0.2)' }} />
-          <span className="text-lg text-white/20 group-hover:text-white/40 transition-colors duration-200 relative z-10 font-light">
+          <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ background: 'radial-gradient(circle at center, rgba(201,162,39,0.15) 0%, transparent 70%)' }} />
+          <span className="text-lg text-white/20 group-hover:text-op-gold transition-colors duration-300 relative z-10 font-bold tracking-widest">
             {seatIndex + 1}
           </span>
         </div>
@@ -324,12 +325,11 @@ function SeatDisplay({
         {/* Name + chips */}
         <div
           className={cn(
-            'rounded-lg px-2 py-1 text-center min-w-[72px] md:min-w-[84px] relative transition-all duration-200',
-            isCurrent && !seat.isFolded && 'ring-2 ring-op-success/60',
+            'rounded-xl px-2 py-1 text-center min-w-[72px] md:min-w-[84px] relative transition-all duration-300 shadow-xl backdrop-blur-md',
+            isCurrent && !seat.isFolded ? 'border-2 border-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.4)]' : 'border border-emerald-500/40 hover:border-emerald-400/60'
           )}
           style={{
-            background: 'rgba(74,140,92,0.25)',
-            border: '1px solid rgba(74,140,92,0.45)',
+            background: 'linear-gradient(180deg, rgba(16,36,22,0.8) 0%, rgba(6,20,10,0.9) 100%)',
           }}
         >
           {isCurrent && !seat.isFolded && (
@@ -381,13 +381,12 @@ function SeatDisplay({
       {/* Seat card */}
       <div
         className={cn(
-          'rounded-lg px-2 py-1.5 md:px-2.5 md:py-2 text-center min-w-[72px] md:min-w-[84px] relative transition-all duration-200',
-          isCurrent && !seat.isFolded && 'ring-2 ring-white/40',
-          seat.isAllIn && !seat.isFolded && 'ring-2 ring-op-error/60',
+          'rounded-xl px-2 py-1.5 md:px-2.5 md:py-2 text-center min-w-[72px] md:min-w-[84px] relative transition-all duration-300 shadow-xl backdrop-blur-md',
+          isCurrent && !seat.isFolded ? 'border-2 border-white/60 shadow-[0_0_15px_rgba(255,255,255,0.2)]' : 'border border-white/10 hover:border-white/20',
+          seat.isAllIn && !seat.isFolded && 'border-2 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.4)]',
         )}
         style={{
-          background: 'rgba(0,0,0,0.50)',
-          border: '1px solid rgba(255,255,255,0.10)',
+          background: 'linear-gradient(180deg, rgba(30,30,30,0.8) 0%, rgba(10,10,10,0.9) 100%)',
         }}
       >
         {/* Timer bar */}
@@ -672,10 +671,10 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
   const maxSeats = gameState?.maxSeats ?? 6;
   const seatPositions =
     maxSeats === 2 ? SEAT_POSITIONS_2 :
-    maxSeats === 9 ? SEAT_POSITIONS_9 : SEAT_POSITIONS_6;
+      maxSeats === 9 ? SEAT_POSITIONS_9 : SEAT_POSITIONS_6;
   const betPositions =
     maxSeats === 2 ? BET_POSITIONS_2 :
-    maxSeats === 9 ? BET_POSITIONS_9 : BET_POSITIONS_6;
+      maxSeats === 9 ? BET_POSITIONS_9 : BET_POSITIONS_6;
 
   const minBuyIn = (gameState?.bigBlind ?? 2) * 20;
   const maxBuyIn = (gameState?.bigBlind ?? 2) * 100;
@@ -993,11 +992,11 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
       await performAction(tableId, action, amount);
       const actionText =
         action === 'fold' ? '폴드' :
-        action === 'check' ? '체크' :
-        action === 'call' ? `콜 ${(amount ?? callAmount).toLocaleString()}` :
-        action === 'bet' ? `벳 ${(amount ?? 0).toLocaleString()}` :
-        action === 'raise' ? `레이즈 ${(amount ?? 0).toLocaleString()}` :
-        `올인 ${(amount ?? 0).toLocaleString()}`;
+          action === 'check' ? '체크' :
+            action === 'call' ? `콜 ${(amount ?? callAmount).toLocaleString()}` :
+              action === 'bet' ? `벳 ${(amount ?? 0).toLocaleString()}` :
+                action === 'raise' ? `레이즈 ${(amount ?? 0).toLocaleString()}` :
+                  `올인 ${(amount ?? 0).toLocaleString()}`;
       addLogEntry(`${nickname ?? 'Player'}: ${actionText}`);
       setShowRaiseSlider(false);
     } catch (err: any) {
@@ -1017,7 +1016,7 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
       const currentHandId = gameState?.handId ?? null;
       const currentStreet = gameState?.street ?? null;
       if (lastPreActionRef.current.handId === currentHandId &&
-          lastPreActionRef.current.street === currentStreet) {
+        lastPreActionRef.current.street === currentStreet) {
         setPreAction(null);
         return;
       }
@@ -1074,7 +1073,10 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
   // ─── Render ───────────────────────────────────────────────────
 
   return (
-    <div className="h-[100dvh] w-[100dvw] bg-op-elevated flex flex-col overflow-hidden select-none">
+    <div className="h-[100dvh] w-[100dvw] bg-[#050505] flex flex-col overflow-hidden select-none relative">
+      {/* Ambient glows for premium feel */}
+      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-emerald-900/20 blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-op-gold/10 blur-[120px] pointer-events-none" />
 
       {/* ═══════════════════════════════════════════════════════════
           TOP BAR - PokerNow style, compact
@@ -1152,160 +1154,166 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
 
         {/* Table container — fills entire available space, minimal padding */}
         <div className="absolute inset-1 md:inset-2 lg:inset-3">
-          {/* Green felt -- PokerNow: radial gradient, brighter center */}
+          {/* Premium dark casino felt with gold trim */}
           <div
-            className="absolute inset-0 rounded-[50%/42%]"
+            className="absolute inset-0 rounded-[50%/42%] overflow-hidden"
             style={{
-              background: 'radial-gradient(ellipse at 50% 40%, #4a8c5c 0%, #3d7a4e 55%, #2d5a3a 100%)',
-              border: '3px solid #2a5a3a',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.5), inset 0 0 30px rgba(0,0,0,0.12)',
+              background: 'radial-gradient(ellipse at 50% 50%, #152418 0%, #0a110b 75%, #050a07 100%)',
+              border: '4px solid rgba(201,162,39,0.35)',
+              boxShadow: '0 10px 40px rgba(0,0,0,0.8), inset 0 0 80px rgba(0,0,0,0.9), 0 0 30px rgba(201,162,39,0.15)',
             }}
           >
+            {/* Inner table ring */}
+            <div
+              className="absolute inset-[3%] rounded-[50%/42%] border border-white/5"
+              style={{ boxShadow: 'inset 0 0 20px rgba(0,0,0,0.5)' }}
+            />
 
-          {/* ── Pot pill -- PokerNow: green pill, compact ── */}
-          <div className="absolute top-[26%] md:top-[22%] left-1/2 -translate-x-1/2 z-10">
-            {gameState.pot > 0 ? (
-              <div
-                className={cn(
-                  'px-3 py-0.5 rounded-full',
-                  potBounce && 'animate-pot-bounce'
-                )}
-                style={{ background: 'rgba(34,80,50,0.85)', border: '1px solid rgba(74,140,92,0.4)' }}
-              >
-                <span className="text-[11px] md:text-[13px] font-bold text-white tabular-nums">
-                  {gameState.pot.toLocaleString()}
-                </span>
-              </div>
-            ) : (
-              <div className="px-3 py-0.5 rounded-full" style={{ background: 'rgba(34,80,50,0.5)' }}>
-                <span className="text-[11px] md:text-[13px] font-bold text-white/30 tabular-nums">0</span>
-              </div>
-            )}
-          </div>
+            {/* ── Pot pill -- PokerNow: green pill, compact ── */}
+            <div className="absolute top-[26%] md:top-[22%] left-1/2 -translate-x-1/2 z-10">
+              {gameState.pot > 0 ? (
+                <div
+                  className={cn(
+                    'px-3 py-0.5 rounded-full',
+                    potBounce && 'animate-pot-bounce'
+                  )}
+                  style={{ background: 'rgba(34,80,50,0.85)', border: '1px solid rgba(74,140,92,0.4)' }}
+                >
+                  <span className="text-[11px] md:text-[13px] font-bold text-white tabular-nums">
+                    {gameState.pot.toLocaleString()}
+                  </span>
+                </div>
+              ) : (
+                <div className="px-3 py-0.5 rounded-full" style={{ background: 'rgba(34,80,50,0.5)' }}>
+                  <span className="text-[11px] md:text-[13px] font-bold text-white/30 tabular-nums">0</span>
+                </div>
+              )}
+            </div>
 
-          {/* ── Community Cards ── */}
-          <div className="absolute top-[40%] md:top-[38%] left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-1.5 z-10 max-w-[calc(100%-16px)]">
-            <div className="flex gap-1 md:gap-2">
-              {Array.from({ length: communityCardSlots }).map((_, i) => {
-                const card = communityCards[i];
-                if (!card) {
+            {/* ── Community Cards ── */}
+            <div className="absolute top-[40%] md:top-[38%] left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-1.5 z-10 max-w-[calc(100%-16px)]">
+              <div className="flex gap-1 md:gap-2">
+                {Array.from({ length: communityCardSlots }).map((_, i) => {
+                  const card = communityCards[i];
+                  if (!card) {
+                    return (
+                      <div
+                        key={i}
+                        className="w-8 h-[48px] md:w-12 md:h-[66px] rounded-[3px]"
+                        style={{
+                          background: 'rgba(0,0,0,0.12)',
+                          border: '1px solid rgba(255,255,255,0.04)',
+                        }}
+                      />
+                    );
+                  }
+                  const parsed = parseCard(card);
+                  if (!parsed) return null;
+                  const isNewCard = i >= newCardStartIndex.current;
+                  const delayWithinStreet = isNewCard ? (i - newCardStartIndex.current) * 150 : 0;
                   return (
                     <div
                       key={i}
-                      className="w-8 h-[48px] md:w-12 md:h-[66px] rounded-[3px]"
-                      style={{
-                        background: 'rgba(0,0,0,0.12)',
-                        border: '1px solid rgba(255,255,255,0.04)',
-                      }}
-                    />
+                      className={isNewCard ? 'animate-community-reveal' : undefined}
+                      style={isNewCard ? { animationDelay: `${delayWithinStreet}ms` } : undefined}
+                    >
+                      <CardRenderer rank={parsed.rank} suit={parsed.suit} size="sm" className="md:hidden" />
+                      <CardRenderer rank={parsed.rank} suit={parsed.suit} size="lg" className="hidden md:flex" />
+                    </div>
                   );
-                }
-                const parsed = parseCard(card);
-                if (!parsed) return null;
-                const isNewCard = i >= newCardStartIndex.current;
-                const delayWithinStreet = isNewCard ? (i - newCardStartIndex.current) * 150 : 0;
-                return (
-                  <div
-                    key={i}
-                    className={isNewCard ? 'animate-community-reveal' : undefined}
-                    style={isNewCard ? { animationDelay: `${delayWithinStreet}ms` } : undefined}
-                  >
-                    <CardRenderer rank={parsed.rank} suit={parsed.suit} size="sm" className="md:hidden" />
-                    <CardRenderer rank={parsed.rank} suit={parsed.suit} size="lg" className="hidden md:flex" />
-                  </div>
-                );
-              })}
+                })}
+              </div>
+
+              {/* Side pots */}
+              {gameState.sidePots.length > 0 && (
+                <div className="flex gap-1 flex-wrap justify-center">
+                  {gameState.sidePots.map((sp, i) => (
+                    <div
+                      key={i}
+                      className="px-2 py-0.5 rounded-full text-[8px] text-white/50"
+                      style={{ background: 'rgba(0,0,0,0.4)' }}
+                    >
+                      사이드 {sp.amount.toLocaleString()}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
-            {/* Side pots */}
-            {gameState.sidePots.length > 0 && (
-              <div className="flex gap-1 flex-wrap justify-center">
-                {gameState.sidePots.map((sp, i) => (
-                  <div
-                    key={i}
-                    className="px-2 py-0.5 rounded-full text-[8px] text-white/50"
-                    style={{ background: 'rgba(0,0,0,0.4)' }}
-                  >
-                    사이드 {sp.amount.toLocaleString()}
-                  </div>
-                ))}
+            {/* ── Status overlay (waiting) -- PokerNow style ── */}
+            {gameState.status === 'waiting' && (
+              <div className="absolute top-[55%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center gap-2">
+                <div className="flex items-center gap-1.5">
+                  {[0, 0.25, 0.5].map((delay, k) => (
+                    <div
+                      key={k}
+                      className="w-1.5 h-1.5 bg-white/40 rounded-full animate-pulse"
+                      style={{ animationDelay: `${delay}s` }}
+                    />
+                  ))}
+                </div>
+                <p className="text-[11px] font-medium text-white/60">다른 플레이어를 기다리는 중...</p>
+                <div className="text-[10px] text-white/30 text-center leading-relaxed">
+                  <p>NLH ~ {gameState.smallBlind}/{gameState.bigBlind}</p>
+                </div>
               </div>
             )}
-          </div>
 
-          {/* ── Status overlay (waiting) -- PokerNow style ── */}
-          {gameState.status === 'waiting' && (
-            <div className="absolute top-[55%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center gap-2">
-              <div className="flex items-center gap-1.5">
-                {[0, 0.25, 0.5].map((delay, k) => (
-                  <div
-                    key={k}
-                    className="w-1.5 h-1.5 bg-white/40 rounded-full animate-pulse"
-                    style={{ animationDelay: `${delay}s` }}
+            {/* ── Seats ── */}
+            {seatPositions.map((pos, i) => {
+              if (i >= maxSeats) return null;
+              const seat = seats[i];
+              return (
+                <div
+                  key={i}
+                  className="absolute -translate-x-1/2 -translate-y-1/2 z-20"
+                  style={{ top: `${pos[0]}%`, left: `${pos[1]}%` }}
+                >
+                  <MemoizedSeatDisplay
+                    seat={seat}
+                    seatIndex={i}
+                    isHero={i === heroSeatIndex}
+                    isDealer={gameState.dealerSeat === i && isPlaying}
+                    isCurrent={gameState.currentSeat === i}
+                    timeLeft={gameState.currentSeat === i ? turnTimeLeft : 0}
+                    showCards={isShowdown}
+                    onSitDown={handleSitDown}
+                    lastAction={lastActions[i]}
+                    hasNewCards={newCardsDealt}
+                    isHandActive={isPlaying}
                   />
-                ))}
-              </div>
-              <p className="text-[11px] font-medium text-white/60">다른 플레이어를 기다리는 중...</p>
-              <div className="text-[10px] text-white/30 text-center leading-relaxed">
-                <p>NLH ~ {gameState.smallBlind}/{gameState.bigBlind}</p>
-              </div>
-            </div>
-          )}
+                </div>
+              );
+            })}
 
-          {/* ── Seats ── */}
-          {seatPositions.map((pos, i) => {
-            if (i >= maxSeats) return null;
-            const seat = seats[i];
-            return (
-              <div
-                key={i}
-                className="absolute -translate-x-1/2 -translate-y-1/2 z-20"
-                style={{ top: `${pos[0]}%`, left: `${pos[1]}%` }}
-              >
-                <MemoizedSeatDisplay
-                  seat={seat}
-                  seatIndex={i}
-                  isHero={i === heroSeatIndex}
-                  isDealer={gameState.dealerSeat === i && isPlaying}
-                  isCurrent={gameState.currentSeat === i}
-                  timeLeft={gameState.currentSeat === i ? turnTimeLeft : 0}
-                  showCards={isShowdown}
-                  onSitDown={handleSitDown}
-                  lastAction={lastActions[i]}
-                  hasNewCards={newCardsDealt}
-                  isHandActive={isPlaying}
-                />
-              </div>
-            );
-          })}
-
-          {/* ── Bet chips in front of seats ── */}
-          {betPositions.map((pos, i) => {
-            if (i >= maxSeats) return null;
-            const seat = seats[i];
-            if (!seat || seat.betInRound <= 0) return null;
-            return (
-              <div
-                key={`bet-${i}`}
-                className="absolute -translate-x-1/2 -translate-y-1/2 z-10"
-                style={{ top: `${pos[0]}%`, left: `${pos[1]}%` }}
-              >
-                <ChipAmount amount={seat.betInRound} animate />
-              </div>
-            );
-          })}
+            {/* ── Bet chips in front of seats ── */}
+            {betPositions.map((pos, i) => {
+              if (i >= maxSeats) return null;
+              const seat = seats[i];
+              if (!seat || seat.betInRound <= 0) return null;
+              return (
+                <div
+                  key={`bet-${i}`}
+                  className="absolute -translate-x-1/2 -translate-y-1/2 z-10"
+                  style={{ top: `${pos[0]}%`, left: `${pos[1]}%` }}
+                >
+                  <ChipAmount amount={seat.betInRound} animate />
+                </div>
+              );
+            })}
           </div>{/* close felt */}
         </div>{/* close table container */}
       </div>{/* close flex-1 area */}
 
       {/* ═══════════════════════════════════════════════════════════
-          HERO ZONE — PokerNow style, compact single-strip
+          HERO ZONE — Premium glassmorphic interface
           ═══════════════════════════════════════════════════════════ */}
       <div
-        className="flex-shrink-0"
+        className="flex-shrink-0 relative z-20 backdrop-blur-xl"
         style={{
-          background: 'var(--op-surface)',
-          borderTop: '1px solid rgba(255,255,255,0.08)',
+          background: 'rgba(10, 10, 10, 0.85)',
+          borderTop: '1px solid rgba(255,255,255,0.1)',
+          boxShadow: '0 -10px 40px rgba(0,0,0,0.5)',
           paddingBottom: 'env(safe-area-inset-bottom)',
         }}
       >
@@ -1495,11 +1503,11 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
                       onClick={() => handleAction('fold')}
                       disabled={actionPending}
                       className={cn(
-                        'flex-1 min-h-[48px] rounded-lg font-bold text-[13px] transition-all active:scale-[0.96] bg-op-text-secondary text-white',
+                        'flex-1 min-h-[48px] rounded-xl font-bold text-[13px] tracking-wide transition-all active:scale-[0.96] bg-white/5 border border-white/10 hover:bg-white/10 text-white/70 hover:text-white relative overflow-hidden group',
                         actionPending && 'opacity-50 cursor-not-allowed'
                       )}
                     >
-                      폴드
+                      <span className="relative z-10">폴드</span>
                     </button>
                   )}
 
@@ -1508,15 +1516,15 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
                     onClick={() => canCheck ? handleAction('check') : handleAction('call', callAmount)}
                     disabled={actionPending}
                     className={cn(
-                      'flex-1 min-h-[48px] rounded-lg font-bold transition-all active:scale-[0.96]',
-                      canCheck ? 'bg-op-enter text-white' : 'bg-op-felt text-white',
+                      'flex-1 min-h-[48px] rounded-xl font-bold tracking-wide transition-all active:scale-[0.96] shadow-lg relative overflow-hidden group',
+                      canCheck ? 'bg-white/10 border border-white/20 text-white hover:bg-white/20' : 'bg-gradient-to-b from-blue-500 to-blue-700 border-blue-400 text-white shadow-[0_0_15px_rgba(59,130,246,0.3)]',
                       actionPending && 'opacity-50 cursor-not-allowed'
                     )}
                   >
                     {canCheck ? (
-                      <span className="text-[13px]">체크</span>
+                      <span className="text-[13px] relative z-10">체크</span>
                     ) : (
-                      <span className="flex flex-col items-center leading-tight">
+                      <span className="flex flex-col items-center leading-tight relative z-10">
                         <span className="text-[13px]">콜</span>
                         <span className="text-[11px] opacity-80 font-semibold tabular-nums">{callAmount.toLocaleString()}</span>
                       </span>
@@ -1540,28 +1548,31 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
                       }}
                       disabled={actionPending}
                       className={cn(
-                        'flex-1 min-h-[48px] rounded-lg font-bold transition-all active:scale-[0.96]',
+                        'flex-1 min-h-[48px] rounded-xl font-bold tracking-wide transition-all active:scale-[0.96] shadow-lg relative overflow-hidden group',
                         showRaiseSlider && raiseAmount >= maxRaiseTotal
-                          ? 'bg-op-error text-white animate-all-in-pulse'
-                          : 'bg-op-warning text-white',
+                          ? 'bg-gradient-to-b from-red-500 to-red-600 border border-red-400 text-white animate-all-in-pulse shadow-[0_0_20px_rgba(239,68,68,0.5)]'
+                          : 'bg-gradient-to-b from-op-gold to-yellow-600 border border-yellow-400 text-black shadow-[0_0_20px_rgba(201,162,39,0.3)]',
                         actionPending && 'opacity-50 cursor-not-allowed'
                       )}
                     >
-                      {showRaiseSlider ? (
-                        raiseAmount >= maxRaiseTotal ? (
-                          <span className="text-[13px]">올인</span>
+                      <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out" />
+                      <div className="relative z-10 text-center flex flex-col items-center leading-tight">
+                        {showRaiseSlider ? (
+                          raiseAmount >= maxRaiseTotal ? (
+                            <span className="text-[13px]">올인</span>
+                          ) : (
+                            <>
+                              <span className="text-[12px]">{gameState.currentBet > 0 ? '레이즈' : '벳'}</span>
+                              <span className="text-[11px] opacity-85 font-semibold tabular-nums">{raiseAmount.toLocaleString()}</span>
+                            </>
+                          )
                         ) : (
-                          <span className="flex flex-col items-center leading-tight">
+                          <>
                             <span className="text-[12px]">{gameState.currentBet > 0 ? '레이즈' : '벳'}</span>
-                            <span className="text-[11px] opacity-85 font-semibold tabular-nums">{raiseAmount.toLocaleString()}</span>
-                          </span>
-                        )
-                      ) : (
-                        <span className="flex flex-col items-center leading-tight">
-                          <span className="text-[12px]">{gameState.currentBet > 0 ? '레이즈' : '벳'}</span>
-                          <span className="text-[11px] opacity-75 font-semibold tabular-nums">{minRaiseTotal.toLocaleString()}</span>
-                        </span>
-                      )}
+                            <span className="text-[11px] opacity-75 font-semibold tabular-nums">{minRaiseTotal.toLocaleString()}</span>
+                          </>
+                        )}
+                      </div>
                     </button>
                   )}
                 </div>
@@ -1573,16 +1584,16 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
               <div className="px-3 py-2">
                 <div className="flex gap-2">
                   {[
-                    { key: 'fold' as const, label: '폴드', activeClass: 'bg-op-text-secondary text-white' },
-                    { key: 'check_fold' as const, label: '체크/폴드', activeClass: 'bg-op-enter-hover text-white' },
-                    { key: 'call' as const, label: '콜', activeClass: 'bg-op-enter-hover text-white' },
+                    { key: 'fold' as const, label: '폴드', activeClass: 'bg-white/10 text-white/70 border border-white/20' },
+                    { key: 'check_fold' as const, label: '체크/폴드', activeClass: 'bg-blue-500/20 text-blue-400 border border-blue-500/30 shadow-[0_0_10px_rgba(59,130,246,0.2)]' },
+                    { key: 'call' as const, label: '콜', activeClass: 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shadow-[0_0_10px_rgba(52,211,153,0.2)]' },
                   ].map(({ key, label, activeClass }) => (
                     <button
                       key={key}
                       onClick={() => setPreAction(preAction === key ? null : key)}
                       className={cn(
-                        'flex-1 py-2 rounded-lg text-[11px] font-semibold transition-all active:scale-[0.93]',
-                        preAction === key ? activeClass : 'bg-white/5 text-white/30'
+                        'flex-1 py-2.5 rounded-xl text-[11px] tracking-wide font-bold transition-all active:scale-[0.93]',
+                        preAction === key ? activeClass : 'bg-transparent border border-white/10 text-white/40 hover:text-white/60 hover:bg-white/5'
                       )}
                     >
                       {label}

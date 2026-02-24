@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Ticket, Star, Crown, Zap, Trophy, X, TrendingUp, Gift, Sparkles } from 'lucide-react';
+import { Ticket, Star, Crown, Zap, Trophy, X, TrendingUp, Gift, Sparkles, History } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { buyLotteryTicket, getUserPoints } from '../actions';
 
@@ -167,7 +167,7 @@ export default function LotteryPage() {
                 </span>
               </div>
               <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden">
-                <div 
+                <div
                   className={cn(
                     "h-full rounded-full transition-all duration-500",
                     todayCount >= DAILY_LIMIT ? "bg-red-500" : "bg-gradient-to-r from-op-gold to-[#fff4cc]"
@@ -182,7 +182,7 @@ export default function LotteryPage() {
 
       <div className="max-w-5xl mx-auto px-4 py-8 space-y-6 lg:space-y-8 relative z-10">
         <div className="grid lg:grid-cols-5 gap-6 lg:gap-8">
-          
+
           {/* Card Flip Area - Takes up 3 cols on desktop */}
           <div className="lg:col-span-3 space-y-6">
             <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[32px] p-6 sm:p-10 shadow-2xl relative overflow-hidden min-h-[500px] flex flex-col">
@@ -191,7 +191,7 @@ export default function LotteryPage() {
                   <Gift className="text-op-gold w-7 h-7" />
                   스페셜 티켓
                 </h2>
-                
+
                 {currentTicket && isRevealed && (
                   <button
                     onClick={handleReset}
@@ -209,7 +209,7 @@ export default function LotteryPage() {
                     <div className="w-full max-w-[340px] aspect-[3/4] mx-auto rounded-2xl bg-gradient-to-br from-white/5 to-white/10 border border-white/10 flex items-center justify-center mb-8 relative group overflow-hidden shadow-[0_20px_40px_rgba(0,0,0,0.4)] transition-transform duration-500 hover:scale-[1.02]">
                       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20 mix-blend-overlay"></div>
                       <div className="absolute top-0 left-0 w-full h-[30%] bg-gradient-to-b from-white/10 to-transparent"></div>
-                      
+
                       <div className="text-center relative z-10 p-8 flex flex-col items-center">
                         <div className="w-20 h-20 rounded-full border-2 border-dashed border-white/20 flex items-center justify-center mb-6 group-hover:border-op-gold/50 transition-colors">
                           <Ticket size={40} className="text-white/30 group-hover:text-op-gold transition-colors" />
@@ -218,14 +218,14 @@ export default function LotteryPage() {
                         <p className="text-sm text-white/40 font-medium">티켓을 구매하고 행운을 확인하세요</p>
                       </div>
                     </div>
-                    
+
                     {errorMessage && (
                       <div className="mb-6 bg-red-500/10 border border-red-500/20 rounded-xl p-3 flex justify-center gap-2 items-center w-full max-w-[340px]">
                         <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
                         <p className="text-sm text-red-400 font-medium">{errorMessage}</p>
                       </div>
                     )}
-                    
+
                     <button
                       onClick={handleBuyTicket}
                       disabled={isPurchasing || userPoints < TICKET_COST || todayCount >= DAILY_LIMIT}
@@ -239,7 +239,7 @@ export default function LotteryPage() {
                       {!(isPurchasing || userPoints < TICKET_COST || todayCount >= DAILY_LIMIT) && (
                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-[200%] group-hover:animate-[shimmer_1.5s_infinite]" />
                       )}
-                      
+
                       <div className={cn(
                         "relative z-10 flex items-center justify-center gap-2",
                         !(isPurchasing || userPoints < TICKET_COST || todayCount >= DAILY_LIMIT) && "group-hover:scale-105 transition-transform duration-300"
@@ -274,10 +274,10 @@ export default function LotteryPage() {
                         >
                           {/* Inner gold border */}
                           <div className="absolute inset-[8px] border-2 border-dashed border-op-gold/40 rounded-[16px] pointer-events-none" />
-                          
+
                           {/* Holographic overlay */}
                           <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
-                          
+
                           <div className="absolute inset-0 flex items-center justify-center">
                             <div className="text-center relative z-10">
                               <div className="relative mb-6">
@@ -289,7 +289,7 @@ export default function LotteryPage() {
                               <p className="text-sm font-medium text-white/40 bg-white/5 px-4 py-1.5 rounded-full inline-block border border-white/10">카드를 터치하여 긁기</p>
                             </div>
                           </div>
-                          
+
                           <div className="absolute bottom-6 left-0 w-full text-center">
                             <p className="text-[10px] text-white/20 font-bold uppercase tracking-[0.2em]">Premium Ticket</p>
                           </div>
@@ -321,17 +321,17 @@ export default function LotteryPage() {
                                     return <TierIcon size={70} className="text-white mx-auto drop-shadow-2xl animate-bounce-slow" />;
                                   })()}
                                 </div>
-                                
+
                                 <p className="text-2xl font-bold text-white/90 mb-1 drop-shadow-md tracking-wider">
                                   {getTierInfo(currentTicket.tier).name} 당첨!
                                 </p>
-                                
+
                                 <div className="bg-white/10 backdrop-blur-md rounded-2xl py-4 px-2 border border-white/20 mb-8 shadow-inner">
                                   <p className="text-5xl font-black text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]">
                                     {currentTicket.prizeAmount.toLocaleString()}P
                                   </p>
                                 </div>
-                                
+
                                 <p className="text-sm text-white/80 font-bold uppercase tracking-widest">Congratulations</p>
                               </>
                             ) : (
@@ -344,7 +344,7 @@ export default function LotteryPage() {
                               </>
                             )}
                           </div>
-                          
+
                           {/* Pattern overlay for premium feel */}
                           <div className="absolute inset-0 opacity-10 mix-blend-overlay pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '20px 20px' }} />
                         </div>
@@ -389,10 +389,10 @@ export default function LotteryPage() {
                           {tier.prize > 0 ? `${tier.prize.toLocaleString()}P` : '0P'}
                         </span>
                       </div>
-                      
+
                       {/* Subtle probability bar underneath */}
                       <div className="absolute bottom-0 left-3 right-3 h-1 flex rounded-full overflow-hidden opacity-30">
-                         <div
+                        <div
                           className={cn("h-full bg-gradient-to-r", tier.color)}
                           style={{ width: `${Math.min(tier.probability * 3, 100)}%` }}
                         />

@@ -38,6 +38,8 @@ export function BaccaratTableClient({ tableId, userId, nickname, initialBalance 
     const [bankerScore, setBankerScore] = useState<number | null>(null);
     const [revealedCards, setRevealedCards] = useState<number>(0);
 
+    const [isMounted, setIsMounted] = useState(false);
+
     // Audio Refs using HTML Audio for simplicity and preloading
     const chipSoundRef = useRef<HTMLAudioElement | null>(null);
     const dealSoundRef = useRef<HTMLAudioElement | null>(null);
@@ -45,6 +47,7 @@ export function BaccaratTableClient({ tableId, userId, nickname, initialBalance 
     const winSoundRef = useRef<HTMLAudioElement | null>(null);
 
     useEffect(() => {
+        setIsMounted(true);
         chipSoundRef.current = new Audio('/sounds/chip.mp3');
         dealSoundRef.current = new Audio('/sounds/card-slide.mp3');
         flipSoundRef.current = new Audio('/sounds/card-flip.mp3');
@@ -194,6 +197,14 @@ export function BaccaratTableClient({ tableId, userId, nickname, initialBalance 
             alert(err.message || 'Clear bet failed');
         }
     };
+
+    if (!isMounted) {
+        return (
+            <div className="w-full flex-1 min-h-[600px] h-[calc(100vh-120px)] bg-[#1a1c20] rounded-xl flex items-center justify-center border border-white/10 shadow-2xl transition-colors">
+                <div className="animate-pulse text-white/50 text-sm font-bold tracking-widest">LOADING TABLE...</div>
+            </div>
+        );
+    }
 
     return (
         <div className="w-full flex-1 min-h-[600px] h-[calc(100vh-120px)] bg-[#1a1c20] rounded-xl flex flex-col overflow-hidden select-none relative font-sans text-white border border-white/10 shadow-2xl transition-colors">

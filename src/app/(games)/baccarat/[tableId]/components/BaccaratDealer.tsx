@@ -71,7 +71,7 @@ export const BaccaratDealer: React.FC<BaccaratDealerProps> = ({
                         <div className="absolute top-3 left-1/2 -translate-x-1/2 w-[1px] h-full bg-white/20" />
                     </div>
                 </motion.div>
-                <span className="text-[10px] font-bold text-slate-400 dark:text-white/30 mt-1 uppercase tracking-widest drop-shadow-md">Dealer</span>
+                <span className="text-[10px] font-bold text-slate-400 dark:text-white/30 mt-1 uppercase tracking-widest drop-shadow-md">딜러</span>
             </div>
 
             {/* Status Indicator */}
@@ -89,14 +89,18 @@ export const BaccaratDealer: React.FC<BaccaratDealerProps> = ({
                                     "bg-green-500/10 border-green-500/50"
                         )}
                     >
-                        <span className={cn(
-                            "text-sm md:text-lg font-black uppercase tracking-widest",
+                        <div className={cn(
+                            "flex items-center justify-center gap-2 text-sm md:text-lg font-black uppercase tracking-widest",
                             gameState === 'betting' ? "text-amber-500 animate-pulse" :
                                 gameState === 'dealing' ? "text-white" : "text-green-500"
                         )}>
-                            {gameState === 'betting' ? `PLACE YOUR BETS (${timeRemaining}s)` :
-                                gameState === 'dealing' ? "NO MORE BETS" : "RESULT"}
-                        </span>
+                            {gameState === 'betting' ? (
+                                <>
+                                    <span>베팅해 주세요</span>
+                                    <span className="text-xs md:text-sm opacity-80 mt-0.5">({timeRemaining}초)</span>
+                                </>
+                            ) : gameState === 'dealing' ? "베팅 마감" : "결과"}
+                        </div>
                     </motion.div>
                 </AnimatePresence>
             </div>
@@ -151,7 +155,7 @@ export const BaccaratDealer: React.FC<BaccaratDealerProps> = ({
                             "bg-blue-600/20 text-blue-400 border border-blue-500/30",
                             gameState === 'result' && playerScore !== null && bankerScore !== null && playerScore > bankerScore
                                 ? "shadow-[0_0_30px_rgba(59,130,246,0.6)] ring-2 ring-blue-500 scale-110 bg-blue-600/40 text-blue-300" : ""
-                        )}>Player</span>
+                        )}>플레이어</span>
                         <motion.div
                             key={playerScore}
                             initial={{ scale: 0.5, opacity: 0 }}
@@ -217,7 +221,7 @@ export const BaccaratDealer: React.FC<BaccaratDealerProps> = ({
                             "bg-red-600/20 text-red-400 border border-red-500/30",
                             gameState === 'result' && playerScore !== null && bankerScore !== null && bankerScore > playerScore
                                 ? "shadow-[0_0_30px_rgba(220,38,38,0.6)] ring-2 ring-red-500 scale-110 bg-red-600/40 text-red-300" : ""
-                        )}>Banker</span>
+                        )}>뱅커</span>
                         <motion.div
                             key={bankerScore}
                             initial={{ scale: 0.5, opacity: 0 }}

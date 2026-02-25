@@ -35,20 +35,20 @@ export const BaccaratBettingGrid: React.FC<BaccaratBettingGridProps> = ({
                     <div className="flex h-[35%] gap-1 md:gap-2">
                         {/* P. Pair */}
                         <BetButton
-                            zone="player_pair" label="P. PAIR" ratio="11:1"
+                            zone="player_pair" label="P. 페어" ratio="11:1"
                             color="blue" gameState={gameState}
                             betAmount={myBets['player_pair']} placeBet={placeBet}
                         />
                         {/* Tie */}
                         <BetButton
-                            zone="tie" label="TIE" ratio="8:1"
+                            zone="tie" label="타이" ratio="8:1"
                             color="green" gameState={gameState}
                             betAmount={myBets['tie']} placeBet={placeBet}
                             flex={1.5}
                         />
                         {/* B. Pair */}
                         <BetButton
-                            zone="banker_pair" label="B. PAIR" ratio="11:1"
+                            zone="banker_pair" label="B. 페어" ratio="11:1"
                             color="red" gameState={gameState}
                             betAmount={myBets['banker_pair']} placeBet={placeBet}
                         />
@@ -58,14 +58,14 @@ export const BaccaratBettingGrid: React.FC<BaccaratBettingGridProps> = ({
                     <div className="flex h-[65%] gap-1 md:gap-2">
                         {/* Player */}
                         <BetButton
-                            zone="player" label="PLAYER" ratio="1:1"
+                            zone="player" label="플레이어" ratio="1:1"
                             color="blue" gameState={gameState}
                             betAmount={myBets['player']} placeBet={placeBet}
                             isMain
                         />
                         {/* Banker */}
                         <BetButton
-                            zone="banker" label="BANKER" ratio="1:0.95"
+                            zone="banker" label="뱅커" ratio="1:0.95"
                             color="red" gameState={gameState}
                             betAmount={myBets['banker']} placeBet={placeBet}
                             isMain
@@ -114,14 +114,14 @@ export const BaccaratBettingGrid: React.FC<BaccaratBettingGridProps> = ({
                             disabled={gameState !== 'betting'}
                             className="px-3 md:px-5 py-2.5 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 active:bg-white/20 text-white/90 text-[10px] md:text-xs font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed uppercase tracking-wider shadow-sm flex-1"
                         >
-                            Repeat
+                            재베팅
                         </button>
                         <button
                             onClick={clearBets}
                             disabled={gameState !== 'betting' || Object.keys(myBets).length === 0}
                             className="px-3 md:px-5 py-2.5 rounded-lg border border-red-500/20 bg-red-950/40 hover:bg-red-900/60 active:bg-red-800/60 text-red-200 text-[10px] md:text-xs font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed uppercase tracking-wider shadow-sm flex-1"
                         >
-                            Clear
+                            취소
                         </button>
                     </div>
                 </div>

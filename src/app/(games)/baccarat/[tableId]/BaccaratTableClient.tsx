@@ -27,7 +27,7 @@ export function BaccaratTableClient({ tableId, userId, nickname }: BaccaratTable
     const [isMuted, setIsMuted] = useState(false);
     const [selectedChip, setSelectedChip] = useState<number>(1000); // 1k
 
-    const [balance, setBalance] = useState(500000);
+    const [balance, setBalance] = useState(0);
     const [myBets, setMyBets] = useState<Record<string, number>>({});
     const [history, setHistory] = useState<string[]>([]);
 
@@ -185,7 +185,7 @@ export function BaccaratTableClient({ tableId, userId, nickname }: BaccaratTable
     };
 
     return (
-        <div className="w-full flex-1 min-h-[600px] h-[calc(100vh-120px)] bg-[#0a0f12] rounded-xl flex flex-col overflow-hidden select-none relative font-sans text-white border border-white/10 shadow-2xl transition-colors">
+        <div className="w-full flex-1 min-h-[600px] h-[calc(100vh-120px)] bg-slate-900 dark:bg-[#0a0f12] rounded-xl flex flex-col overflow-hidden select-none relative font-sans text-white border border-white/10 shadow-2xl transition-colors">
 
             {/* Dynamic Animated Background Filter */}
             <div className={cn("absolute inset-0 opacity-40 pointer-events-none transition-all duration-[3000ms] ease-in-out",
@@ -203,16 +203,16 @@ export function BaccaratTableClient({ tableId, userId, nickname }: BaccaratTable
                     </Link>
                     <div>
                         <h1 className="text-sm md:text-base font-bold flex items-center gap-2 text-white">
-                            Baccarat <span className="text-yellow-500">Premium</span>
+                            바카라 <span className="text-yellow-500">프리미엄</span>
                         </h1>
-                        <p className="text-[10px] md:text-xs text-white/50">Table {tableId.slice(0, 4)} • Min 100 / Max 1M</p>
+                        <p className="text-[10px] md:text-xs text-white/50">테이블 {tableId.slice(0, 4)} • 최소 100 / 최대 1M</p>
                     </div>
                 </div>
 
                 <div className="flex items-center gap-3 md:gap-6">
                     <div className="flex flex-col items-end">
-                        <span className="text-[10px] text-white/50 uppercase tracking-wider font-bold">Balance</span>
-                        <span className="text-sm md:text-base font-black text-yellow-500 tabular-nums">${balance.toLocaleString('en-US')}</span>
+                        <span className="text-[10px] text-white/50 uppercase tracking-wider font-bold">보유 포인트</span>
+                        <span className="text-sm md:text-base font-black text-yellow-500 tabular-nums">{balance.toLocaleString('en-US')}</span>
                     </div>
                     <div className="flex items-center gap-1">
                         <button className="p-2 text-white/50 hover:text-white transition-colors rounded-full hover:bg-white/10">

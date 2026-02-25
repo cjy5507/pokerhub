@@ -47,68 +47,105 @@ export const BaccaratDealer: React.FC<BaccaratDealerProps> = ({
 
     return (
         <div className="flex-1 relative flex flex-col justify-center items-center py-6 min-h-[250px] lg:min-h-0">
-            {/* Dealer Character */}
-            <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center">
-                <motion.div animate={dealerMotion} className="relative flex flex-col items-center">
+            {/* Dealer Character: 3D Animated Terry */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center">
+                <motion.div animate={dealerMotion} className="relative flex flex-col items-center drop-shadow-2xl">
+
                     {/* Hair / Head top */}
-                    <div className="relative z-10 w-12 h-6 md:w-14 md:h-7 bg-slate-800 rounded-t-[2.5rem] shadow-inner -mb-2 overflow-hidden flex justify-center">
-                        <div className="w-full h-full bg-gradient-to-tr from-black via-slate-800 to-slate-700 opacity-90" />
-                        <div className="absolute top-1 right-2 w-3 h-3 bg-white/10 rounded-full blur-[2px]" />
+                    <div className="relative z-10 w-14 h-7 md:w-16 md:h-8 rounded-t-[3rem] shadow-[inset_0_-4px_10px_rgba(0,0,0,0.6)] -mb-3 overflow-hidden flex justify-center bg-[#1e293b] border-2 border-b-0 border-[#0f172a]">
+                        {/* Hair Highlight */}
+                        <div className="absolute -top-4 w-[150%] h-[150%] bg-[radial-gradient(ellipse_at_top,#475569_0%,transparent_60%)] opacity-70" />
+                        <div className="absolute top-1 right-3 w-4 h-2 bg-white/10 rounded-full blur-[1px] rotate-[-15deg]" />
                     </div>
-                    {/* Face */}
-                    <div className="w-12 h-14 md:w-14 md:h-16 rounded-[2rem] rounded-b-[2.5rem] bg-gradient-to-b from-orange-200 to-orange-300 dark:from-orange-300 dark:to-orange-400 mx-auto relative border border-orange-400/30 shadow-md z-0 shadow-black/40 overflow-hidden">
+
+                    {/* Face (3D Shaded) */}
+                    <div className="w-14 h-16 md:w-16 md:h-20 rounded-[2.5rem] rounded-b-[3rem] bg-gradient-to-b from-[#fcd34d] via-[#fbbf24] to-[#d97706] dark:from-[#fde68a] dark:via-[#f59e0b] dark:to-[#b45309] mx-auto relative border border-[#b45309]/50 shadow-[inset_0_-8px_15px_rgba(0,0,0,0.2),0_10px_20px_rgba(0,0,0,0.4)] z-0 overflow-hidden">
+
+                        {/* Base Face Highlight */}
+                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-1/2 bg-gradient-to-b from-white/30 to-transparent rounded-t-[2.5rem]" />
+
                         {/* Eyes */}
-                        <div className="absolute top-[35%] left-[22%] w-2 h-1.5 md:w-2.5 md:h-2 bg-slate-900 rounded-full flex justify-center overflow-hidden">
-                            <div className="w-1 h-1 bg-white rounded-full translate-x-[1px]" />
+                        <div className="absolute top-[35%] left-[20%] w-3 h-2.5 md:w-3.5 md:h-3 bg-[#0f172a] rounded-full flex justify-center items-center shadow-[inset_0_1px_2px_rgba(0,0,0,0.8)] border-b border-white/20">
+                            <div className="w-1.5 h-1.5 bg-white rounded-full translate-x-[1px] -translate-y-[0.5px] shadow-[0_0_2px_rgba(255,255,255,0.8)]" />
                         </div>
-                        <div className="absolute top-[35%] right-[22%] w-2 h-1.5 md:w-2.5 md:h-2 bg-slate-900 rounded-full flex justify-center overflow-hidden">
-                            <div className="w-1 h-1 bg-white rounded-full -translate-x-[1px]" />
+                        <div className="absolute top-[35%] right-[20%] w-3 h-2.5 md:w-3.5 md:h-3 bg-[#0f172a] rounded-full flex justify-center items-center shadow-[inset_0_1px_2px_rgba(0,0,0,0.8)] border-b border-white/20">
+                            <div className="w-1.5 h-1.5 bg-white rounded-full -translate-x-[1px] -translate-y-[0.5px] shadow-[0_0_2px_rgba(255,255,255,0.8)]" />
                         </div>
 
-                        {/* THE BIG NOSE */}
-                        <div className="absolute top-[48%] left-1/2 -translate-x-1/2 w-4 h-6 md:w-5 md:h-7 bg-gradient-to-b from-orange-300 to-orange-400 rounded-full shadow-[0_4px_6px_rgba(0,0,0,0.2)] border-x border-b border-orange-500/40 z-10 flex flex-col items-center justify-end pb-1">
+                        {/* Cheeks */}
+                        <div className="absolute top-[50%] left-[10%] w-3 h-2 bg-rose-500/30 rounded-full blur-[2px]" />
+                        <div className="absolute top-[50%] right-[10%] w-3 h-2 bg-rose-500/30 rounded-full blur-[2px]" />
+
+                        {/* THE BIG HUGE 3D NOSE */}
+                        <div className="absolute top-[42%] left-1/2 -translate-x-1/2 w-5 h-7 md:w-6 md:h-9 bg-gradient-to-b from-[#fde68a] via-[#fbbf24] to-[#b45309] rounded-full shadow-[0_6px_8px_rgba(0,0,0,0.3),inset_-2px_-4px_6px_rgba(0,0,0,0.2)] border-x border-b border-[#92400e]/50 z-10 flex flex-col items-center justify-end pb-1 md:pb-1.5 relative">
+                            {/* Nose Highlight */}
+                            <div className="absolute top-1 w-2 md:w-2.5 h-4 md:h-5 bg-white/40 rounded-full blur-[1px]" />
                             {/* Nostrils */}
-                            <div className="flex gap-1.5">
-                                <div className="w-1 h-1 bg-orange-900/60 rounded-full" />
-                                <div className="w-1 h-1 bg-orange-900/60 rounded-full" />
+                            <div className="flex gap-2 relative z-20">
+                                <div className="w-1.5 h-1 md:w-2 md:h-1.5 bg-[#78350f]/80 rounded-full shadow-[inset_0_1px_2px_rgba(0,0,0,0.8)]" />
+                                <div className="w-1.5 h-1 md:w-2 md:h-1.5 bg-[#78350f]/80 rounded-full shadow-[inset_0_1px_2px_rgba(0,0,0,0.8)]" />
                             </div>
                         </div>
 
                         {/* Mouth */}
-                        <div className="absolute top-[80%] left-1/2 -translate-x-1/2 w-4 h-1 md:w-5 md:h-1.5 bg-gradient-to-b from-rose-900 to-rose-950 rounded-full opacity-80" />
+                        <div className="absolute top-[82%] md:top-[85%] left-1/2 -translate-x-1/2 w-5 h-1.5 md:w-6 md:h-2 bg-gradient-to-b from-[#881337] to-[#4c0519] rounded-full opacity-90 shadow-[inset_0_1px_2px_rgba(0,0,0,0.8)] border-b border-[#fcd34d]/50" />
+
+                        {/* Chin Shadow */}
+                        <div className="absolute bottom-0 w-full h-3 bg-gradient-to-t from-[#78350f]/50 to-transparent" />
                     </div>
+
                     {/* Neck & Bowtie */}
-                    <div className="w-4 h-3 md:w-5 md:h-4 bg-orange-400 relative -mt-1 z-10 shadow-inner">
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-3 bg-red-800 rounded-sm flex items-center justify-center shadow-sm">
-                            <div className="w-2 h-2 bg-red-900 rounded-full" />
+                    <div className="w-5 h-4 md:w-6 md:h-5 bg-gradient-to-b from-[#92400e] to-[#78350f] relative -mt-2 z-10 shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]">
+                        {/* 3D Bowtie */}
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-4 md:w-10 md:h-5 bg-gradient-to-br from-[#dc2626] to-[#7f1d1d] rounded-sm flex items-center justify-center shadow-[0_2px_4px_rgba(0,0,0,0.5)] border border-[#991b1b]">
+                            {/* Bowtie Knot */}
+                            <div className="w-2.5 h-3 md:w-3 md:h-4 bg-gradient-to-b from-[#ef4444] to-[#991b1b] rounded-md shadow-[0_0_2px_rgba(0,0,0,0.5)] z-10 border border-[#b91c1c]" />
+                            {/* Bowtie Creases */}
+                            <div className="absolute left-1 border-t-2 border-b-2 border-transparent border-r-4 border-r-[#7f1d1d]/50 h-2 w-0" />
+                            <div className="absolute right-1 border-t-2 border-b-2 border-transparent border-l-4 border-l-[#7f1d1d]/50 h-2 w-0" />
                         </div>
                     </div>
+
                     {/* Body (Vest & Shirt) */}
-                    <div className="w-16 h-12 md:w-20 md:h-14 bg-gradient-to-b from-slate-950 to-black rounded-b-3xl relative overflow-hidden border border-slate-800 -mt-1 shadow-[0_10px_20px_rgba(0,0,0,0.5)] z-0">
+                    <div className="w-20 h-14 md:w-24 md:h-16 bg-gradient-to-br from-[#1e293b] via-[#0f172a] to-[#020617] rounded-[2rem] rounded-b-[3rem] relative overflow-hidden border-2 border-[#334155]/30 -mt-1 shadow-[inset_0_-10px_20px_rgba(0,0,0,0.8),0_15px_25px_rgba(0,0,0,0.6)] z-0">
+                        {/* Vest Texture/Highlight */}
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,#334155_0%,transparent_60%)] opacity-30" />
+
                         {/* White Shirt Triangle */}
-                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-10 md:w-8 md:h-12 bg-white flex justify-center" style={{ clipPath: 'polygon(0 0, 100% 0, 50% 100%)' }}>
+                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-12 md:w-10 md:h-14 bg-gradient-to-b from-[#f8fafc] to-[#cbd5e1] flex justify-center shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)]" style={{ clipPath: 'polygon(0 0, 100% 0, 50% 100%)' }}>
+                            {/* Inner shirt shadow from vest */}
+                            <div className="absolute top-0 left-0 w-full h-full shadow-[inset_0_0_5px_rgba(0,0,0,0.8)]" />
+
                             {/* Buttons */}
-                            <div className="mt-3 flex flex-col gap-1.5">
-                                <div className="w-1 h-1 bg-black rounded-full" />
-                                <div className="w-1 h-1 bg-black rounded-full" />
+                            <div className="mt-4 flex flex-col gap-2 relative z-10">
+                                <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-[#0f172a] rounded-full shadow-[inset_0_1px_1px_rgba(255,255,255,0.4)]" />
+                                <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-[#0f172a] rounded-full shadow-[inset_0_1px_1px_rgba(255,255,255,0.4)]" />
                             </div>
                         </div>
                     </div>
+
                     {/* Dealer Arms (Hidden in idle, move when dealing) */}
                     <motion.div
-                        animate={gameState === 'dealing' ? { y: [0, 15, 0], x: [-5, -15, -5], scaleY: [1, 1.2, 1], rotate: [0, 20, 0] } : {}}
-                        transition={{ duration: 0.6, repeat: Infinity }}
-                        className="absolute top-16 -left-1 w-3.5 h-10 bg-slate-900 rounded-full border border-slate-800 shadow-md origin-top -z-10"
+                        animate={gameState === 'dealing' ? { y: [0, 15, 0], x: [-5, -15, -5], scaleY: [1, 1.2, 1], rotate: [0, 25, 0] } : {}}
+                        transition={{ duration: 0.6, repeat: Infinity, ease: "easeInOut" }}
+                        className="absolute top-[4.5rem] md:top-[5.5rem] -left-2 w-4.5 h-12 md:w-5 md:h-14 bg-gradient-to-b from-[#1e293b] to-[#0f172a] rounded-full border border-[#334155]/50 shadow-[0_5px_10px_rgba(0,0,0,0.5)] origin-top -z-10"
                     />
                     <motion.div
-                        animate={gameState === 'dealing' ? { y: [0, 15, 0], x: [5, 15, 5], scaleY: [1, 1.2, 1], rotate: [0, -20, 0] } : {}}
-                        transition={{ duration: 0.6, repeat: Infinity, delay: 0.3 }}
-                        className="absolute top-16 -right-1 w-3.5 h-10 bg-slate-900 rounded-full border border-slate-800 shadow-md origin-top -z-10"
+                        animate={gameState === 'dealing' ? { y: [0, 15, 0], x: [5, 15, 5], scaleY: [1, 1.2, 1], rotate: [0, -25, 0] } : {}}
+                        transition={{ duration: 0.6, repeat: Infinity, delay: 0.3, ease: "easeInOut" }}
+                        className="absolute top-[4.5rem] md:top-[5.5rem] -right-2 w-4.5 h-12 md:w-5 md:h-14 bg-gradient-to-b from-[#1e293b] to-[#0f172a] rounded-full border border-[#334155]/50 shadow-[0_5px_10px_rgba(0,0,0,0.5)] origin-top -z-10"
                     />
                 </motion.div>
-                <div className="flex flex-col items-center mt-2">
-                    <span className="text-xs font-black text-white px-2 py-0.5 bg-black/50 rounded-md border border-white/20 shadow-md">TERRY</span>
-                    <span className="text-[9px] font-bold text-slate-400 dark:text-white/40 uppercase tracking-widest drop-shadow-md">딜러</span>
+
+                {/* Name Tag Plate */}
+                <div className="flex flex-col items-center mt-3 z-30">
+                    <div className="relative group">
+                        <div className="absolute -inset-0.5 bg-gradient-to-r from-yellow-600 to-yellow-400 rounded-md blur opacity-30 group-hover:opacity-100 transition duration-1000 group-hover:duration-200" />
+                        <div className="px-3 py-1 bg-gradient-to-b from-slate-800 to-black rounded-md border border-yellow-500/50 relative shadow-lg flex items-center gap-1">
+                            <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_5px_#22c55e]" />
+                            <span className="text-xs md:text-sm font-black bg-gradient-to-r from-yellow-200 to-yellow-500 text-transparent bg-clip-text tracking-widest drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">TERRY</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 

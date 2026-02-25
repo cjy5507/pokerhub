@@ -29,7 +29,7 @@ interface BaccaratDealerProps {
     revealedCards: number;
 }
 
-export const BaccaratDealer: React.FC<BaccaratDealerProps> = ({
+const BaccaratDealerComponent: React.FC<BaccaratDealerProps> = ({
     gameState,
     timeRemaining,
     playerCards,
@@ -336,6 +336,8 @@ export const BaccaratDealer: React.FC<BaccaratDealerProps> = ({
         </div>
     );
 };
+
+export const BaccaratDealer = React.memo(BaccaratDealerComponent);
 
 // Extracted mini-components for readability
 

@@ -5,11 +5,6 @@ type SupabaseConfig = {
 
 const warningCache = new Set<string>();
 
-function getEnv(name: string): string | null {
-  const value = process.env[name]?.trim();
-  return value ? value : null;
-}
-
 function warnOnce(message: string): void {
   if (process.env.NODE_ENV === 'test' || warningCache.has(message)) {
     return;
@@ -18,16 +13,23 @@ function warnOnce(message: string): void {
   console.warn(message);
 }
 
+// Next.js inlines NEXT_PUBLIC_* vars at build time ONLY when accessed as
+// static literals (process.env.NEXT_PUBLIC_FOO). Dynamic access like
+// process.env[name] is NOT inlined, causing them to be undefined on the client.
+
 export function getSupabaseUrl(): string | null {
-  return getEnv('NEXT_PUBLIC_SUPABASE_URL') ?? getEnv('SUPABASE_URL');
+  const value = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? '').trim();
+  return value || null;
 }
 
 export function getSupabasePublishableKey(): string | null {
-  return getEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY') ?? getEnv('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY');
+  const value = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? '').trim();
+  return value || null;
 }
 
 export function getSupabaseServiceRoleKey(): string | null {
-  return getEnv('SUPABASE_SERVICE_ROLE_KEY') ?? getEnv('SUPABASE_SECRET_KEY');
+  const value = (process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY ?? '').trim();
+  return value || null;
 }
 
 export function getBrowserSupabaseConfig(): SupabaseConfig | null {

@@ -50,15 +50,15 @@ const SEAT_POSITIONS_2: [number, number][] = [
   [8, 50],   // Seat 1 - top center (opponent)
 ];
 
-// Horizontal arc along the bottom (Seat 0 to 5)
-// Values are [top%, left%]
+// 6 seats evenly spaced (60° apart) around an ellipse
+// center=(50,50), radiusY=42, radiusX=40
 const SEAT_POSITIONS_6: [number, number][] = [
-  [85, 12],  // Seat 0 - far left
-  [88, 28],  // Seat 1 - mid left
-  [90, 44],  // Seat 2 - center left
-  [90, 56],  // Seat 3 - center right
-  [88, 72],  // Seat 4 - mid right
-  [85, 88],  // Seat 5 - far right
+  [92, 50],  // Seat 0 - bottom center (hero)
+  [67, 10],  // Seat 1 - left
+  [15, 15],  // Seat 2 - top left
+  [8, 50],   // Seat 3 - top center
+  [15, 85],  // Seat 4 - top right
+  [67, 90],  // Seat 5 - right
 ];
 
 // Mathematically balanced: 9 seats evenly spaced (40° apart) around an ellipse
@@ -81,14 +81,14 @@ const BET_POSITIONS_2: [number, number][] = [
   [30, 50],
 ];
 
-// Bet chips: pushing upwards from the horizontal arc towards the center pot
+// Bet chips: ~60% of the way from seat to center (50,50)
 const BET_POSITIONS_6: [number, number][] = [
-  [72, 18],  // from seat 0
-  [74, 32],  // from seat 1
-  [76, 46],  // from seat 2
-  [76, 54],  // from seat 3
-  [74, 68],  // from seat 4
-  [72, 82],  // from seat 5
+  [75, 50],  // from seat 0
+  [58, 25],  // from seat 1
+  [30, 28],  // from seat 2
+  [24, 50],  // from seat 3
+  [30, 72],  // from seat 4
+  [58, 75],  // from seat 5
 ];
 
 // Bet chips: ~60% of the way from seat to center (50,50)

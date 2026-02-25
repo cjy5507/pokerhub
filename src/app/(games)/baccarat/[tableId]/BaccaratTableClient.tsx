@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { cn } from '@/lib/utils';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ArrowLeft, Volume2, VolumeX, Info } from 'lucide-react';
 import Link from 'next/link';
 import { createOptionalClient } from '@/lib/supabase/client';
@@ -15,6 +14,10 @@ import { BaccaratRoadmap } from './components/BaccaratRoadmap';
 type BaccaratState = 'waiting' | 'betting' | 'dealing' | 'result';
 type BetZone = 'player' | 'banker' | 'tie' | 'player_pair' | 'banker_pair';
 
+const PHASE_DEALING_MS = 5000;
+const CARD_REVEAL_INTERVAL_MS = 800;
+const CARD_DEAL_SOUND_INTERVAL_MS = 200;
+
 interface BaccaratTableClientProps {
     tableId: string;
     userId: string | null;
@@ -22,9 +25,40 @@ interface BaccaratTableClientProps {
     initialBalance?: number;
 }
 
+function shallowEqualObject(a: Record<string, number>, b: Record<string, number>) {
+    const aKeys = Object.keys(a);
+    const bKeys = Object.keys(b);
+    if (aKeys.length !== bKeys.length) return false;
+    for (const key of aKeys) {
+        if (a[key] !== b[key]) return false;
+    }
+    return true;
+}
+
+function shallowEqualArray(a: string[], b: string[]) {
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+        if (a[i] !== b[i]) return false;
+    }
+    return true;
+}
+
+function cardsEqual(a: any[], b: any[]) {
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+        if (!a[i] || !b[i]) return false;
+        if (a[i].suit !== b[i].suit || a[i].value !== b[i].value || a[i].score !== b[i].score) {
+            return false;
+        }
+    }
+    return true;
+}
+
 export function BaccaratTableClient({ tableId, userId, nickname, initialBalance }: BaccaratTableClientProps) {
     const [gameState, setGameState] = useState<BaccaratState>('betting');
     const [timeRemaining, setTimeRemaining] = useState(15);
+    const [phaseEndsAtMs, setPhaseEndsAtMs] = useState(0);
+    const [serverTimeOffsetMs, setServerTimeOffsetMs] = useState(0);
     const [isMuted, setIsMuted] = useState(false);
     const [selectedChip, setSelectedChip] = useState<number>(1000); // 1k
 
@@ -39,6 +73,9 @@ export function BaccaratTableClient({ tableId, userId, nickname, initialBalance 
     const [revealedCards, setRevealedCards] = useState<number>(0);
 
     const [isMounted, setIsMounted] = useState(false);
+    const [isDesktop, setIsDesktop] = useState(false);
+    const gameStateRef = useRef<BaccaratState>('betting');
+    const roundIdRef = useRef<string | null>(null);
 
     // Audio Refs using HTML Audio for simplicity and preloading
     const chipSoundRef = useRef<HTMLAudioElement | null>(null);
@@ -54,121 +91,221 @@ export function BaccaratTableClient({ tableId, userId, nickname, initialBalance 
         winSoundRef.current = new Audio('/sounds/win.mp3');
     }, []);
 
-    const playSound = (audio: HTMLAudioElement | null) => {
+    useEffect(() => {
+        gameStateRef.current = gameState;
+    }, [gameState]);
+
+    useEffect(() => {
+        const media = window.matchMedia('(min-width: 1280px)');
+        const handleChange = () => setIsDesktop(media.matches);
+        handleChange();
+        media.addEventListener('change', handleChange);
+        return () => media.removeEventListener('change', handleChange);
+    }, []);
+
+    const playSound = useCallback((audio: HTMLAudioElement | null) => {
         if (!isMuted && audio) {
             audio.currentTime = 0;
             audio.play().catch(() => { });
         }
-    };
+    }, [isMuted]);
 
-    const applyState = (data: any) => {
+    const applyState = useCallback((data: any) => {
         if (!data || !data.table) return;
         const { table, round, serverTime, myBets: betsMap, balance: serverBalance } = data;
 
         // Transition logic for sounds
-        if (gameState !== 'result' && table.status === 'result') {
+        if (gameStateRef.current !== 'result' && table.status === 'result') {
             playSound(winSoundRef.current);
         }
 
-        setGameState(table.status);
+        if (gameStateRef.current !== table.status) {
+            gameStateRef.current = table.status;
+            setGameState(table.status);
+        }
+
+        const nextRoundId = table.currentRoundId ?? null;
+        if (roundIdRef.current !== nextRoundId) {
+            roundIdRef.current = nextRoundId;
+            if (table.status === 'betting' && betsMap === undefined) {
+                setMyBets(prev => Object.keys(prev).length === 0 ? prev : {});
+            }
+        }
+
         if (table.status === 'betting' && betsMap !== undefined) {
-            setMyBets(betsMap);
+            const normalizedBetsMap = betsMap ?? {};
+            setMyBets(prev => shallowEqualObject(prev, normalizedBetsMap) ? prev : normalizedBetsMap);
         }
 
         if (serverBalance !== undefined) {
-            setBalance(serverBalance);
+            setBalance(prev => prev === serverBalance ? prev : serverBalance);
         }
 
-        if (table.history) setHistory(table.history);
+        if (Array.isArray(table.history)) {
+            setHistory(prev => shallowEqualArray(prev, table.history) ? prev : table.history);
+        }
 
-        const endsAt = new Date(table.phaseEndsAt).getTime();
-        const diff = Math.max(0, Math.floor((endsAt - serverTime) / 1000));
-        setTimeRemaining(diff);
+        if (typeof serverTime === 'number') {
+            const nextOffset = Math.round(serverTime - Date.now());
+            setServerTimeOffsetMs(prev => Math.abs(prev - nextOffset) < 200 ? prev : nextOffset);
+        }
+
+        const endsAt = table.phaseEndsAt ? new Date(table.phaseEndsAt).getTime() : 0;
+        if (Number.isFinite(endsAt) && endsAt > 0) {
+            setPhaseEndsAtMs(prev => prev === endsAt ? prev : endsAt);
+            if (typeof serverTime === 'number') {
+                const diff = Math.max(0, Math.floor((endsAt - serverTime) / 1000));
+                setTimeRemaining(prev => prev === diff ? prev : diff);
+            }
+        }
 
         if (round) {
-            setPlayerCards(prev => JSON.stringify(prev) === JSON.stringify(round.playerCards) ? prev : (round.playerCards || []));
-            setBankerCards(prev => JSON.stringify(prev) === JSON.stringify(round.bankerCards) ? prev : (round.bankerCards || []));
-            setPlayerScore(round.playerScore);
-            setBankerScore(round.bankerScore);
+            const nextPlayerCards = round.playerCards || [];
+            const nextBankerCards = round.bankerCards || [];
+
+            setPlayerCards(prev => cardsEqual(prev, nextPlayerCards) ? prev : nextPlayerCards);
+            setBankerCards(prev => cardsEqual(prev, nextBankerCards) ? prev : nextBankerCards);
+            setPlayerScore(prev => prev === round.playerScore ? prev : round.playerScore);
+            setBankerScore(prev => prev === round.bankerScore ? prev : round.bankerScore);
         } else {
             setPlayerCards(prev => prev.length === 0 ? prev : []);
             setBankerCards(prev => prev.length === 0 ? prev : []);
-            setPlayerScore(null);
-            setBankerScore(null);
+            setPlayerScore(prev => prev === null ? prev : null);
+            setBankerScore(prev => prev === null ? prev : null);
         }
-    };
+    }, [playSound]);
 
-    // Watchdog
-    useEffect(() => {
-        let mounted = true;
-        async function fetchState() {
-            try {
-                const data = await syncBaccaratState(tableId);
-                if (data && data.error) return;
-                if (mounted && data) applyState(data);
-            } catch (err) { }
-        }
-        fetchState();
-        const watchdog = setInterval(fetchState, 3000);
-        return () => {
-            mounted = false;
-            clearInterval(watchdog);
-        };
-    }, [tableId]);
-
-    // Realtime Subs
-    useEffect(() => {
-        const supabase = createOptionalClient();
-        if (!supabase) return;
-
-        const channel = supabase.channel(`baccarat:${tableId}`);
-        channel.on('broadcast', { event: 'game_state' }, (payload) => {
-            applyState(payload.payload);
-        }).subscribe();
-
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, [tableId]);
+    const fetchLatestState = useCallback(async () => {
+        try {
+            const data = await syncBaccaratState(tableId);
+            if (data && data.error) return;
+            if (data) applyState(data);
+        } catch { }
+    }, [tableId, applyState]);
 
     // Countdown timer
     useEffect(() => {
+        if (!phaseEndsAtMs) return;
+
+        const updateCountdown = () => {
+            const syncedNow = Date.now() + serverTimeOffsetMs;
+            const diff = Math.max(0, Math.floor((phaseEndsAtMs - syncedNow) / 1000));
+            setTimeRemaining(prev => prev === diff ? prev : diff);
+        };
+
+        updateCountdown();
         const timer = setInterval(() => {
-            setTimeRemaining(prev => Math.max(0, prev - 1));
+            updateCountdown();
         }, 1000);
         return () => clearInterval(timer);
-    }, []);
+    }, [phaseEndsAtMs, serverTimeOffsetMs]);
+
+    // Realtime Subs
+    useEffect(() => {
+        let mounted = true;
+        const supabase = createOptionalClient();
+        if (!supabase) {
+            void fetchLatestState();
+            return;
+        }
+
+        const channel = supabase.channel(`baccarat:${tableId}`);
+        channel.on('broadcast', { event: 'game_state' }, (payload) => {
+            if (mounted) {
+                applyState(payload.payload);
+            }
+        }).subscribe((status) => {
+            if (!mounted) return;
+            if (status === 'SUBSCRIBED') {
+                void fetchLatestState();
+            }
+            if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+                void fetchLatestState();
+            }
+        });
+
+        void fetchLatestState();
+
+        const onFocus = () => {
+            void fetchLatestState();
+        };
+        const onVisible = () => {
+            if (document.visibilityState === 'visible') {
+                void fetchLatestState();
+            }
+        };
+
+        window.addEventListener('focus', onFocus);
+        document.addEventListener('visibilitychange', onVisible);
+
+        return () => {
+            mounted = false;
+            window.removeEventListener('focus', onFocus);
+            document.removeEventListener('visibilitychange', onVisible);
+            supabase.removeChannel(channel);
+        };
+    }, [tableId, applyState, fetchLatestState]);
+
+    // Phase boundary sync scheduler (no polling loop)
+    useEffect(() => {
+        if (!phaseEndsAtMs) return;
+
+        const syncedNow = Date.now() + serverTimeOffsetMs;
+        const msUntilPhaseEnd = phaseEndsAtMs - syncedNow;
+        const jitter = Math.floor(Math.random() * 180);
+        const delay = Math.max(120, msUntilPhaseEnd + 80 + jitter);
+
+        const timer = setTimeout(() => {
+            void fetchLatestState();
+        }, delay);
+
+        return () => clearTimeout(timer);
+    }, [phaseEndsAtMs, serverTimeOffsetMs, fetchLatestState]);
 
     // Sequentially Deal and Reveal logic
     useEffect(() => {
-        if (gameState === 'dealing' || gameState === 'result') {
-            const totalCards = playerCards.length + bankerCards.length;
-            if (totalCards === 0) return; // Wait until there are actually cards
+        const totalCards = playerCards.length + bankerCards.length;
 
+        if (totalCards === 0) {
             setRevealedCards(0);
-
-            const timers: NodeJS.Timeout[] = [];
-            // Deal sounds instantly
-            for (let i = 0; i < totalCards; i++) {
-                timers.push(setTimeout(() => {
-                    playSound(dealSoundRef.current);
-                }, i * 200 + 100));
-            }
-
-            // Flip sounds and state updates
-            for (let i = 0; i < totalCards; i++) {
-                timers.push(setTimeout(() => {
-                    setRevealedCards(prev => prev + 1);
-                    playSound(flipSoundRef.current);
-                }, (i + 1) * 800)); // slightly slower for tension
-            }
-            return () => timers.forEach(clearTimeout);
-        } else {
-            setRevealedCards(0);
+            return;
         }
-    }, [gameState, playerCards, bankerCards]); // Corrected dependency to arrays to prevent infinite looping when refs don't change
 
-    const placeBet = async (zone: BetZone) => {
+        if (gameState === 'result') {
+            setRevealedCards(totalCards);
+            return;
+        }
+
+        if (gameState !== 'dealing') {
+            setRevealedCards(0);
+            return;
+        }
+
+        const syncedNow = Date.now() + serverTimeOffsetMs;
+        const dealingStartedAt = phaseEndsAtMs > 0 ? (phaseEndsAtMs - PHASE_DEALING_MS) : syncedNow;
+        const elapsedMs = Math.max(0, syncedNow - dealingStartedAt);
+        const alreadyRevealed = Math.min(totalCards, Math.floor(elapsedMs / CARD_REVEAL_INTERVAL_MS));
+
+        setRevealedCards(prev => prev === alreadyRevealed ? prev : alreadyRevealed);
+
+        const timers: NodeJS.Timeout[] = [];
+        for (let i = alreadyRevealed; i < totalCards; i++) {
+            const dealDelay = Math.max(0, (i * CARD_DEAL_SOUND_INTERVAL_MS + 100) - elapsedMs);
+            timers.push(setTimeout(() => {
+                playSound(dealSoundRef.current);
+            }, dealDelay));
+
+            const revealDelay = Math.max(0, ((i + 1) * CARD_REVEAL_INTERVAL_MS) - elapsedMs);
+            timers.push(setTimeout(() => {
+                setRevealedCards(prev => Math.max(prev, i + 1));
+                playSound(flipSoundRef.current);
+            }, revealDelay));
+        }
+
+        return () => timers.forEach(clearTimeout);
+    }, [gameState, playerCards, bankerCards, phaseEndsAtMs, serverTimeOffsetMs, playSound]);
+
+    const placeBet = useCallback(async (zone: BetZone) => {
         if (gameState !== 'betting') return;
         playSound(chipSoundRef.current);
 
@@ -176,27 +313,33 @@ export function BaccaratTableClient({ tableId, userId, nickname, initialBalance 
             const res = await placeBaccaratBet(tableId, zone, selectedChip);
             if (res && res.success) {
                 setMyBets(prev => ({ ...prev, [zone]: (prev[zone] || 0) + selectedChip }));
+                if (typeof res.balance === 'number') {
+                    setBalance(res.balance);
+                }
             } else if (res && res.error) {
                 alert(res.error);
             }
         } catch (err: any) {
             alert(err.message || 'Bet failed');
         }
-    };
+    }, [gameState, playSound, tableId, selectedChip]);
 
-    const clearBets = async () => {
+    const clearBets = useCallback(async () => {
         if (gameState !== 'betting') return;
         try {
             const res = await clearBaccaratBets(tableId);
             if (res && res.success) {
                 setMyBets({});
+                if (typeof res.balance === 'number') {
+                    setBalance(res.balance);
+                }
             } else if (res && res.error) {
                 alert(res.error);
             }
         } catch (err: any) {
             alert(err.message || 'Clear bet failed');
         }
-    };
+    }, [gameState, tableId]);
 
     if (!isMounted) {
         return (
@@ -248,13 +391,14 @@ export function BaccaratTableClient({ tableId, userId, nickname, initialBalance 
             {/* MAIN GAME AREA */}
             <div className="flex-1 flex flex-col xl:flex-row relative min-h-0 z-10 w-full">
 
-                {/* Roadmap on the left (Desktop) */}
-                <div className="hidden xl:flex w-[320px] 2xl:w-[400px] border-r border-white/10 bg-black/40 flex-col">
-                    <BaccaratRoadmap
-                        history={history}
-                        gameState={gameState}
-                    />
-                </div>
+                {isDesktop && (
+                    <div className="hidden xl:flex w-[320px] 2xl:w-[400px] border-r border-white/10 bg-black/40 flex-col">
+                        <BaccaratRoadmap
+                            history={history}
+                            gameState={gameState}
+                        />
+                    </div>
+                )}
 
                 <div className="flex-1 flex flex-col relative w-full h-full pb-4">
                     <BaccaratDealer
@@ -268,13 +412,14 @@ export function BaccaratTableClient({ tableId, userId, nickname, initialBalance 
                     />
                 </div>
 
-                {/* Roadmap on top/mobile */}
-                <div className="flex xl:hidden w-full border-b border-white/5 bg-black/40">
-                    <BaccaratRoadmap
-                        history={history}
-                        gameState={gameState}
-                    />
-                </div>
+                {!isDesktop && (
+                    <div className="flex xl:hidden w-full border-b border-white/5 bg-black/40">
+                        <BaccaratRoadmap
+                            history={history}
+                            gameState={gameState}
+                        />
+                    </div>
+                )}
             </div>
 
             {/* BOTTOM: Betting Grid & Action Bar */}

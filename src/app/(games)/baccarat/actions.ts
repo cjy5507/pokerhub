@@ -72,7 +72,7 @@ export async function syncBaccaratState(tableId: string) {
     try {
         if (!db) return null;
 
-        let payloadToBroadcast: any = null;
+        let stateChanged = false;
         let requiresTransaction = false;
 
         // 1. Quick read outside transaction to save connections
@@ -97,6 +97,7 @@ export async function syncBaccaratState(tableId: string) {
                 if (txTables.length === 0) {
                     await tx.insert(baccaratTables).values({ id: tableId, status: 'betting', history: [] });
                     txTables = await tx.select().from(baccaratTables).where(eq(baccaratTables.id, tableId)).limit(1);
+                    stateChanged = true;
                 }
 
                 let txT = txTables[0];
@@ -112,8 +113,7 @@ export async function syncBaccaratState(tableId: string) {
                         status: 'betting',
                         phaseEndsAt: txT.phaseEndsAt
                     }).where(eq(baccaratTables.id, tableId));
-
-                    payloadToBroadcast = { table: txT, round: null, serverTime: now };
+                    stateChanged = true;
                     return;
                 }
 
@@ -212,6 +212,7 @@ export async function syncBaccaratState(tableId: string) {
                     history: txT.history,
                     phaseEndsAt: txT.phaseEndsAt,
                 }).where(eq(baccaratTables.id, tableId));
+                stateChanged = true;
             });
         }
 
@@ -223,23 +224,14 @@ export async function syncBaccaratState(tableId: string) {
             if (usr) balance = usr.points;
         }
 
-        if (payloadToBroadcast) {
-            await broadcastBaccaratState(tableId, payloadToBroadcast);
-
-            if (session?.userId && payloadToBroadcast.table.status === 'betting' && payloadToBroadcast.table.currentRoundId) {
-                const bets = await db.select().from(baccaratBets).where(and(eq(baccaratBets.roundId, payloadToBroadcast.table.currentRoundId), eq(baccaratBets.userId, session.userId)));
-                bets.forEach((b: any) => {
-                    myBets[b.zone] = (myBets[b.zone] || 0) + b.amount;
-                });
-            }
-
-            return { ...payloadToBroadcast, myBets, balance };
+        if (requiresTransaction) {
+            // Fetch the updated latest state after transaction commits.
+            const latestTables = await db.select().from(baccaratTables).where(eq(baccaratTables.id, tableId)).limit(1);
+            if (latestTables.length === 0) return null;
+            t = latestTables[0];
         }
 
-        // Fetch the updated latest state (after tx commits)
-        const latestTables = await db.select().from(baccaratTables).where(eq(baccaratTables.id, tableId)).limit(1);
-        if (latestTables.length === 0) return null;
-        t = latestTables[0];
+        if (!t) return null;
 
         // Fetch round data if any
         let roundData = null;
@@ -250,7 +242,11 @@ export async function syncBaccaratState(tableId: string) {
 
         // Fetch active bets for visual update (if betting phase)
         if (session?.userId && t.status === 'betting' && t.currentRoundId) {
-            const bets = await db.select().from(baccaratBets).where(and(eq(baccaratBets.roundId, t.currentRoundId || ''), eq(baccaratBets.userId, session.userId)));
+            const bets = await db.select().from(baccaratBets).where(and(
+                eq(baccaratBets.roundId, t.currentRoundId || ''),
+                eq(baccaratBets.userId, session.userId),
+                eq(baccaratBets.isResolved, false)
+            ));
             bets.forEach((b: any) => {
                 myBets[b.zone] = (myBets[b.zone] || 0) + b.amount;
             });
@@ -262,7 +258,10 @@ export async function syncBaccaratState(tableId: string) {
             serverTime: Date.now(),
         };
 
-        await broadcastBaccaratState(tableId, payload);
+        if (stateChanged) {
+            // Non-blocking so sync responses are not delayed by realtime handshake/retry.
+            void broadcastBaccaratState(tableId, payload);
+        }
         return { ...payload, myBets, balance };
 
     } catch (error: any) {

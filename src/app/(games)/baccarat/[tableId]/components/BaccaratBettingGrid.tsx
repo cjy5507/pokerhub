@@ -15,7 +15,7 @@ interface BaccaratBettingGridProps {
 
 const chips = [100, 500, 1000, 5000, 10000, 50000];
 
-export const BaccaratBettingGrid: React.FC<BaccaratBettingGridProps> = ({
+const BaccaratBettingGridComponent: React.FC<BaccaratBettingGridProps> = ({
     gameState,
     myBets,
     selectedChip,
@@ -137,6 +137,8 @@ export const BaccaratBettingGrid: React.FC<BaccaratBettingGridProps> = ({
         </div>
     );
 };
+
+export const BaccaratBettingGrid = React.memo(BaccaratBettingGridComponent);
 
 // Mini BetButton Component
 interface BetButtonProps {

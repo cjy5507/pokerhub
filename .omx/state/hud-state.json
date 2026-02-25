@@ -1,0 +1,5 @@
+{
+  "last_turn_at": "2026-02-25T17:15:34.528Z",
+  "turn_count": 8,
+  "last_agent_output": "완료했습니다. ✅\n\n### 1) 실시간 동기화(폴링 제거 방향)\n바카라 클라이언트를 **Supabase Realtime 중심**으로 바꿨습니다.\n\n- 3초 watchdog 폴링 루"
+}

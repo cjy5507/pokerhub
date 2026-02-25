@@ -734,4 +734,6 @@ export const baccaratBets = pgTable('baccarat_bets', {
   tableIdIdx: index('baccarat_bets_table_id_idx').on(table.tableId),
   userIdIdx: index('baccarat_bets_user_id_idx').on(table.userId),
   unresolvedIdx: index('baccarat_bets_unresolved_idx').on(table.tableId, table.isResolved),
+  roundUnresolvedIdx: index('baccarat_bets_round_unresolved_idx').on(table.roundId, table.isResolved),
+  roundUserResolvedIdx: index('baccarat_bets_round_user_resolved_idx').on(table.roundId, table.userId, table.isResolved),
 }));

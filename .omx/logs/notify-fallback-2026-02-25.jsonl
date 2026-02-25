@@ -1,0 +1,13 @@
+{"timestamp":"2026-02-25T16:46:29.510Z","type":"watcher_start","cwd":"/Users/joejaeyoung/pokerhub","notify_script":"/Users/joejaeyoung/.homebrew/lib/node_modules/oh-my-codex/scripts/notify-hook.js","poll_ms":700,"once":false}
+{"timestamp":"2026-02-25T16:47:55.553Z","type":"watcher_start","cwd":"/Users/joejaeyoung/pokerhub","notify_script":"/Users/joejaeyoung/.homebrew/lib/node_modules/oh-my-codex/scripts/notify-hook.js","poll_ms":700,"once":true}
+{"timestamp":"2026-02-25T16:47:55.555Z","type":"watcher_once_complete","seen_turns":0}
+{"timestamp":"2026-02-25T16:47:55.557Z","type":"watcher_stop","signal":"SIGTERM"}
+{"timestamp":"2026-02-25T16:48:00.664Z","type":"watcher_start","cwd":"/Users/joejaeyoung/pokerhub","notify_script":"/Users/joejaeyoung/.homebrew/lib/node_modules/oh-my-codex/scripts/notify-hook.js","poll_ms":700,"once":false}
+{"timestamp":"2026-02-25T16:48:06.828Z","type":"watcher_start","cwd":"/Users/joejaeyoung/pokerhub","notify_script":"/Users/joejaeyoung/.homebrew/lib/node_modules/oh-my-codex/scripts/notify-hook.js","poll_ms":700,"once":true}
+{"timestamp":"2026-02-25T16:48:06.829Z","type":"watcher_once_complete","seen_turns":0}
+{"timestamp":"2026-02-25T16:48:06.831Z","type":"watcher_stop","signal":"SIGTERM"}
+{"timestamp":"2026-02-25T16:48:32.239Z","type":"watcher_start","cwd":"/Users/joejaeyoung/pokerhub","notify_script":"/Users/joejaeyoung/.homebrew/lib/node_modules/oh-my-codex/scripts/notify-hook.js","poll_ms":700,"once":false}
+{"timestamp":"2026-02-25T16:49:52.198Z","type":"watcher_start","cwd":"/Users/joejaeyoung/pokerhub","notify_script":"/Users/joejaeyoung/.homebrew/lib/node_modules/oh-my-codex/scripts/notify-hook.js","poll_ms":700,"once":true}
+{"timestamp":"2026-02-25T16:49:52.199Z","type":"watcher_once_complete","seen_turns":0}
+{"timestamp":"2026-02-25T16:49:52.201Z","type":"watcher_stop","signal":"SIGTERM"}
+{"timestamp":"2026-02-25T16:49:53.299Z","type":"watcher_start","cwd":"/Users/joejaeyoung/pokerhub","notify_script":"/Users/joejaeyoung/.homebrew/lib/node_modules/oh-my-codex/scripts/notify-hook.js","poll_ms":700,"once":false}

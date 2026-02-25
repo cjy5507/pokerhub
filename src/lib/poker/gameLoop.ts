@@ -217,7 +217,7 @@ export async function processAction(
         }
         // Track closer's passive actions too (check, call, fold)
         if (act.seatNumber === actionClosedBySeat &&
-            ['check', 'call', 'fold'].includes(act.actionType)) {
+          ['check', 'call', 'fold'].includes(act.actionType)) {
           closerHasActed = true;
         }
       }
@@ -559,6 +559,17 @@ export async function processAction(
         ? { seatNumber: actingSeatNumber, action: action as string, amount: amount ?? 0 }
         : null;
       await broadcastGameState(tableId, lastActionPayload);
+
+      // 핸드 완료 후 활성 플레이어 2명 이상이면 다음 핸드 자동 시작
+      if (result.events?.includes('hand_complete') || result.events?.includes('pot_awarded')) {
+        setTimeout(async () => {
+          try {
+            await startNewHand(tableId);
+          } catch (e) {
+            console.error('Auto-start next hand failed:', e);
+          }
+        }, 3000);
+      }
     }
 
     return result;

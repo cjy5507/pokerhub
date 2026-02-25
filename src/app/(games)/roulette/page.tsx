@@ -187,10 +187,10 @@ export default function RoulettePage() {
   }).join(', ');
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-op-text pb-20 lg:pb-0 px-4 py-6 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0a0a0a] text-slate-900 dark:text-op-text transition-colors pb-20 lg:pb-0 px-4 py-6 relative overflow-hidden">
       {/* Background ambient glow */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-op-gold/10 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-500/10 blur-[120px] pointer-events-none" />
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-op-gold/5 dark:bg-op-gold/10 blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-500/5 dark:bg-blue-500/10 blur-[120px] pointer-events-none" />
 
       {/* Header */}
       <div className="max-w-5xl mx-auto mb-8 relative z-10">
@@ -198,15 +198,15 @@ export default function RoulettePage() {
           <div className="p-3 bg-gradient-to-br from-op-gold/40 to-op-gold-hover/10 rounded-2xl shadow-[0_0_20px_rgba(201,162,39,0.3)] backdrop-blur-md border border-op-gold/30">
             <Disc className="w-8 h-8 text-op-gold animate-[spin_10s_linear_infinite]" />
           </div>
-          <h1 className="text-4xl font-black tracking-tighter bg-gradient-to-r from-white via-gray-200 to-gray-400 text-transparent bg-clip-text drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+          <h1 className="text-4xl font-black tracking-tighter bg-gradient-to-r from-slate-900 via-slate-700 to-slate-500 dark:from-white dark:via-gray-200 dark:to-gray-400 text-transparent bg-clip-text drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
             포인트 룰렛
           </h1>
         </div>
 
         {/* Current Points - Glass Panel */}
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-5 text-center max-w-sm mx-auto shadow-2xl relative overflow-hidden group">
+        <div className="bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-black/10 dark:border-white/10 shadow-sm dark:shadow-none rounded-2xl p-5 text-center max-w-sm mx-auto shadow-2xl relative overflow-hidden group">
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-[shimmer_2s_infinite]" />
-          <div className="text-sm font-medium text-white/50 mb-1 flex items-center justify-center gap-2">
+          <div className="text-sm font-medium text-slate-500 dark:text-white/50 mb-1 flex items-center justify-center gap-2">
             <Crown className="w-4 h-4 text-op-gold" />
             보유 포인트
           </div>
@@ -221,7 +221,7 @@ export default function RoulettePage() {
         {/* Left Column - Wheel */}
         <div className="space-y-6 flex flex-col items-center w-full">
           {/* Wheel Container - Premium Frame */}
-          <div className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[40px] p-6 sm:p-10 shadow-[0_0_40px_rgba(0,0,0,0.5)] w-full max-w-[440px]">
+          <div className="bg-white/80 dark:bg-white/5 backdrop-blur-2xl border border-black/10 dark:border-white/10 shadow-sm dark:shadow-none rounded-[40px] p-6 sm:p-10 shadow-[0_0_40px_rgba(0,0,0,0.5)] w-full max-w-[440px]">
             <div className="relative mx-auto aspect-square w-full">
               {/* Pointer */}
               <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-4 z-30 drop-shadow-[0_4px_10px_rgba(0,0,0,0.8)]">
@@ -309,13 +309,13 @@ export default function RoulettePage() {
           </div>
 
           {/* Controls - Glass Panel */}
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[28px] p-6 w-full shadow-xl">
+          <div className="bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-black/10 dark:border-white/10 shadow-sm dark:shadow-none rounded-[28px] p-6 w-full shadow-xl">
             <div className="flex items-center justify-between mb-4">
-              <div className="text-sm font-semibold text-white/70 flex items-center gap-2">
+              <div className="text-sm font-semibold text-slate-600 dark:text-white/70 flex items-center gap-2">
                 <CoinsIcon className="w-4 h-4 text-op-gold" />
                 배팅 금액 선택
               </div>
-              <div className="text-xs font-bold text-white/40 bg-black/40 px-3 py-1 rounded-full">
+              <div className="text-xs font-bold text-slate-500 dark:text-white/40 bg-black/5 dark:bg-black/40 px-3 py-1 rounded-full">
                 현재: {betAmount.toLocaleString()}P
               </div>
             </div>
@@ -330,7 +330,7 @@ export default function RoulettePage() {
                     "py-3 rounded-xl font-bold text-sm sm:text-base transition-all duration-200 relative overflow-hidden group",
                     betAmount === amount
                       ? "bg-gradient-to-b from-op-gold to-op-gold-hover text-black shadow-[0_0_20px_rgba(201,162,39,0.5)] transform scale-[1.03]"
-                      : "bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 hover:text-white",
+                      : "bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-slate-600 dark:text-white/70 hover:bg-black/10 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white",
                     isSpinning && "opacity-50 cursor-not-allowed transform-none"
                   )}
                 >
@@ -356,7 +356,7 @@ export default function RoulettePage() {
               className={cn(
                 "w-full py-5 rounded-2xl font-black text-xl sm:text-2xl transition-all duration-300 relative overflow-hidden shadow-2xl group",
                 isSpinning || currentPoints < betAmount
-                  ? "bg-gray-800 text-gray-500 cursor-not-allowed border border-gray-700"
+                  ? "bg-gray-200 dark:bg-gray-800 text-gray-400 dark:text-gray-500 cursor-not-allowed border border-gray-300 dark:border-gray-700"
                   : "bg-gradient-to-r from-[#d4af37] via-[#fff4cc] to-[#c9a227] text-black border border-op-gold/50 cursor-pointer shadow-[0_0_40px_rgba(201,162,39,0.4)]"
               )}
             >
@@ -427,24 +427,24 @@ export default function RoulettePage() {
         {/* Right Column - Stats & History */}
         <div className="space-y-6 flex flex-col w-full h-full">
           {/* Statistics - Glass Panel */}
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[28px] p-6 shadow-xl">
+          <div className="bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-black/10 dark:border-white/10 shadow-sm dark:shadow-none rounded-[28px] p-6 shadow-xl">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-2 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 rounded-xl border border-indigo-500/30">
                 <BarChart3 className="w-5 h-5 text-indigo-400" />
               </div>
-              <h2 className="text-xl font-bold text-white">내 통계</h2>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">내 통계</h2>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <StatCard label="총 스핀" value={stats.totalSpins.toString()} />
-              <StatCard label="총 배팅" value={`${stats.totalBet.toLocaleString()}`} valueColor="text-white" />
+              <StatCard label="총 배팅" value={`${stats.totalBet.toLocaleString()}`} valueColor="text-slate-900 dark:text-white" />
               <StatCard label="총 획득" value={`${stats.totalWon.toLocaleString()}`} valueColor="text-green-400" glowColor="rgba(74,222,128,0.2)" />
 
-              <div className="bg-black/40 border border-white/5 rounded-2xl p-4 flex flex-col justify-center relative overflow-hidden">
+              <div className="bg-black/5 dark:bg-black/40 border border-black/5 dark:border-white/5 rounded-2xl p-4 flex flex-col justify-center relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-2 opacity-20">
                   {profit >= 0 ? <TrendingUp className="w-12 h-12 text-green-500" /> : <TrendingDown className="w-12 h-12 text-red-500" />}
                 </div>
-                <div className="text-sm text-white/50 mb-1 font-medium z-10">내 손익</div>
+                <div className="text-sm text-slate-500 dark:text-white/50 mb-1 font-medium z-10">내 손익</div>
                 <div className={cn(
                   "text-2xl font-black truncate z-10",
                   profit >= 0 ? "text-green-400 drop-shadow-[0_0_10px_rgba(74,222,128,0.4)]" : "text-red-400 drop-shadow-[0_0_10px_rgba(239,68,68,0.4)]"
@@ -456,22 +456,22 @@ export default function RoulettePage() {
           </div>
 
           {/* History - Glass Panel */}
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[28px] p-6 shadow-xl flex-1 flex flex-col overflow-hidden max-h-[500px]">
+          <div className="bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-black/10 dark:border-white/10 shadow-sm dark:shadow-none rounded-[28px] p-6 shadow-xl flex-1 flex flex-col overflow-hidden max-h-[500px]">
             <div className="flex items-center gap-3 mb-6 shrink-0">
               <div className="p-2 bg-gradient-to-br from-emerald-500/20 to-teal-500/20 rounded-xl border border-emerald-500/30">
                 <History className="w-5 h-5 text-emerald-400" />
               </div>
-              <h2 className="text-xl font-bold text-white">스핀 기록</h2>
-              <div className="ml-auto text-xs font-medium text-white/40 bg-white/5 px-2 py-1 rounded-lg">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">스핀 기록</h2>
+              <div className="ml-auto text-xs font-medium text-slate-500 dark:text-white/40 bg-black/5 dark:bg-white/5 px-2 py-1 rounded-lg">
                 최근 20개
               </div>
             </div>
 
             {history.length === 0 ? (
-              <div className="flex-1 flex flex-col items-center justify-center text-center p-8 bg-black/20 rounded-2xl border border-white/5 border-dashed">
-                <History className="w-12 h-12 text-white/10 mb-3" />
-                <p className="text-white/40 font-medium">아직 스핀 기록이 없습니다</p>
-                <p className="text-xs text-white/30 mt-1">행운을 돌려 첫 기록을 남겨보세요!</p>
+              <div className="flex-1 flex flex-col items-center justify-center text-center p-8 bg-black/5 dark:bg-black/20 rounded-2xl border border-black/5 dark:border-white/5 border-dashed">
+                <History className="w-12 h-12 text-slate-300 dark:text-white/10 mb-3" />
+                <p className="text-slate-400 dark:text-white/40 font-medium">아직 스핀 기록이 없습니다</p>
+                <p className="text-xs text-slate-400 dark:text-white/30 mt-1">행운을 돌려 첫 기록을 남겨보세요!</p>
               </div>
             ) : (
               <div className="flex-1 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
@@ -483,18 +483,18 @@ export default function RoulettePage() {
                   return (
                     <div
                       key={index}
-                      className="bg-black/40 hover:bg-black/60 border border-white/5 rounded-xl p-4 flex items-center justify-between transition-colors"
+                      className="bg-black/5 dark:bg-black/40 hover:bg-black/10 dark:hover:bg-black/60 border border-black/5 dark:border-white/5 rounded-xl p-4 flex items-center justify-between transition-colors"
                     >
                       <div className="flex items-center gap-4">
-                        <div className="text-xs font-bold text-white/30 bg-white/5 px-2 py-1 rounded-md min-w-[65px] text-center">
+                        <div className="text-xs font-bold text-slate-400 dark:text-white/30 bg-black/5 dark:bg-white/5 px-2 py-1 rounded-md min-w-[65px] text-center">
                           {spin.time}
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-white/60">{spin.bet}P</span>
-                          <X className="w-3 h-3 text-white/30" />
+                          <span className="text-sm font-medium text-slate-600 dark:text-white/60">{spin.bet}P</span>
+                          <X className="w-3 h-3 text-slate-400 dark:text-white/30" />
                           <span className={cn(
                             "font-black text-lg",
-                            parseMultiplier(spin.multiplier) >= 2 ? "text-op-gold drop-shadow-[0_0_5px_rgba(201,162,39,0.5)]" : "text-white"
+                            parseMultiplier(spin.multiplier) >= 2 ? "text-op-gold drop-shadow-[0_0_5px_rgba(201,162,39,0.5)]" : "text-slate-800 dark:text-white"
                           )}>{spin.multiplier}</span>
                         </div>
                       </div>
@@ -513,9 +513,9 @@ export default function RoulettePage() {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto mt-8 text-center bg-white/5 backdrop-blur-sm border border-white/5 rounded-2xl p-4 relative z-10">
-        <p className="text-xs md:text-sm text-white/40 font-medium">본 룰렛은 실제 금전적 가치가 없는 가상 포인트로만 운영됩니다.</p>
-        <p className="text-[10px] md:text-xs text-white/30 mt-1">포인트는 현금으로 교환할 수 없으며, 서비스 내 활동에만 사용됩니다.</p>
+      <div className="max-w-5xl mx-auto mt-8 text-center bg-white/80 dark:bg-white/5 backdrop-blur-sm border border-black/5 dark:border-white/5 rounded-2xl p-4 relative z-10">
+        <p className="text-xs md:text-sm text-slate-500 dark:text-white/40 font-medium">본 룰렛은 실제 금전적 가치가 없는 가상 포인트로만 운영됩니다.</p>
+        <p className="text-[10px] md:text-xs text-slate-400 dark:text-white/30 mt-1">포인트는 현금으로 교환할 수 없으며, 서비스 내 활동에만 사용됩니다.</p>
       </div>
     </div>
   );
@@ -534,10 +534,10 @@ function CoinsIcon(props: any) {
 }
 
 // Reusable stat card for the stats section
-function StatCard({ label, value, valueColor = "text-white", glowColor }: { label: string, value: string, valueColor?: string, glowColor?: string }) {
+function StatCard({ label, value, valueColor = "text-slate-900 dark:text-white", glowColor }: { label: string, value: string, valueColor?: string, glowColor?: string }) {
   return (
-    <div className="bg-black/40 border border-white/5 rounded-2xl p-4 flex flex-col justify-center transition-all hover:bg-black/50">
-      <div className="text-sm text-white/50 mb-1 font-medium">{label}</div>
+    <div className="bg-black/5 dark:bg-black/40 border border-black/5 dark:border-white/5 rounded-2xl p-4 flex flex-col justify-center transition-all hover:bg-black/10 dark:hover:bg-black/50">
+      <div className="text-sm text-slate-500 dark:text-white/50 mb-1 font-medium">{label}</div>
       <div
         className={cn("text-2xl font-black truncate", valueColor)}
         style={glowColor ? { textShadow: `0 0 15px ${glowColor}` } : {}}

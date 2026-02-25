@@ -52,6 +52,9 @@ export function BaccaratTableClient({ tableId, userId, nickname }: BaccaratTable
     const [playerScore, setPlayerScore] = useState<number | null>(null);
     const [bankerScore, setBankerScore] = useState<number | null>(null);
 
+    // Card reveal state for sequential flip animation
+    const [revealedCards, setRevealedCards] = useState<number>(0);
+
     const applyState = (data: any) => {
         if (!data || !data.table) return;
         const { table, round, serverTime, myBets: betsMap, balance: serverBalance } = data;
@@ -131,11 +134,28 @@ export function BaccaratTableClient({ tableId, userId, nickname }: BaccaratTable
         return () => clearInterval(timer);
     }, []);
 
+    // Sequential card reveal effect
+    useEffect(() => {
+        if (gameState === 'dealing' || gameState === 'result') {
+            const totalCards = playerCards.length + bankerCards.length;
+            setRevealedCards(0);
+
+            const timers: NodeJS.Timeout[] = [];
+            for (let i = 0; i < totalCards; i++) {
+                timers.push(setTimeout(() => {
+                    setRevealedCards(prev => prev + 1);
+                }, (i + 1) * 500));
+            }
+            return () => timers.forEach(clearTimeout);
+        } else {
+            setRevealedCards(0);
+        }
+    }, [gameState, playerCards.length, bankerCards.length]);
+
     // Handle betting
     const placeBet = async (zone: BetZone) => {
         if (gameState !== 'betting') return;
 
-        // Plop sound logic would go here
         if (!isMuted) {
             // new Audio('/sounds/chip.mp3').play().catch(()=>{});
         }
@@ -143,12 +163,10 @@ export function BaccaratTableClient({ tableId, userId, nickname }: BaccaratTable
         try {
             const res = await placeBaccaratBet(tableId, zone, selectedChip);
             if (res.success) {
-                // Optimistic UI update
                 setMyBets(prev => ({
                     ...prev,
                     [zone]: (prev[zone] || 0) + selectedChip
                 }));
-                // Real balance should come from server, but for now we rely on the next fetch
             }
         } catch (err: any) {
             alert(err.message || 'Bet failed');
@@ -168,6 +186,8 @@ export function BaccaratTableClient({ tableId, userId, nickname }: BaccaratTable
     };
 
     const chips = [100, 500, 1000, 5000, 10000, 50000];
+
+    const isDealing = gameState === 'dealing' || gameState === 'result';
 
     return (
         <div className="w-full flex-1 min-h-[600px] h-[calc(100vh-120px)] bg-slate-50 dark:bg-[#050505] rounded-xl flex flex-col overflow-hidden select-none relative font-sans text-slate-900 dark:text-white border border-black/5 dark:border-white/10 shadow-2xl transition-colors">
@@ -212,8 +232,58 @@ export function BaccaratTableClient({ tableId, userId, nickname }: BaccaratTable
                 {/* 1. Dealer / Board View (Evolution Style) */}
                 <div className="flex-1 relative flex flex-col justify-center items-center py-6 min-h-[250px] lg:min-h-0">
 
+                    {/* Dealer Character */}
+                    <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center">
+                        <div className={cn(
+                            "transition-transform duration-500",
+                            gameState === 'dealing' ? "[animation:dealerDeal_1s_ease-in-out]" : "[animation:dealerIdle_3s_ease-in-out_infinite]"
+                        )}>
+                            <div className="relative flex flex-col items-center">
+                                {/* Hat (dealer visor) — rendered first so it sits behind head in DOM but above via z */}
+                                <div className="relative z-10 w-14 h-5 md:w-16 md:h-6 bg-gradient-to-b from-slate-900 to-slate-800 dark:from-slate-700 dark:to-slate-800 rounded-full shadow-md border border-slate-600/50 flex items-center justify-center -mb-1">
+                                    <div className="w-10 md:w-12 h-[2px] bg-yellow-400/80 rounded-full" />
+                                </div>
+
+                                {/* Head */}
+                                <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-b from-amber-200 to-amber-300 dark:from-amber-300 dark:to-amber-400 mx-auto relative border-2 border-amber-400/50 shadow-md z-0">
+                                    {/* Eyes */}
+                                    <div className="absolute top-[42%] left-[26%] w-1.5 h-2 md:w-2 md:h-2.5 bg-slate-800 rounded-full" />
+                                    <div className="absolute top-[42%] right-[26%] w-1.5 h-2 md:w-2 md:h-2.5 bg-slate-800 rounded-full" />
+                                    {/* Eye shine */}
+                                    <div className="absolute top-[40%] left-[30%] w-0.5 h-0.5 bg-white rounded-full" />
+                                    <div className="absolute top-[40%] right-[30%] w-0.5 h-0.5 bg-white rounded-full" />
+                                    {/* Smile */}
+                                    <div className="absolute bottom-[20%] left-1/2 -translate-x-1/2 w-4 h-2 border-b-2 border-slate-700 rounded-b-full" />
+                                    {/* Cheeks */}
+                                    <div className="absolute top-[55%] left-[15%] w-2 h-1.5 bg-rose-300/60 rounded-full" />
+                                    <div className="absolute top-[55%] right-[15%] w-2 h-1.5 bg-rose-300/60 rounded-full" />
+                                </div>
+
+                                {/* Body/Vest */}
+                                <div className="w-16 h-10 md:w-20 md:h-12 bg-gradient-to-b from-slate-800 to-slate-900 dark:from-slate-700 dark:to-slate-800 rounded-b-2xl relative overflow-hidden border-x-2 border-b-2 border-slate-600/50 -mt-1">
+                                    {/* Bow tie */}
+                                    <div className="absolute top-0.5 left-1/2 -translate-x-1/2 w-4 h-3 md:w-5 md:h-3">
+                                        <div className="absolute inset-0 flex">
+                                            <div className="w-1/2 h-full bg-red-600 rounded-l-full" />
+                                            <div className="w-1/2 h-full bg-red-600 rounded-r-full" />
+                                        </div>
+                                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-red-700 rounded-full" />
+                                    </div>
+                                    {/* Shirt line */}
+                                    <div className="absolute top-3 left-1/2 -translate-x-1/2 w-[1px] h-full bg-white/20" />
+                                    {/* Lapels */}
+                                    <div className="absolute top-0 left-[30%] w-[1px] h-4 bg-white/10 rotate-12" />
+                                    <div className="absolute top-0 right-[30%] w-[1px] h-4 bg-white/10 -rotate-12" />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Dealer label */}
+                        <span className="text-[9px] md:text-[10px] font-bold text-slate-400 dark:text-white/30 mt-1 uppercase tracking-widest">Dealer</span>
+                    </div>
+
                     {/* Status Text (Floating) */}
-                    <div className="absolute top-4 lg:top-8 w-full flex justify-center z-20">
+                    <div className="absolute top-16 lg:top-20 w-full flex justify-center z-20">
                         <div className={cn(
                             "px-8 py-2 md:py-3 rounded-full border backdrop-blur-md transition-all duration-300 shadow-xl dark:shadow-2xl",
                             gameState === 'betting' ? "bg-white/80 dark:bg-black/60 border-op-warning/30 dark:border-op-warning/50" :
@@ -231,22 +301,48 @@ export function BaccaratTableClient({ tableId, userId, nickname }: BaccaratTable
                     </div>
 
                     {/* Cards Display */}
-                    <div className="flex justify-center gap-8 md:gap-24 relative z-10 w-full px-4 mt-8 md:mt-2">
+                    <div className="flex justify-center gap-8 md:gap-24 relative z-10 w-full px-4 mt-14 md:mt-8">
                         {/* Player Side */}
                         <div className="flex flex-col items-center flex-1 max-w-[200px]">
                             <div className="flex justify-center gap-2 relative min-h-[120px] md:min-h-[160px] w-full">
-                                {playerCards.map((card, i) => (
-                                    <div key={i} className={cn(
-                                        "w-14 h-20 sm:w-16 sm:h-24 md:w-20 md:h-28 bg-white rounded-lg flex flex-col items-center justify-center shadow-[0_15px_30px_rgba(0,0,0,0.6)] transition-all duration-500 will-change-transform",
-                                        getSuitColor(card.suit),
-                                        gameState === 'dealing' || gameState === 'result' ? "translate-y-0 opacity-100 rotate-0 scale-100" : "translate-y-12 opacity-0 rotate-12 scale-90",
-                                        i === 2 ? "absolute -right-6 md:-right-10 top-2 lg:top-4 rotate-90" : ""
-                                    )} style={{ transitionDelay: `${i * 150}ms`, zIndex: i }}>
-                                        <span className="absolute top-1 left-1.5 md:top-2 md:left-2 text-xs md:text-sm font-bold">{card.value}</span>
-                                        <SuitIcon suit={card.suit} className="w-5 h-5 md:w-8 md:h-8 opacity-90" />
-                                        <span className="absolute bottom-1 right-1.5 md:bottom-2 md:right-2 text-xs md:text-sm font-bold rotate-180">{card.value}</span>
-                                    </div>
-                                ))}
+                                {playerCards.map((card, i) => {
+                                    // Deal order: P1=0, B1=1, P2=2, B2=3, P3=4, B3=5
+                                    const dealIndex = i === 0 ? 0 : i === 1 ? 2 : 4;
+                                    const isFlipped = revealedCards > dealIndex;
+                                    return (
+                                        <div
+                                            key={i}
+                                            className={cn(
+                                                "[perspective:800px]",
+                                                i === 2 ? "absolute -right-6 md:-right-10 top-2 lg:top-4" : ""
+                                            )}
+                                            style={{ transitionDelay: `${dealIndex * 100}ms`, zIndex: i }}
+                                        >
+                                            <div className={cn(
+                                                "relative w-14 h-20 sm:w-16 sm:h-24 md:w-20 md:h-28 transition-all duration-[600ms] will-change-transform [transform-style:preserve-3d]",
+                                                isFlipped ? "[transform:rotateY(180deg)]" : "[transform:rotateY(0deg)]",
+                                                isDealing ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0",
+                                                i === 2 ? "rotate-90" : ""
+                                            )}>
+                                                {/* Card Back */}
+                                                <div className="absolute inset-0 rounded-lg [backface-visibility:hidden] bg-gradient-to-br from-blue-800 to-blue-950 border-2 border-blue-600/50 flex items-center justify-center shadow-lg">
+                                                    <div className="w-[80%] h-[80%] border border-blue-400/30 rounded-md flex items-center justify-center">
+                                                        <span className="text-blue-400/50 text-sm font-black tracking-widest">OP</span>
+                                                    </div>
+                                                </div>
+                                                {/* Card Front */}
+                                                <div className={cn(
+                                                    "absolute inset-0 rounded-lg [backface-visibility:hidden] [transform:rotateY(180deg)] bg-white flex flex-col items-center justify-center shadow-[0_8px_20px_rgba(0,0,0,0.3)]",
+                                                    getSuitColor(card.suit)
+                                                )}>
+                                                    <span className="absolute top-1 left-1.5 text-xs font-bold">{card.value}</span>
+                                                    <SuitIcon suit={card.suit} className="w-5 h-5 md:w-8 md:h-8 opacity-90" />
+                                                    <span className="absolute bottom-1 right-1.5 text-xs font-bold rotate-180">{card.value}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                                 {playerCards.length === 0 && (
                                     <div className="w-14 h-20 md:w-20 md:h-28 border-2 border-slate-300 dark:border-white/10 rounded-lg flex items-center justify-center transition-colors">
                                         <span className="text-slate-400 dark:text-white/20 text-[10px] md:text-xs uppercase underline decoration-slate-300 dark:decoration-white/20 underline-offset-4">Card</span>
@@ -276,18 +372,44 @@ export function BaccaratTableClient({ tableId, userId, nickname }: BaccaratTable
                         {/* Banker Side */}
                         <div className="flex flex-col items-center flex-1 max-w-[200px]">
                             <div className="flex justify-center gap-2 relative min-h-[120px] md:min-h-[160px] w-full">
-                                {bankerCards.map((card, i) => (
-                                    <div key={i} className={cn(
-                                        "w-14 h-20 sm:w-16 sm:h-24 md:w-20 md:h-28 bg-white rounded-lg flex flex-col items-center justify-center shadow-[0_15px_30px_rgba(0,0,0,0.6)] transition-all duration-500 will-change-transform",
-                                        getSuitColor(card.suit),
-                                        gameState === 'dealing' || gameState === 'result' ? "translate-y-0 opacity-100 rotate-0 scale-100" : "translate-y-12 opacity-0 -rotate-12 scale-90",
-                                        i === 2 ? "absolute -left-6 md:-left-10 top-2 lg:top-4 -rotate-90" : ""
-                                    )} style={{ transitionDelay: `${i * 150 + (playerCards.length * 150)}ms`, zIndex: i }}>
-                                        <span className="absolute top-1 left-1.5 md:top-2 md:left-2 text-xs md:text-sm font-bold">{card.value}</span>
-                                        <SuitIcon suit={card.suit} className="w-5 h-5 md:w-8 md:h-8 opacity-90" />
-                                        <span className="absolute bottom-1 right-1.5 md:bottom-2 md:right-2 text-xs md:text-sm font-bold rotate-180">{card.value}</span>
-                                    </div>
-                                ))}
+                                {bankerCards.map((card, i) => {
+                                    // Deal order: P1=0, B1=1, P2=2, B2=3, P3=4, B3=5
+                                    const dealIndex = i === 0 ? 1 : i === 1 ? 3 : 5;
+                                    const isFlipped = revealedCards > dealIndex;
+                                    return (
+                                        <div
+                                            key={i}
+                                            className={cn(
+                                                "[perspective:800px]",
+                                                i === 2 ? "absolute -left-6 md:-left-10 top-2 lg:top-4" : ""
+                                            )}
+                                            style={{ transitionDelay: `${dealIndex * 100}ms`, zIndex: i }}
+                                        >
+                                            <div className={cn(
+                                                "relative w-14 h-20 sm:w-16 sm:h-24 md:w-20 md:h-28 transition-all duration-[600ms] will-change-transform [transform-style:preserve-3d]",
+                                                isFlipped ? "[transform:rotateY(180deg)]" : "[transform:rotateY(0deg)]",
+                                                isDealing ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0",
+                                                i === 2 ? "-rotate-90" : ""
+                                            )}>
+                                                {/* Card Back */}
+                                                <div className="absolute inset-0 rounded-lg [backface-visibility:hidden] bg-gradient-to-br from-blue-800 to-blue-950 border-2 border-blue-600/50 flex items-center justify-center shadow-lg">
+                                                    <div className="w-[80%] h-[80%] border border-blue-400/30 rounded-md flex items-center justify-center">
+                                                        <span className="text-blue-400/50 text-sm font-black tracking-widest">OP</span>
+                                                    </div>
+                                                </div>
+                                                {/* Card Front */}
+                                                <div className={cn(
+                                                    "absolute inset-0 rounded-lg [backface-visibility:hidden] [transform:rotateY(180deg)] bg-white flex flex-col items-center justify-center shadow-[0_8px_20px_rgba(0,0,0,0.3)]",
+                                                    getSuitColor(card.suit)
+                                                )}>
+                                                    <span className="absolute top-1 left-1.5 text-xs font-bold">{card.value}</span>
+                                                    <SuitIcon suit={card.suit} className="w-5 h-5 md:w-8 md:h-8 opacity-90" />
+                                                    <span className="absolute bottom-1 right-1.5 text-xs font-bold rotate-180">{card.value}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                                 {bankerCards.length === 0 && (
                                     <div className="w-14 h-20 md:w-20 md:h-28 border-2 border-slate-300 dark:border-white/10 rounded-lg flex items-center justify-center transition-colors">
                                         <span className="text-slate-400 dark:text-white/20 text-[10px] md:text-xs uppercase underline decoration-slate-300 dark:decoration-white/20 underline-offset-4">Card</span>
@@ -464,7 +586,7 @@ export function BaccaratTableClient({ tableId, userId, nickname }: BaccaratTable
                                     "flex-1 rounded-br-xl lg:rounded-br-2xl border-2 transition-all relative flex flex-col items-center justify-center overflow-hidden group",
                                     "bg-gradient-to-b from-red-700/60 to-red-900/60 border-red-500/40",
                                     gameState === 'betting' ? "hover:from-red-600/80 hover:to-red-800/80 hover:border-red-400/60 cursor-pointer active:scale-[0.98] shadow-[inset_0_0_20px_rgba(220,38,38,0.2)]" : "cursor-not-allowed opacity-80",
-                                    gameState === 'result' ? "animate-pulse border-op-gold bg-red-600/80 shadow-[inset_0_0_40px_rgba(202,138,4,0.4)]" : "" // Mock win state
+                                    gameState === 'result' ? "animate-pulse border-op-gold bg-red-600/80 shadow-[inset_0_0_40px_rgba(202,138,4,0.4)]" : ""
                                 )}
                             >
                                 <span className="text-xl md:text-3xl font-black text-white drop-shadow-lg tracking-widest">BANKER</span>
@@ -539,6 +661,19 @@ export function BaccaratTableClient({ tableId, userId, nickname }: BaccaratTable
                 </div>
 
             </div>
+
+            <style jsx>{`
+                @keyframes dealerIdle {
+                    0%, 100% { transform: translateY(0); }
+                    50% { transform: translateY(-3px); }
+                }
+                @keyframes dealerDeal {
+                    0% { transform: translateY(0) rotate(0deg); }
+                    30% { transform: translateY(-5px) rotate(-3deg); }
+                    60% { transform: translateY(-2px) rotate(2deg); }
+                    100% { transform: translateY(0) rotate(0deg); }
+                }
+            `}</style>
         </div>
     );
 }

@@ -258,9 +258,9 @@ const CardFront = ({ card }: { card: any }) => (
         "absolute inset-0 rounded-lg [backface-visibility:hidden] bg-white flex flex-col items-center justify-center shadow-[0_10px_30px_rgba(0,0,0,0.5)] border border-slate-200",
         getSuitColor(card.suit)
     )}>
-        <span className="absolute top-1 left-1.5 text-xs font-bold">{card.value}</span>
-        <SuitIcon suit={card.suit} className="w-6 h-6 md:w-8 md:h-8 opacity-90" />
-        <span className="absolute bottom-1 right-1.5 text-xs font-bold rotate-180">{card.value}</span>
+        <span className="absolute top-1 left-1.5 text-xs md:text-sm font-black tracking-tighter">{card.value}</span>
+        <SuitIcon suit={card.suit} className="w-8 h-8 md:w-12 md:h-12 opacity-100" />
+        <span className="absolute bottom-1 right-1.5 text-xs md:text-sm font-black tracking-tighter rotate-180">{card.value}</span>
     </div>
 );
 

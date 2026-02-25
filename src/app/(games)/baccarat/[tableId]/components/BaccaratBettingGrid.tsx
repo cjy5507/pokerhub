@@ -141,7 +141,6 @@ export const BaccaratBettingGrid: React.FC<BaccaratBettingGridProps> = ({
 // Mini BetButton Component
 const BetButton = ({ zone, label, ratio, color, gameState, betAmount, placeBet, flex = 1, isMain = false }: any) => {
     const isBetting = gameState === 'betting';
-    const isWinner = gameState === 'result' && false; // Future enhancement: highlight winning zone
 
     const colors = {
         blue: "bg-gradient-to-br from-[#1e3a8a]/80 to-[#172554]/90 border-[#3b82f6]/40 hover:border-[#3b82f6]/80 text-[#bfdbfe] shadow-[inset_0_0_20px_rgba(59,130,246,0.1)]",

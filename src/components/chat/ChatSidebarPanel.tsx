@@ -24,7 +24,11 @@ export default function ChatSidebarPanel() {
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Only scroll if we are actively interacting or mounted. Prevent dragging whole app down on initial load globally.
+    const timer = setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 100);
+    return () => clearTimeout(timer);
   }, [messages]);
 
   const handleSend = async () => {

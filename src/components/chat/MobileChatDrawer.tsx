@@ -40,8 +40,13 @@ export function MobileChatDrawer() {
 
   // Auto-scroll to bottom
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    if (isMobileDrawerOpen) {
+      const timer = setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [messages, isMobileDrawerOpen]);
 
   const handleSend = async () => {
     if (!inputValue.trim() || isSending) return;

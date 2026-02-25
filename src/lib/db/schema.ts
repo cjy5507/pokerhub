@@ -701,7 +701,7 @@ export const marketOrders = pgTable('market_orders', {
 // ==================== BACCARAT DOMAIN ====================
 
 export const baccaratTables = pgTable('baccarat_tables', {
-  id: uuid('id').defaultRandom().primaryKey(),
+  id: varchar('id', { length: 50 }).primaryKey(),
   status: baccaratStatusEnum('status').notNull().default('betting'),
   phaseEndsAt: timestamp('phase_ends_at', { withTimezone: true }),
   history: jsonb('history').default('[]'),
@@ -712,7 +712,7 @@ export const baccaratTables = pgTable('baccarat_tables', {
 
 export const baccaratRounds = pgTable('baccarat_rounds', {
   id: varchar('id', { length: 50 }).primaryKey(),
-  tableId: uuid('table_id').notNull().references(() => baccaratTables.id, { onDelete: 'cascade' }),
+  tableId: varchar('table_id', { length: 50 }).notNull().references(() => baccaratTables.id, { onDelete: 'cascade' }),
   playerCards: jsonb('player_cards'),
   bankerCards: jsonb('banker_cards'),
   playerScore: integer('player_score'),
@@ -723,7 +723,7 @@ export const baccaratRounds = pgTable('baccarat_rounds', {
 
 export const baccaratBets = pgTable('baccarat_bets', {
   id: uuid('id').defaultRandom().primaryKey(),
-  tableId: uuid('table_id').notNull().references(() => baccaratTables.id, { onDelete: 'cascade' }),
+  tableId: varchar('table_id', { length: 50 }).notNull().references(() => baccaratTables.id, { onDelete: 'cascade' }),
   userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'restrict' }),
   zone: baccaratBetZoneEnum('zone').notNull(),
   amount: integer('amount').notNull(),

@@ -83,8 +83,8 @@ export async function syncBaccaratState(tableId: string) {
         if (!t) {
             requiresTransaction = true;
         } else {
-            let endsAt = t.phase_ends_at ? new Date(t.phase_ends_at).getTime() : (t.phaseEndsAt ? t.phaseEndsAt.getTime() : 0);
-            if (!t.current_round_id && !t.currentRoundId || endsAt === 0 || now >= endsAt) {
+            let endsAt = t.phaseEndsAt ? t.phaseEndsAt.getTime() : 0;
+            if (!t.currentRoundId || endsAt === 0 || now >= endsAt) {
                 requiresTransaction = true;
             }
         }
@@ -100,9 +100,9 @@ export async function syncBaccaratState(tableId: string) {
                 }
 
                 let txT = txTables[0];
-                let txEndsAt = txT.phase_ends_at ? new Date(txT.phase_ends_at).getTime() : (txT.phaseEndsAt ? txT.phaseEndsAt.getTime() : 0);
+                let txEndsAt = txT.phaseEndsAt ? txT.phaseEndsAt.getTime() : 0;
 
-                if (!txT.current_round_id && !txT.currentRoundId || txEndsAt === 0) {
+                if (!txT.currentRoundId || txEndsAt === 0) {
                     const newRoundId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : randomUUID();
                     txT.currentRoundId = newRoundId;
                     txT.status = 'betting';
@@ -127,7 +127,7 @@ export async function syncBaccaratState(tableId: string) {
                 }
 
                 let currentStatus = txT.status;
-                let currentRoundId = txT.current_round_id || txT.currentRoundId;
+                let currentRoundId = txT.currentRoundId;
                 let history = Array.isArray(txT.history) ? [...txT.history] : [];
                 let dbUpdates = 0;
 
@@ -228,7 +228,7 @@ export async function syncBaccaratState(tableId: string) {
         // Fetch round data if any
         let roundData = null;
         if (t.status !== 'betting') {
-            const rounds = await db.select().from(baccaratRounds).where(eq(baccaratRounds.id, t.currentRoundId || t.current_round_id || '')).limit(1);
+            const rounds = await db.select().from(baccaratRounds).where(eq(baccaratRounds.id, t.currentRoundId || '')).limit(1);
             roundData = rounds[0] || null;
         }
 
@@ -240,8 +240,8 @@ export async function syncBaccaratState(tableId: string) {
             const [usr] = await db.select().from(users).where(eq(users.id, session.userId)).limit(1);
             if (usr) balance = usr.points;
 
-            if (t.status === 'betting' && (t.currentRoundId || t.current_round_id)) {
-                const bets = await db.select().from(baccaratBets).where(and(eq(baccaratBets.roundId, t.currentRoundId || t.current_round_id), eq(baccaratBets.userId, session.userId)));
+            if (t.status === 'betting' && t.currentRoundId) {
+                const bets = await db.select().from(baccaratBets).where(and(eq(baccaratBets.roundId, t.currentRoundId || ''), eq(baccaratBets.userId, session.userId)));
                 bets.forEach((b: any) => {
                     myBets[b.zone] = (myBets[b.zone] || 0) + b.amount;
                 });

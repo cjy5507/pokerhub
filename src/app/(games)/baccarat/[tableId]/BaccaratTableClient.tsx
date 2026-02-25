@@ -54,11 +54,15 @@ export function BaccaratTableClient({ tableId, userId, nickname }: BaccaratTable
 
     const applyState = (data: any) => {
         if (!data || !data.table) return;
-        const { table, round, serverTime, myBets: betsMap } = data;
+        const { table, round, serverTime, myBets: betsMap, balance: serverBalance } = data;
 
         setGameState(table.status);
         if (table.status === 'betting' && betsMap !== undefined) {
             setMyBets(betsMap);
+        }
+
+        if (serverBalance !== undefined) {
+            setBalance(serverBalance);
         }
 
         if (table.history) setHistory(table.history);

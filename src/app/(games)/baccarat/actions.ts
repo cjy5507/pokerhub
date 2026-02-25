@@ -218,12 +218,18 @@ export async function syncBaccaratState(tableId: string) {
 
     // Fetch active bets for visual update (if betting phase)
     let myBets: any = {};
+    let balance = 0;
     const session = await getSession();
-    if (session?.userId && t.status === 'betting' && t.currentRoundId) {
-        const bets = await db.select().from(baccaratBets).where(and(eq(baccaratBets.roundId, t.currentRoundId), eq(baccaratBets.userId, session.userId)));
-        bets.forEach((b: any) => {
-            myBets[b.zone] = (myBets[b.zone] || 0) + b.amount;
-        });
+    if (session?.userId) {
+        const [usr] = await db.select().from(users).where(eq(users.id, session.userId)).limit(1);
+        if (usr) balance = usr.points;
+
+        if (t.status === 'betting' && t.currentRoundId) {
+            const bets = await db.select().from(baccaratBets).where(and(eq(baccaratBets.roundId, t.currentRoundId), eq(baccaratBets.userId, session.userId)));
+            bets.forEach((b: any) => {
+                myBets[b.zone] = (myBets[b.zone] || 0) + b.amount;
+            });
+        }
     }
 
     const payload = {
@@ -234,7 +240,7 @@ export async function syncBaccaratState(tableId: string) {
 
     // We can broadcast to everyone
     await broadcastBaccaratState(tableId, payload);
-    return { ...payload, myBets };
+    return { ...payload, myBets, balance };
 }
 
 export async function placeBaccaratBet(tableId: string, zone: any, amount: number) {

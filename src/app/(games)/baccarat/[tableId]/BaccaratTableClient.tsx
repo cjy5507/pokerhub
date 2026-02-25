@@ -19,15 +19,16 @@ interface BaccaratTableClientProps {
     tableId: string;
     userId: string | null;
     nickname: string | null;
+    initialBalance?: number;
 }
 
-export function BaccaratTableClient({ tableId, userId, nickname }: BaccaratTableClientProps) {
+export function BaccaratTableClient({ tableId, userId, nickname, initialBalance }: BaccaratTableClientProps) {
     const [gameState, setGameState] = useState<BaccaratState>('betting');
     const [timeRemaining, setTimeRemaining] = useState(15);
     const [isMuted, setIsMuted] = useState(false);
     const [selectedChip, setSelectedChip] = useState<number>(1000); // 1k
 
-    const [balance, setBalance] = useState(0);
+    const [balance, setBalance] = useState(initialBalance || 0);
     const [myBets, setMyBets] = useState<Record<string, number>>({});
     const [history, setHistory] = useState<string[]>([]);
 
@@ -168,8 +169,10 @@ export function BaccaratTableClient({ tableId, userId, nickname }: BaccaratTable
 
         try {
             const res = await placeBaccaratBet(tableId, zone, selectedChip);
-            if (res.success) {
+            if (res && res.success) {
                 setMyBets(prev => ({ ...prev, [zone]: (prev[zone] || 0) + selectedChip }));
+            } else if (res && res.error) {
+                alert(res.error);
             }
         } catch (err: any) {
             alert(err.message || 'Bet failed');
@@ -180,46 +183,52 @@ export function BaccaratTableClient({ tableId, userId, nickname }: BaccaratTable
         if (gameState !== 'betting') return;
         try {
             const res = await clearBaccaratBets(tableId);
-            if (res.success) setMyBets({});
-        } catch (err: any) { }
+            if (res && res.success) {
+                setMyBets({});
+            } else if (res && res.error) {
+                alert(res.error);
+            }
+        } catch (err: any) {
+            alert(err.message || 'Clear bet failed');
+        }
     };
 
     return (
-        <div className="w-full flex-1 min-h-[600px] h-[calc(100vh-120px)] bg-slate-900 dark:bg-[#0a0f12] rounded-xl flex flex-col overflow-hidden select-none relative font-sans text-white border border-white/10 shadow-2xl transition-colors">
+        <div className="w-full flex-1 min-h-[600px] h-[calc(100vh-120px)] bg-slate-100 dark:bg-[#0a0f12] rounded-xl flex flex-col overflow-hidden select-none relative font-sans text-slate-800 dark:text-white border border-black/10 dark:border-white/10 shadow-2xl transition-colors">
 
             {/* Dynamic Animated Background Filter - Mystery Board Cafe Theme */}
-            <div className={cn("absolute inset-0 opacity-40 pointer-events-none transition-all duration-[3000ms] ease-in-out",
+            <div className={cn("absolute inset-0 opacity-40 dark:opacity-40 opacity-20 pointer-events-none transition-all duration-[3000ms] ease-in-out",
                 gameState === 'betting' ? "bg-[radial-gradient(circle_at_50%_50%,#7e22ce_0%,transparent_40%),radial-gradient(circle_at_80%_80%,#be185d_0%,transparent_30%)]" :
                     gameState === 'dealing' ? "bg-[radial-gradient(circle_at_20%_20%,#0f172a_0%,transparent_40%),radial-gradient(circle_at_80%_20%,#4c1d95_0%,transparent_50%)] blur-2xl opacity-50 scale-110" :
                         "bg-[radial-gradient(circle_at_50%_40%,#eab308_0%,transparent_50%)] blur-xl opacity-30 scale-100"
             )} />
             {/* Wooden/Vintage dark overlay for the cafe table feel */}
-            <div className="absolute inset-0 bg-gradient-to-b from-[#1a1025]/80 via-[#100918]/90 to-[#05020a] pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-b from-[#f8fafc]/90 via-[#f1f5f9]/95 to-[#e2e8f0] dark:from-[#1a1025]/80 dark:via-[#100918]/90 dark:to-[#05020a] pointer-events-none transition-colors" />
 
             {/* TOP BAR */}
-            <header className="flex-shrink-0 h-14 flex items-center justify-between px-4 z-30 border-b border-white/10 bg-black/40 backdrop-blur-md">
+            <header className="flex-shrink-0 h-14 flex items-center justify-between px-4 z-30 border-b border-black/10 dark:border-white/10 bg-white/40 dark:bg-black/40 backdrop-blur-md transition-colors">
                 <div className="flex items-center gap-4">
                     <Link href="/poker" className="text-white/50 hover:text-white transition-colors p-2 rounded-md bg-white/5 hover:bg-white/10">
                         <ArrowLeft className="w-5 h-5" />
                     </Link>
                     <div>
-                        <h1 className="text-sm md:text-base font-bold flex items-center gap-2 text-white">
-                            미스테리 <span className="text-purple-400">보드카페</span>
+                        <h1 className="text-sm md:text-base font-bold flex items-center gap-2 text-slate-800 dark:text-white transition-colors">
+                            미스테리 <span className="text-purple-600 dark:text-purple-400">보드카페</span>
                         </h1>
-                        <p className="text-[10px] md:text-xs text-white/50">테이블 {tableId.slice(0, 4)} • 바카라 VIP</p>
+                        <p className="text-[10px] md:text-xs text-slate-500 dark:text-white/50 transition-colors">테이블 {tableId.slice(0, 4)} • 바카라 VIP</p>
                     </div>
                 </div>
 
                 <div className="flex items-center gap-3 md:gap-6">
                     <div className="flex flex-col items-end">
-                        <span className="text-[10px] text-white/50 uppercase tracking-wider font-bold">보유 포인트</span>
-                        <span className="text-sm md:text-base font-black text-yellow-500 tabular-nums">{balance.toLocaleString('en-US')}</span>
+                        <span className="text-[10px] text-slate-500 dark:text-white/50 uppercase tracking-wider font-bold transition-colors">보유 포인트</span>
+                        <span className="text-sm md:text-base font-black text-yellow-600 dark:text-yellow-500 tabular-nums transition-colors">{balance.toLocaleString('en-US')}</span>
                     </div>
                     <div className="flex items-center gap-1">
-                        <button className="p-2 text-white/50 hover:text-white transition-colors rounded-full hover:bg-white/10">
+                        <button className="p-2 text-slate-500 dark:text-white/50 hover:text-slate-800 dark:hover:text-white transition-colors rounded-full hover:bg-black/5 dark:hover:bg-white/10">
                             <Info className="w-5 h-5" />
                         </button>
-                        <button onClick={() => setIsMuted(m => !m)} className="p-2 text-white/50 hover:text-white transition-colors rounded-full hover:bg-white/10">
+                        <button onClick={() => setIsMuted(m => !m)} className="p-2 text-slate-500 dark:text-white/50 hover:text-slate-800 dark:hover:text-white transition-colors rounded-full hover:bg-black/5 dark:hover:bg-white/10">
                             {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
                         </button>
                     </div>

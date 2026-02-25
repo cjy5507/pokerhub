@@ -215,9 +215,25 @@ export async function syncBaccaratState(tableId: string) {
             });
         }
 
+        let myBets: any = {};
+        let balance = 0;
+        const session = await getSession().catch(() => null);
+        if (session?.userId) {
+            const [usr] = await db.select().from(users).where(eq(users.id, session.userId)).limit(1);
+            if (usr) balance = usr.points;
+        }
+
         if (payloadToBroadcast) {
             await broadcastBaccaratState(tableId, payloadToBroadcast);
-            return { ...payloadToBroadcast, myBets: {} };
+
+            if (session?.userId && payloadToBroadcast.table.status === 'betting' && payloadToBroadcast.table.currentRoundId) {
+                const bets = await db.select().from(baccaratBets).where(and(eq(baccaratBets.roundId, payloadToBroadcast.table.currentRoundId), eq(baccaratBets.userId, session.userId)));
+                bets.forEach((b: any) => {
+                    myBets[b.zone] = (myBets[b.zone] || 0) + b.amount;
+                });
+            }
+
+            return { ...payloadToBroadcast, myBets, balance };
         }
 
         // Fetch the updated latest state (after tx commits)
@@ -233,19 +249,11 @@ export async function syncBaccaratState(tableId: string) {
         }
 
         // Fetch active bets for visual update (if betting phase)
-        let myBets: any = {};
-        let balance = 0;
-        const session = await getSession().catch(() => null);
-        if (session?.userId) {
-            const [usr] = await db.select().from(users).where(eq(users.id, session.userId)).limit(1);
-            if (usr) balance = usr.points;
-
-            if (t.status === 'betting' && t.currentRoundId) {
-                const bets = await db.select().from(baccaratBets).where(and(eq(baccaratBets.roundId, t.currentRoundId || ''), eq(baccaratBets.userId, session.userId)));
-                bets.forEach((b: any) => {
-                    myBets[b.zone] = (myBets[b.zone] || 0) + b.amount;
-                });
-            }
+        if (session?.userId && t.status === 'betting' && t.currentRoundId) {
+            const bets = await db.select().from(baccaratBets).where(and(eq(baccaratBets.roundId, t.currentRoundId || ''), eq(baccaratBets.userId, session.userId)));
+            bets.forEach((b: any) => {
+                myBets[b.zone] = (myBets[b.zone] || 0) + b.amount;
+            });
         }
 
         const payload = {
@@ -266,25 +274,25 @@ export async function syncBaccaratState(tableId: string) {
 export async function placeBaccaratBet(tableId: string, zone: any, amount: number) {
     if (!db) return { success: false, error: 'DB unavailable' };
     const session = await getSession();
-    if (!session?.userId) throw new Error('Not logged in');
+    if (!session?.userId) return { success: false, error: 'Not logged in' };
 
     // Make sure we're up to date first
     await syncBaccaratState(tableId);
 
     return await db.transaction(async (tx: any) => {
         const tables = await tx.select().from(baccaratTables).where(eq(baccaratTables.id, tableId)).limit(1);
-        if (tables.length === 0) throw new Error('Table not found');
+        if (tables.length === 0) return { success: false, error: 'Table not found' };
         const t = tables[0];
 
-        if (t.status !== 'betting') throw new Error('Not in betting phase');
-        if (!t.currentRoundId) throw new Error('No active round');
+        if (t.status !== 'betting') return { success: false, error: 'Not in betting phase' };
+        if (!t.currentRoundId) return { success: false, error: 'No active round' };
 
         const [usr] = await tx.update(users)
             .set({ points: sql`points - ${amount}` })
             .where(and(eq(users.id, session.userId), sql`points >= ${amount}`))
             .returning({ points: users.points });
 
-        if (!usr) throw new Error('Insufficient points');
+        if (!usr) return { success: false, error: 'Insufficient points' };
 
         await tx.insert(baccaratBets).values({
             tableId,
@@ -301,15 +309,15 @@ export async function placeBaccaratBet(tableId: string, zone: any, amount: numbe
 export async function clearBaccaratBets(tableId: string) {
     if (!db) return { success: false, error: 'DB unavailable' };
     const session = await getSession();
-    if (!session?.userId) throw new Error('Not logged in');
+    if (!session?.userId) return { success: false, error: 'Not logged in' };
 
     await syncBaccaratState(tableId);
 
     return await db.transaction(async (tx: any) => {
         const tables = await tx.select().from(baccaratTables).where(eq(baccaratTables.id, tableId)).limit(1);
-        if (tables.length === 0) throw new Error('Table not found');
+        if (tables.length === 0) return { success: false, error: 'Table not found' };
         const t = tables[0];
-        if (t.status !== 'betting') throw new Error('Not in betting phase');
+        if (t.status !== 'betting') return { success: false, error: 'Not in betting phase' };
 
         const bets = await tx.select().from(baccaratBets).where(and(
             eq(baccaratBets.roundId, t.currentRoundId || ''),

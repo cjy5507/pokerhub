@@ -73,131 +73,147 @@ export async function syncBaccaratState(tableId: string) {
         if (!db) return null;
 
         let payloadToBroadcast: any = null;
-        let myBetsData: any = {};
+        let requiresTransaction = false;
 
-        await db.transaction(async (tx: any) => {
-            let tables = await tx.select().from(baccaratTables).where(eq(baccaratTables.id, tableId)).limit(1);
+        // 1. Quick read outside transaction to save connections
+        let tables = await db.select().from(baccaratTables).where(eq(baccaratTables.id, tableId)).limit(1);
+        let t = tables[0];
+        const now = Date.now();
 
-            if (tables.length === 0) {
-                await tx.insert(baccaratTables).values({ id: tableId, status: 'betting', history: [] });
-                tables = await tx.select().from(baccaratTables).where(eq(baccaratTables.id, tableId)).limit(1);
-            }
-
-            let t = tables[0];
-            const now = Date.now();
+        if (!t) {
+            requiresTransaction = true;
+        } else {
             let endsAt = t.phase_ends_at ? new Date(t.phase_ends_at).getTime() : (t.phaseEndsAt ? t.phaseEndsAt.getTime() : 0);
-
-            if (!t.current_round_id && !t.currentRoundId || endsAt === 0) {
-                const newRoundId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : randomUUID();
-                t.currentRoundId = newRoundId;
-                t.status = 'betting';
-                t.phaseEndsAt = new Date(now + PHASE_BETTING_MS);
-                await tx.update(baccaratTables).set({
-                    currentRoundId: newRoundId,
-                    status: 'betting',
-                    phaseEndsAt: t.phaseEndsAt
-                }).where(eq(baccaratTables.id, tableId));
-
-                payloadToBroadcast = { table: t, round: null, serverTime: now };
-                return;
+            if (!t.current_round_id && !t.currentRoundId || endsAt === 0 || now >= endsAt) {
+                requiresTransaction = true;
             }
+        }
 
-            if (now < endsAt) return; // DB is up to date
+        // 2. Only enter transaction if we need to progress the game state
+        if (requiresTransaction) {
+            await db.transaction(async (tx: any) => {
+                let txTables = await tx.select().from(baccaratTables).where(eq(baccaratTables.id, tableId)).limit(1);
 
-            // Mathematical Catch-Up Loop
-            const cycleMs = PHASE_BETTING_MS + PHASE_DEALING_MS + PHASE_RESULT_MS;
-            if (now - endsAt > cycleMs * 50) {
-                const skipCycles = Math.floor((now - endsAt) / cycleMs) - 50;
-                if (skipCycles > 0) endsAt += skipCycles * cycleMs;
-            }
+                if (txTables.length === 0) {
+                    await tx.insert(baccaratTables).values({ id: tableId, status: 'betting', history: [] });
+                    txTables = await tx.select().from(baccaratTables).where(eq(baccaratTables.id, tableId)).limit(1);
+                }
 
-            let currentStatus = t.status;
-            let currentRoundId = t.current_round_id || t.currentRoundId;
-            let history = Array.isArray(t.history) ? [...t.history] : [];
-            let dbUpdates = 0;
+                let txT = txTables[0];
+                let txEndsAt = txT.phase_ends_at ? new Date(txT.phase_ends_at).getTime() : (txT.phaseEndsAt ? txT.phaseEndsAt.getTime() : 0);
 
-            while (now >= endsAt && dbUpdates < 200) {
-                dbUpdates++;
-                if (currentStatus === 'betting') {
-                    const hand = generateBaccaratHand();
-                    const res = hand.pScore > hand.bScore ? 'P' : hand.pScore < hand.bScore ? 'B' : 'T';
+                if (!txT.current_round_id && !txT.currentRoundId || txEndsAt === 0) {
+                    const newRoundId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : randomUUID();
+                    txT.currentRoundId = newRoundId;
+                    txT.status = 'betting';
+                    txT.phaseEndsAt = new Date(now + PHASE_BETTING_MS);
+                    await tx.update(baccaratTables).set({
+                        currentRoundId: newRoundId,
+                        status: 'betting',
+                        phaseEndsAt: txT.phaseEndsAt
+                    }).where(eq(baccaratTables.id, tableId));
 
-                    await tx.insert(baccaratRounds).values({
-                        id: currentRoundId,
-                        tableId: tableId,
-                        playerCards: hand.player,
-                        bankerCards: hand.banker,
-                        playerScore: hand.pScore,
-                        bankerScore: hand.bScore,
-                        result: res,
-                    });
+                    payloadToBroadcast = { table: txT, round: null, serverTime: now };
+                    return;
+                }
 
-                    currentStatus = 'dealing';
-                    endsAt += PHASE_DEALING_MS;
+                if (now < txEndsAt) return; // Another request already advanced it
 
-                } else if (currentStatus === 'dealing') {
-                    currentStatus = 'result';
-                    endsAt += PHASE_RESULT_MS;
+                // Mathematical Catch-Up Loop
+                const cycleMs = PHASE_BETTING_MS + PHASE_DEALING_MS + PHASE_RESULT_MS;
+                if (now - txEndsAt > cycleMs * 50) {
+                    const skipCycles = Math.floor((now - txEndsAt) / cycleMs) - 50;
+                    if (skipCycles > 0) txEndsAt += skipCycles * cycleMs;
+                }
 
-                } else if (currentStatus === 'result') {
-                    const rounds = await tx.select().from(baccaratRounds).where(eq(baccaratRounds.id, currentRoundId)).limit(1);
-                    if (rounds.length > 0) {
-                        const round = rounds[0];
-                        const res = round.result || 'T';
+                let currentStatus = txT.status;
+                let currentRoundId = txT.current_round_id || txT.currentRoundId;
+                let history = Array.isArray(txT.history) ? [...txT.history] : [];
+                let dbUpdates = 0;
 
-                        const pCards: any = round.playerCards || [];
-                        const bCards: any = round.bankerCards || [];
-                        const isPPair = pCards.length >= 2 && pCards[0].value === pCards[1].value;
-                        const isBPair = bCards.length >= 2 && bCards[0].value === bCards[1].value;
+                while (now >= txEndsAt && dbUpdates < 200) {
+                    dbUpdates++;
+                    if (currentStatus === 'betting') {
+                        const hand = generateBaccaratHand();
+                        const res = hand.pScore > hand.bScore ? 'P' : hand.pScore < hand.bScore ? 'B' : 'T';
 
-                        const bets = await tx.select().from(baccaratBets).where(and(eq(baccaratBets.roundId, currentRoundId), eq(baccaratBets.isResolved, false)));
+                        await tx.insert(baccaratRounds).values({
+                            id: currentRoundId,
+                            tableId: tableId,
+                            playerCards: hand.player,
+                            bankerCards: hand.banker,
+                            playerScore: hand.pScore,
+                            bankerScore: hand.bScore,
+                            result: res,
+                        });
 
-                        for (const bet of bets) {
-                            let winAmount = 0;
-                            if (bet.zone === 'player' && res === 'P') winAmount = bet.amount * 2;
-                            else if (bet.zone === 'banker' && res === 'B') winAmount = bet.amount + Math.floor(bet.amount * 0.95);
-                            else if (bet.zone === 'tie' && res === 'T') winAmount = bet.amount * 9;
-                            else if (bet.zone === 'player_pair' && isPPair) winAmount = bet.amount * 12;
-                            else if (bet.zone === 'banker_pair' && isBPair) winAmount = bet.amount * 12;
+                        currentStatus = 'dealing';
+                        txEndsAt += PHASE_DEALING_MS;
 
-                            if (res === 'T' && (bet.zone === 'player' || bet.zone === 'banker')) winAmount = bet.amount;
+                    } else if (currentStatus === 'dealing') {
+                        currentStatus = 'result';
+                        txEndsAt += PHASE_RESULT_MS;
 
-                            if (winAmount > 0) {
-                                await tx.update(users).set({ points: sql`points + ${winAmount}` }).where(eq(users.id, bet.userId));
-                                await tx.insert(pointTransactions).values({
-                                    userId: bet.userId,
-                                    amount: winAmount,
-                                    balanceAfter: 0,
-                                    type: 'earn_game',
-                                    description: `Baccarat win (${bet.zone}): +${winAmount}P`,
-                                });
+                    } else if (currentStatus === 'result') {
+                        const rounds = await tx.select().from(baccaratRounds).where(eq(baccaratRounds.id, currentRoundId)).limit(1);
+                        if (rounds.length > 0) {
+                            const round = rounds[0];
+                            const res = round.result || 'T';
+
+                            const pCards: any = round.playerCards || [];
+                            const bCards: any = round.bankerCards || [];
+                            const isPPair = pCards.length >= 2 && pCards[0].value === pCards[1].value;
+                            const isBPair = bCards.length >= 2 && bCards[0].value === bCards[1].value;
+
+                            const bets = await tx.select().from(baccaratBets).where(and(eq(baccaratBets.roundId, currentRoundId), eq(baccaratBets.isResolved, false)));
+
+                            for (const bet of bets) {
+                                let winAmount = 0;
+                                if (bet.zone === 'player' && res === 'P') winAmount = bet.amount * 2;
+                                else if (bet.zone === 'banker' && res === 'B') winAmount = bet.amount + Math.floor(bet.amount * 0.95);
+                                else if (bet.zone === 'tie' && res === 'T') winAmount = bet.amount * 9;
+                                else if (bet.zone === 'player_pair' && isPPair) winAmount = bet.amount * 12;
+                                else if (bet.zone === 'banker_pair' && isBPair) winAmount = bet.amount * 12;
+
+                                if (res === 'T' && (bet.zone === 'player' || bet.zone === 'banker')) winAmount = bet.amount;
+
+                                if (winAmount > 0) {
+                                    await tx.update(users).set({ points: sql`points + ${winAmount}` }).where(eq(users.id, bet.userId));
+                                    await tx.insert(pointTransactions).values({
+                                        userId: bet.userId,
+                                        amount: winAmount,
+                                        balanceAfter: 0,
+                                        type: 'earn_game',
+                                        description: `Baccarat win (${bet.zone}): +${winAmount}P`,
+                                    });
+                                }
+                                await tx.update(baccaratBets).set({ isResolved: true }).where(eq(baccaratBets.id, bet.id));
                             }
-                            await tx.update(baccaratBets).set({ isResolved: true }).where(eq(baccaratBets.id, bet.id));
+
+                            history.push(res);
+                            if (history.length > 72) history.shift();
                         }
 
-                        history.push(res);
-                        if (history.length > 72) history.shift();
+                        currentRoundId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : randomUUID();
+                        currentStatus = 'betting';
+                        txEndsAt += PHASE_BETTING_MS;
                     }
-
-                    currentRoundId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : randomUUID();
-                    currentStatus = 'betting';
-                    endsAt += PHASE_BETTING_MS;
                 }
-            }
 
-            // Commit final state
-            t.status = currentStatus;
-            t.currentRoundId = currentRoundId;
-            t.history = history;
-            t.phaseEndsAt = new Date(endsAt);
+                // Commit final state
+                txT.status = currentStatus;
+                txT.currentRoundId = currentRoundId;
+                txT.history = history;
+                txT.phaseEndsAt = new Date(txEndsAt);
 
-            await tx.update(baccaratTables).set({
-                status: t.status as "betting" | "dealing" | "result",
-                currentRoundId: t.currentRoundId,
-                history: t.history,
-                phaseEndsAt: t.phaseEndsAt,
-            }).where(eq(baccaratTables.id, tableId));
-        });
+                await tx.update(baccaratTables).set({
+                    status: txT.status as "betting" | "dealing" | "result",
+                    currentRoundId: txT.currentRoundId,
+                    history: txT.history,
+                    phaseEndsAt: txT.phaseEndsAt,
+                }).where(eq(baccaratTables.id, tableId));
+            });
+        }
 
         if (payloadToBroadcast) {
             await broadcastBaccaratState(tableId, payloadToBroadcast);
@@ -207,7 +223,7 @@ export async function syncBaccaratState(tableId: string) {
         // Fetch the updated latest state (after tx commits)
         const latestTables = await db.select().from(baccaratTables).where(eq(baccaratTables.id, tableId)).limit(1);
         if (latestTables.length === 0) return null;
-        const t = latestTables[0];
+        t = latestTables[0];
 
         // Fetch round data if any
         let roundData = null;

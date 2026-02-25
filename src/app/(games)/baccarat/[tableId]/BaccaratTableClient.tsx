@@ -90,9 +90,13 @@ export function BaccaratTableClient({ tableId, userId, nickname }: BaccaratTable
         async function fetchState() {
             try {
                 const data = await syncBaccaratState(tableId);
+                if (data && data.error) {
+                    console.error("SERVER SYNC ERROR:", data.error, data.stack);
+                    return;
+                }
                 if (mounted && data) applyState(data);
             } catch (err) {
-                console.error(err);
+                console.error("CLIENT SYNC ERROR:", err);
             }
         }
 
@@ -189,7 +193,7 @@ export function BaccaratTableClient({ tableId, userId, nickname }: BaccaratTable
                 <div className="flex items-center gap-3 md:gap-6">
                     <div className="flex flex-col items-end">
                         <span className="text-[10px] text-slate-500 dark:text-white/50 uppercase tracking-wider font-bold">Balance</span>
-                        <span className="text-sm md:text-base font-black text-op-gold tabular-nums">${balance.toLocaleString()}</span>
+                        <span className="text-sm md:text-base font-black text-op-gold tabular-nums">${balance.toLocaleString('en-US')}</span>
                     </div>
                     <div className="flex items-center gap-1">
                         <button className="p-2 text-slate-500 hover:text-slate-900 dark:text-white/50 dark:hover:text-white transition-colors rounded-full hover:bg-black/5 dark:hover:bg-white/10">
@@ -446,7 +450,7 @@ export function BaccaratTableClient({ tableId, userId, nickname }: BaccaratTable
                                 {myBets['player'] && (
                                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 md:w-16 md:h-16 rounded-full border border-yellow-400 shadow-[0_8px_16px_rgba(0,0,0,0.6)] flex items-center justify-center animate-bounce-short z-10 bg-[repeating-conic-gradient(from_0deg,#2563eb_0deg_15deg,#1e3a8a_15deg_30deg)] after:absolute after:inset-[2px] after:rounded-full after:border-[2px] after:border-white/30 after:border-dashed">
                                         <div className="bg-black/90 px-2 md:px-3 py-1 rounded-full text-xs md:text-sm font-black text-white relative z-10 border-[1.5px] border-yellow-500/50 shadow-inner whitespace-nowrap">
-                                            {myBets['player'].toLocaleString()}
+                                            {myBets['player'].toLocaleString('en-US')}
                                         </div>
                                     </div>
                                 )}
@@ -468,7 +472,7 @@ export function BaccaratTableClient({ tableId, userId, nickname }: BaccaratTable
                                 {myBets['banker'] && (
                                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 md:w-16 md:h-16 rounded-full border border-yellow-400 shadow-[0_8px_16px_rgba(0,0,0,0.6)] flex items-center justify-center animate-bounce-short z-10 bg-[repeating-conic-gradient(from_0deg,#dc2626_0deg_15deg,#7f1d1d_15deg_30deg)] after:absolute after:inset-[2px] after:rounded-full after:border-[2px] after:border-white/30 after:border-dashed">
                                         <div className="bg-black/90 px-2 md:px-3 py-1 rounded-full text-xs md:text-sm font-black text-white relative z-10 border-[1.5px] border-yellow-500/50 shadow-inner whitespace-nowrap">
-                                            {myBets['banker'].toLocaleString()}
+                                            {myBets['banker'].toLocaleString('en-US')}
                                         </div>
                                     </div>
                                 )}

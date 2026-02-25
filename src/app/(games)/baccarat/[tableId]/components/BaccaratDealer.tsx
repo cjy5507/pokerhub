@@ -70,8 +70,19 @@ export const BaccaratDealer: React.FC<BaccaratDealerProps> = ({
                         </div>
                         <div className="absolute top-3 left-1/2 -translate-x-1/2 w-[1px] h-full bg-white/20" />
                     </div>
+                    {/* Dealer Arms (Hidden in idle, move when dealing) */}
+                    <motion.div
+                        animate={gameState === 'dealing' ? { y: [0, 15, 0], x: [-5, -15, -5], scaleY: [1, 1.2, 1], rotate: [0, 15, 0] } : {}}
+                        transition={{ duration: 0.6, repeat: Infinity }}
+                        className="absolute top-14 -left-1 w-3 h-8 bg-red-950 rounded-full border border-red-900/50 shadow-md origin-top -z-10"
+                    />
+                    <motion.div
+                        animate={gameState === 'dealing' ? { y: [0, 15, 0], x: [5, 15, 5], scaleY: [1, 1.2, 1], rotate: [0, -15, 0] } : {}}
+                        transition={{ duration: 0.6, repeat: Infinity, delay: 0.3 }}
+                        className="absolute top-14 -right-1 w-3 h-8 bg-red-950 rounded-full border border-red-900/50 shadow-md origin-top -z-10"
+                    />
                 </motion.div>
-                <span className="text-[10px] font-bold text-slate-400 dark:text-white/30 mt-1 uppercase tracking-widest drop-shadow-md">딜러</span>
+                <span className="text-[10px] font-bold text-slate-400 dark:text-white/30 mt-2 uppercase tracking-widest drop-shadow-md">딜러</span>
             </div>
 
             {/* Status Indicator */}
@@ -118,21 +129,22 @@ export const BaccaratDealer: React.FC<BaccaratDealerProps> = ({
                                 return (
                                     <motion.div
                                         key={`p-${i}`}
-                                        initial={{ opacity: 0, x: 200, y: -200, scale: 0.5, rotateY: 180, rotateZ: 30 }}
+                                        initial={{ opacity: 0, x: 100, y: -250, scale: 0.1, rotateY: 180, rotateZ: 180 }}
                                         animate={{
                                             opacity: 1,
                                             x: i === 2 ? 10 : 0,
                                             y: i === 2 ? 10 : 0,
-                                            scale: 1,
+                                            scale: isFlipped ? [1, 1.15, 1] : 1, // Squeeze effect
                                             rotateY: isFlipped ? 0 : 180,
                                             rotateZ: i === 2 ? 90 : 0
                                         }}
                                         transition={{
-                                            delay: dealIndex * 0.15,
-                                            type: "spring",
-                                            stiffness: 100,
-                                            damping: 15,
-                                            rotateY: { duration: 0.6, ease: "backOut", delay: dealIndex * 0.4 } // flip timing
+                                            opacity: { duration: 0.3, delay: dealIndex * 0.15 },
+                                            x: { type: "spring", stiffness: 90, damping: 12, delay: dealIndex * 0.15 },
+                                            y: { type: "spring", stiffness: 90, damping: 12, delay: dealIndex * 0.15 },
+                                            rotateZ: { type: "spring", stiffness: 90, damping: 12, delay: dealIndex * 0.15 },
+                                            rotateY: { duration: 0.8, ease: [0.175, 0.885, 0.32, 1.1], delay: dealIndex * 0.4 }, // Dramatic flip
+                                            scale: { duration: 0.8, ease: "easeInOut", delay: dealIndex * 0.4 }
                                         }}
                                         className={cn(
                                             "relative w-16 h-24 md:w-20 md:h-28 will-change-transform",
@@ -184,21 +196,22 @@ export const BaccaratDealer: React.FC<BaccaratDealerProps> = ({
                                 return (
                                     <motion.div
                                         key={`b-${i}`}
-                                        initial={{ opacity: 0, x: -200, y: -200, scale: 0.5, rotateY: 180, rotateZ: -30 }}
+                                        initial={{ opacity: 0, x: -100, y: -250, scale: 0.1, rotateY: 180, rotateZ: -180 }}
                                         animate={{
                                             opacity: 1,
                                             x: i === 2 ? -10 : 0,
                                             y: i === 2 ? 10 : 0,
-                                            scale: 1,
+                                            scale: isFlipped ? [1, 1.15, 1] : 1, // Squeeze effect
                                             rotateY: isFlipped ? 0 : 180,
                                             rotateZ: i === 2 ? -90 : 0
                                         }}
                                         transition={{
-                                            delay: dealIndex * 0.15,
-                                            type: "spring",
-                                            stiffness: 100,
-                                            damping: 15,
-                                            rotateY: { duration: 0.6, ease: "backOut", delay: dealIndex * 0.4 } // flip timing
+                                            opacity: { duration: 0.3, delay: dealIndex * 0.15 },
+                                            x: { type: "spring", stiffness: 90, damping: 12, delay: dealIndex * 0.15 },
+                                            y: { type: "spring", stiffness: 90, damping: 12, delay: dealIndex * 0.15 },
+                                            rotateZ: { type: "spring", stiffness: 90, damping: 12, delay: dealIndex * 0.15 },
+                                            rotateY: { duration: 0.8, ease: [0.175, 0.885, 0.32, 1.1], delay: dealIndex * 0.4 }, // Dramatic flip
+                                            scale: { duration: 0.8, ease: "easeInOut", delay: dealIndex * 0.4 }
                                         }}
                                         className={cn(
                                             "relative w-16 h-24 md:w-20 md:h-28 will-change-transform",

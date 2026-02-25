@@ -109,6 +109,9 @@ export default function RoulettePage() {
       const multiplier = serverResult.multiplier!;
       const winAmount = serverResult.winAmount!;
 
+      // Force a tiny visual delay to ensure React commits the "isSpinning=true" and reset state before applying the final rotation
+      await new Promise(resolve => setTimeout(resolve, 50));
+
       // Find the matching segment for animation
       const segmentIndex = SEGMENTS.findIndex(s => s.multiplier === multiplier);
       const targetSegment = SEGMENTS[segmentIndex >= 0 ? segmentIndex : 0];
@@ -151,8 +154,9 @@ export default function RoulettePage() {
         // Clear winning segment highlight after 2.5 seconds
         highlightTimerRef.current = setTimeout(() => setWinningSegmentIndex(null), 2500);
       }, 4000);
-    } catch {
-      setErrorMessage('룰렛 실행에 실패했습니다. 다시 시도해주세요.');
+    } catch (error) {
+      console.error('Roulette spin error:', error);
+      setErrorMessage('룰렛 실행 중 서버 통신 에러가 발생했습니다. 잠시 후 다시 시도해주세요.');
       setIsSpinning(false);
     }
   };
@@ -254,15 +258,15 @@ export default function RoulettePage() {
                             className="absolute left-1/2 top-0 w-[3px] h-1/2 bg-gradient-to-b from-white/40 via-white/10 to-transparent -translate-x-1/2 origin-bottom shadow-[0_0_5px_rgba(0,0,0,0.5)]"
                             style={{ transform: `rotate(${segment.deg}deg)` }}
                           />
-                          
+
                           {/* Label Container */}
                           <div
                             className="absolute inset-0 flex items-start justify-center pt-8"
                             style={{ transform: `rotate(${rotation}deg)` }}
                           >
-                            <span 
+                            <span
                               className="text-white font-black text-xl sm:text-2xl"
-                              style={{ 
+                              style={{
                                 textShadow: '0 2px 10px rgba(0,0,0,0.9), 0 0 20px rgba(0,0,0,0.5)',
                                 opacity: winningSegmentIndex !== null && winningSegmentIndex !== index ? 0.3 : 1,
                                 transition: 'opacity 0.3s'
@@ -359,7 +363,7 @@ export default function RoulettePage() {
               {!(isSpinning || currentPoints < betAmount) && (
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-[200%] group-hover:animate-[shimmer_1.5s_infinite]" />
               )}
-              
+
               <div className={cn(
                 "relative z-10 flex items-center justify-center gap-2",
                 !(isSpinning || currentPoints < betAmount) && "group-hover:scale-105 transition-transform duration-300"
@@ -406,10 +410,10 @@ export default function RoulettePage() {
                       parseMultiplier(result.multiplier) === 0
                         ? "text-red-400"
                         : parseMultiplier(result.multiplier) <= 1
-                        ? "text-yellow-400"
-                        : parseMultiplier(result.multiplier) < 10
-                        ? "text-green-400"
-                        : "text-op-gold drop-shadow-[0_0_10px_rgba(201,162,39,0.8)]"
+                          ? "text-yellow-400"
+                          : parseMultiplier(result.multiplier) < 10
+                            ? "text-green-400"
+                            : "text-op-gold drop-shadow-[0_0_10px_rgba(201,162,39,0.8)]"
                     )}>
                       {result.winAmount > 0 ? "+" : ""}{result.winAmount.toLocaleString()}P
                     </span>
@@ -435,10 +439,10 @@ export default function RoulettePage() {
               <StatCard label="총 스핀" value={stats.totalSpins.toString()} />
               <StatCard label="총 배팅" value={`${stats.totalBet.toLocaleString()}`} valueColor="text-white" />
               <StatCard label="총 획득" value={`${stats.totalWon.toLocaleString()}`} valueColor="text-green-400" glowColor="rgba(74,222,128,0.2)" />
-              
+
               <div className="bg-black/40 border border-white/5 rounded-2xl p-4 flex flex-col justify-center relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-2 opacity-20">
-                   {profit >= 0 ? <TrendingUp className="w-12 h-12 text-green-500" /> : <TrendingDown className="w-12 h-12 text-red-500" />}
+                  {profit >= 0 ? <TrendingUp className="w-12 h-12 text-green-500" /> : <TrendingDown className="w-12 h-12 text-red-500" />}
                 </div>
                 <div className="text-sm text-white/50 mb-1 font-medium z-10">내 손익</div>
                 <div className={cn(
@@ -475,39 +479,40 @@ export default function RoulettePage() {
                   const profit = spin.win - spin.bet;
                   const isWin = profit > 0;
                   const isTie = profit === 0;
-                  
+
                   return (
-                  <div
-                    key={index}
-                    className="bg-black/40 hover:bg-black/60 border border-white/5 rounded-xl p-4 flex items-center justify-between transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="text-xs font-bold text-white/30 bg-white/5 px-2 py-1 rounded-md min-w-[65px] text-center">
-                        {spin.time}
+                    <div
+                      key={index}
+                      className="bg-black/40 hover:bg-black/60 border border-white/5 rounded-xl p-4 flex items-center justify-between transition-colors"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="text-xs font-bold text-white/30 bg-white/5 px-2 py-1 rounded-md min-w-[65px] text-center">
+                          {spin.time}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-white/60">{spin.bet}P</span>
+                          <X className="w-3 h-3 text-white/30" />
+                          <span className={cn(
+                            "font-black text-lg",
+                            parseMultiplier(spin.multiplier) >= 2 ? "text-op-gold drop-shadow-[0_0_5px_rgba(201,162,39,0.5)]" : "text-white"
+                          )}>{spin.multiplier}</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-white/60">{spin.bet}P</span>
-                        <X className="w-3 h-3 text-white/30" />
-                        <span className={cn(
-                          "font-black text-lg",
-                          parseMultiplier(spin.multiplier) >= 2 ? "text-op-gold drop-shadow-[0_0_5px_rgba(201,162,39,0.5)]" : "text-white"
-                        )}>{spin.multiplier}</span>
+                      <div className={cn(
+                        "font-black text-lg",
+                        isWin ? "text-green-400" : isTie ? "text-yellow-400" : "text-red-400"
+                      )}>
+                        {isWin ? "+" : ""}{profit.toLocaleString()}P
                       </div>
                     </div>
-                    <div className={cn(
-                      "font-black text-lg",
-                      isWin ? "text-green-400" : isTie ? "text-yellow-400" : "text-red-400"
-                    )}>
-                      {isWin ? "+" : ""}{profit.toLocaleString()}P
-                    </div>
-                  </div>
-                )})}
+                  )
+                })}
               </div>
             )}
           </div>
         </div>
       </div>
-      
+
       <div className="max-w-5xl mx-auto mt-8 text-center bg-white/5 backdrop-blur-sm border border-white/5 rounded-2xl p-4 relative z-10">
         <p className="text-xs md:text-sm text-white/40 font-medium">본 룰렛은 실제 금전적 가치가 없는 가상 포인트로만 운영됩니다.</p>
         <p className="text-[10px] md:text-xs text-white/30 mt-1">포인트는 현금으로 교환할 수 없으며, 서비스 내 활동에만 사용됩니다.</p>
@@ -533,7 +538,7 @@ function StatCard({ label, value, valueColor = "text-white", glowColor }: { labe
   return (
     <div className="bg-black/40 border border-white/5 rounded-2xl p-4 flex flex-col justify-center transition-all hover:bg-black/50">
       <div className="text-sm text-white/50 mb-1 font-medium">{label}</div>
-      <div 
+      <div
         className={cn("text-2xl font-black truncate", valueColor)}
         style={glowColor ? { textShadow: `0 0 15px ${glowColor}` } : {}}
       >

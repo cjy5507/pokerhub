@@ -75,11 +75,21 @@ export async function POST(request: NextRequest) {
     const { email, password } = result.data;
 
     // Find user by email
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, email))
-      .limit(1);
+    let user;
+    try {
+      const result = await db
+        .select()
+        .from(users)
+        .where(eq(users.email, email))
+        .limit(1);
+      user = result[0];
+    } catch (dbError) {
+      console.error('Login DB error:', dbError);
+      return NextResponse.json(
+        { error: '데이터베이스 연결에 실패했습니다. 잠시 후 다시 시도해주세요.' },
+        { status: 503 }
+      );
+    }
 
     if (!user) {
       return NextResponse.json(
@@ -106,12 +116,20 @@ export async function POST(request: NextRequest) {
     }
 
     // Create session
-    await createSession({
-      userId: user.id,
-      email: user.email,
-      nickname: user.nickname,
-      role: user.role,
-    });
+    try {
+      await createSession({
+        userId: user.id,
+        email: user.email,
+        nickname: user.nickname,
+        role: user.role,
+      });
+    } catch (sessionError) {
+      console.error('Session creation error:', sessionError);
+      return NextResponse.json(
+        { error: '세션 발급에 실패했습니다. 브라우저 쿠키 설정을 확인해주세요.' },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       success: true,

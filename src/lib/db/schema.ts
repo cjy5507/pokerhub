@@ -28,6 +28,8 @@ export const notificationTypeEnum = pgEnum('notification_type', ['comment', 'lik
 export const chatRoomTypeEnum = pgEnum('chat_room_type', ['general', 'game', 'tournament', 'private']);
 export const chatMessageTypeEnum = pgEnum('chat_message_type', ['text', 'image', 'system']);
 export const bannerPositionEnum = pgEnum('banner_position', ['main_top', 'main_side', 'board_top', 'floating']);
+export const baccaratStatusEnum = pgEnum('baccarat_status', ['betting', 'dealing', 'result', 'paused']);
+export const baccaratBetZoneEnum = pgEnum('baccarat_bet_zone', ['player', 'banker', 'tie', 'player_pair', 'banker_pair']);
 
 // ==================== USER DOMAIN ====================
 
@@ -693,6 +695,43 @@ export const marketOrders = pgTable('market_orders', {
   status: varchar('status', { length: 20 }).default('pending').notNull(), // pending, completed, cancelled, refunded
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 }, (table) => ({
-  itemIdIdx: index('market_orders_item_id_idx').on(table.itemId),
   buyerIdIdx: index('market_orders_buyer_id_idx').on(table.buyerId),
+}));
+
+// ==================== BACCARAT DOMAIN ====================
+
+export const baccaratTables = pgTable('baccarat_tables', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  status: baccaratStatusEnum('status').notNull().default('betting'),
+  phaseEndsAt: timestamp('phase_ends_at', { withTimezone: true }),
+  history: jsonb('history').default('[]'),
+  currentRoundId: varchar('current_round_id', { length: 50 }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const baccaratRounds = pgTable('baccarat_rounds', {
+  id: varchar('id', { length: 50 }).primaryKey(),
+  tableId: uuid('table_id').notNull().references(() => baccaratTables.id, { onDelete: 'cascade' }),
+  playerCards: jsonb('player_cards'),
+  bankerCards: jsonb('banker_cards'),
+  playerScore: integer('player_score'),
+  bankerScore: integer('banker_score'),
+  result: varchar('result', { length: 10 }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const baccaratBets = pgTable('baccarat_bets', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  tableId: uuid('table_id').notNull().references(() => baccaratTables.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'restrict' }),
+  zone: baccaratBetZoneEnum('zone').notNull(),
+  amount: integer('amount').notNull(),
+  roundId: varchar('round_id', { length: 50 }).notNull(),
+  isResolved: boolean('is_resolved').notNull().default(false),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  tableIdIdx: index('baccarat_bets_table_id_idx').on(table.tableId),
+  userIdIdx: index('baccarat_bets_user_id_idx').on(table.userId),
+  unresolvedIdx: index('baccarat_bets_unresolved_idx').on(table.tableId, table.isResolved),
 }));

@@ -7,6 +7,25 @@ import Link from 'next/link';
 import { createOptionalClient } from '@/lib/supabase/client';
 import { syncBaccaratState, placeBaccaratBet, clearBaccaratBets } from '../actions';
 
+const SuitIcon = ({ suit, className = "w-6 h-6" }: { suit: string; className?: string }) => {
+    switch (suit) {
+        case 'S':
+            return <svg className={className} viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8 6 4 10 4 14C4 18.418 7.582 22 12 22C16.418 22 20 18.418 20 14C20 10 16 6 12 2Z" /></svg>;
+        case 'H':
+            return <svg className={className} viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>;
+        case 'C':
+            return <svg className={className} viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C10.3431 2 9 3.34315 9 5C9 6.27648 9.80006 7.35987 10.9257 7.78453C9.09885 8.12781 7.2345 8.92203 6.00004 10.7499C4.65434 12.7426 4.96023 15.4284 6.78207 17.0674C8.61864 18.7197 11.3972 18.5985 13.0854 16.788L11.8398 22H12.1601L10.9146 16.788C12.6028 18.5985 15.3813 18.7197 17.2179 17.0674C19.0397 15.4284 19.3456 12.7426 17.9999 10.7499C16.7655 8.92203 14.9011 8.12781 13.0743 7.78453C14.1999 7.35987 15 6.27648 15 5C15 3.34315 13.6568 2 12 2Z" /></svg>;
+        case 'D':
+            return <svg className={className} viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 12L12 22L22 12L12 2Z" /></svg>;
+        default:
+            return null;
+    }
+};
+
+const getSuitColor = (suit: string) => {
+    return suit === 'H' || suit === 'D' ? 'text-rose-600' : 'text-slate-900';
+};
+
 // Types
 type BaccaratState = 'waiting' | 'betting' | 'dealing' | 'result';
 type BetZone = 'player' | 'banker' | 'tie' | 'player_pair' | 'banker_pair';
@@ -144,9 +163,10 @@ export function BaccaratTableClient({ tableId, userId, nickname }: BaccaratTable
 
     return (
         <div className="w-full flex-1 min-h-[600px] h-[calc(100vh-120px)] bg-[#050505] rounded-xl flex flex-col overflow-hidden select-none relative font-sans text-white border border-white/10 shadow-2xl">
-            {/* Background elements */}
-            <div className="absolute top-0 left-0 w-full h-[50%] bg-[radial-gradient(ellipse_at_top,#1e3a8a_0%,transparent_70%)] opacity-20 pointer-events-none" />
-            <div className="absolute inset-0 bg-[#0a110b]/90 pointer-events-none" />
+            {/* Generative Dopamine UI & Lo-fi Noise */}
+            <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-[0.04] mix-blend-overlay z-[1]"><filter id="noiseFilter"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch" /></filter><rect width="100%" height="100%" filter="url(#noiseFilter)" /></svg>
+            <div className={cn("absolute inset-0 opacity-40 pointer-events-none transition-all duration-[3000ms] ease-in-out", gameState === 'betting' ? "bg-[radial-gradient(circle_at_50%_50%,#3b82f6_0%,transparent_30%),radial-gradient(circle_at_80%_80%,#eab308_0%,transparent_40%)]" : gameState === 'dealing' ? "bg-[radial-gradient(circle_at_20%_20%,#ef4444_0%,transparent_40%),radial-gradient(circle_at_80%_20%,#3b82f6_0%,transparent_40%)] blur-2xl opacity-50 scale-110" : "bg-[radial-gradient(circle_at_50%_40%,#eab308_0%,transparent_50%)] blur-xl opacity-30 scale-100")} />
+            <div className="absolute inset-0 bg-gradient-to-b from-[#050505]/40 via-[#0a0a0a]/80 to-[#050505] pointer-events-none" />
 
             {/* TOP BAR */}
             <header className="flex-shrink-0 h-14 flex items-center justify-between px-4 z-30 border-b border-white/10 bg-black/40 backdrop-blur-md">
@@ -203,73 +223,78 @@ export function BaccaratTableClient({ tableId, userId, nickname }: BaccaratTable
                     </div>
 
                     {/* Cards Display */}
-                    <div className="flex items-end gap-12 lg:gap-24 relative z-10 scale-90 sm:scale-100">
+                    <div className="flex justify-center gap-8 md:gap-24 relative z-10 w-full px-4 mt-8 md:mt-2">
                         {/* Player Side */}
-                        <div className="flex flex-col items-center">
-                            <div className="flex gap-2 relative">
-                                {/* Card 1 */}
-                                <div className={cn(
-                                    "w-16 h-24 sm:w-20 sm:h-28 bg-white rounded-lg flex flex-col items-center justify-center text-black shadow-[0_10px_30px_rgba(255,255,255,0.1)] transition-transform duration-500",
-                                    gameState === 'dealing' ? "translate-y-0 opacity-100" : gameState === 'waiting' || gameState === 'betting' ? "translate-y-full opacity-0 scale-95" : ""
-                                )}>
-                                    <span className="absolute top-1 left-2 text-lg font-bold">8</span>
-                                    <span className="text-4xl">♠</span>
-                                    <span className="absolute bottom-1 right-2 text-lg font-bold rotate-180">8</span>
-                                </div>
-                                {/* Card 2 */}
-                                <div className={cn(
-                                    "w-16 h-24 sm:w-20 sm:h-28 bg-white rounded-lg flex flex-col items-center justify-center text-red-600 shadow-[0_10px_30px_rgba(255,255,255,0.1)] transition-transform duration-500 delay-150",
-                                    gameState === 'dealing' ? "translate-y-0 opacity-100" : gameState === 'waiting' || gameState === 'betting' ? "translate-y-full opacity-0 scale-95" : ""
-                                )}>
-                                    <span className="absolute top-1 left-2 text-lg font-bold">Q</span>
-                                    <span className="text-4xl">♥</span>
-                                    <span className="absolute bottom-1 right-2 text-lg font-bold rotate-180">Q</span>
-                                </div>
+                        <div className="flex flex-col items-center flex-1 max-w-[200px]">
+                            <div className="flex justify-center gap-2 relative min-h-[120px] md:min-h-[160px] w-full">
+                                {playerCards.map((card, i) => (
+                                    <div key={i} className={cn(
+                                        "w-14 h-20 sm:w-16 sm:h-24 md:w-20 md:h-28 bg-white rounded-lg flex flex-col items-center justify-center shadow-[0_15px_30px_rgba(0,0,0,0.6)] transition-all duration-500 will-change-transform",
+                                        getSuitColor(card.suit),
+                                        gameState === 'dealing' || gameState === 'result' ? "translate-y-0 opacity-100 rotate-0 scale-100" : "translate-y-12 opacity-0 rotate-12 scale-90",
+                                        i === 2 ? "absolute -right-6 md:-right-10 top-2 lg:top-4 rotate-90" : ""
+                                    )} style={{ transitionDelay: `${i * 150}ms`, zIndex: i }}>
+                                        <span className="absolute top-1 left-1.5 md:top-2 md:left-2 text-xs md:text-sm font-bold">{card.value}</span>
+                                        <SuitIcon suit={card.suit} className="w-5 h-5 md:w-8 md:h-8 opacity-90" />
+                                        <span className="absolute bottom-1 right-1.5 md:bottom-2 md:right-2 text-xs md:text-sm font-bold rotate-180">{card.value}</span>
+                                    </div>
+                                ))}
+                                {playerCards.length === 0 && (
+                                    <div className="w-14 h-20 md:w-20 md:h-28 border-2 border-white/10 rounded-lg flex items-center justify-center">
+                                        <span className="text-white/20 text-[10px] md:text-xs uppercase underline decoration-white/20 underline-offset-4">Card</span>
+                                    </div>
+                                )}
                             </div>
 
-                            <div className="mt-6 flex flex-col items-center">
+                            <div className="mt-8 flex flex-col items-center">
                                 <span className={cn(
-                                    "text-lg font-black uppercase tracking-[0.2em] px-4 py-1 rounded-full",
+                                    "text-sm md:text-lg font-black uppercase tracking-widest px-4 md:px-6 py-1 md:py-1.5 rounded-full backdrop-blur-md transition-all",
                                     "bg-blue-600/20 text-blue-400 border border-blue-500/30",
-                                    gameState === 'result' ? "opacity-50" : ""
+                                    gameState === 'result' && playerScore !== null && bankerScore !== null && playerScore > bankerScore ? "shadow-[0_0_30px_rgba(59,130,246,0.6)] ring-2 ring-blue-500/50 scale-110 bg-blue-600/40 text-blue-300" : ""
                                 )}>Player</span>
-                                <div className="mt-2 text-4xl font-black text-white drop-shadow-[0_0_10px_rgba(59,130,246,0.5)]">
-                                    {(gameState === 'dealing' || gameState === 'result') ? '8' : '?'}
+                                <div className={cn("mt-2 md:mt-3 text-4xl md:text-6xl font-black transition-all font-mono", gameState === 'result' && playerScore !== null && bankerScore !== null && playerScore > bankerScore ? "text-white drop-shadow-[0_0_15px_rgba(59,130,246,0.8)] scale-110" : "text-white/80 drop-shadow-md")}>
+                                    {(gameState === 'dealing' || gameState === 'result') && playerScore !== null ? playerScore : '?'}
                                 </div>
                             </div>
                         </div>
 
+                        {/* VS Divider */}
+                        <div className="hidden lg:flex flex-col items-center justify-center px-4">
+                            <div className="w-[1px] h-12 bg-gradient-to-b from-transparent via-white/20 to-transparent"></div>
+                            <span className="text-white/30 text-xs font-black italic my-2 uppercase tracking-[0.3em]">VS</span>
+                            <div className="w-[1px] h-12 bg-gradient-to-b from-transparent via-white/20 to-transparent"></div>
+                        </div>
+
                         {/* Banker Side */}
-                        <div className="flex flex-col items-center">
-                            <div className="flex gap-2 relative">
-                                {/* Card 1 */}
-                                <div className={cn(
-                                    "w-16 h-24 sm:w-20 sm:h-28 bg-white rounded-lg flex flex-col items-center justify-center text-red-600 shadow-[0_10px_30px_rgba(255,255,255,0.1)] transition-transform duration-500 delay-75",
-                                    gameState === 'dealing' ? "translate-y-0 opacity-100" : gameState === 'waiting' || gameState === 'betting' ? "translate-y-full opacity-0 scale-95" : ""
-                                )}>
-                                    <span className="absolute top-1 left-2 text-lg font-bold">5</span>
-                                    <span className="text-4xl">♦</span>
-                                    <span className="absolute bottom-1 right-2 text-lg font-bold rotate-180">5</span>
-                                </div>
-                                {/* Card 2 */}
-                                <div className={cn(
-                                    "w-16 h-24 sm:w-20 sm:h-28 bg-white rounded-lg flex flex-col items-center justify-center text-black shadow-[0_10px_30px_rgba(255,255,255,0.1)] transition-transform duration-500 delay-[225ms]",
-                                    gameState === 'dealing' ? "translate-y-0 opacity-100" : gameState === 'waiting' || gameState === 'betting' ? "translate-y-full opacity-0 scale-95" : ""
-                                )}>
-                                    <span className="absolute top-1 left-2 text-lg font-bold">K</span>
-                                    <span className="text-4xl">♣</span>
-                                    <span className="absolute bottom-1 right-2 text-lg font-bold rotate-180">K</span>
-                                </div>
+                        <div className="flex flex-col items-center flex-1 max-w-[200px]">
+                            <div className="flex justify-center gap-2 relative min-h-[120px] md:min-h-[160px] w-full">
+                                {bankerCards.map((card, i) => (
+                                    <div key={i} className={cn(
+                                        "w-14 h-20 sm:w-16 sm:h-24 md:w-20 md:h-28 bg-white rounded-lg flex flex-col items-center justify-center shadow-[0_15px_30px_rgba(0,0,0,0.6)] transition-all duration-500 will-change-transform",
+                                        getSuitColor(card.suit),
+                                        gameState === 'dealing' || gameState === 'result' ? "translate-y-0 opacity-100 rotate-0 scale-100" : "translate-y-12 opacity-0 -rotate-12 scale-90",
+                                        i === 2 ? "absolute -left-6 md:-left-10 top-2 lg:top-4 -rotate-90" : ""
+                                    )} style={{ transitionDelay: `${i * 150 + (playerCards.length * 150)}ms`, zIndex: i }}>
+                                        <span className="absolute top-1 left-1.5 md:top-2 md:left-2 text-xs md:text-sm font-bold">{card.value}</span>
+                                        <SuitIcon suit={card.suit} className="w-5 h-5 md:w-8 md:h-8 opacity-90" />
+                                        <span className="absolute bottom-1 right-1.5 md:bottom-2 md:right-2 text-xs md:text-sm font-bold rotate-180">{card.value}</span>
+                                    </div>
+                                ))}
+                                {bankerCards.length === 0 && (
+                                    <div className="w-14 h-20 md:w-20 md:h-28 border-2 border-white/10 rounded-lg flex items-center justify-center">
+                                        <span className="text-white/20 text-[10px] md:text-xs uppercase underline decoration-white/20 underline-offset-4">Card</span>
+                                    </div>
+                                )}
                             </div>
 
-                            <div className="mt-6 flex flex-col items-center">
+                            <div className="mt-8 flex flex-col items-center">
                                 <span className={cn(
-                                    "text-lg font-black uppercase tracking-[0.2em] px-4 py-1 rounded-full",
+                                    "text-sm md:text-lg font-black uppercase tracking-widest px-4 md:px-6 py-1 md:py-1.5 rounded-full backdrop-blur-md transition-all",
                                     "bg-red-600/20 text-red-400 border border-red-500/30",
-                                    gameState === 'result' ? "animate-pulse ring-2 ring-red-500/50 shadow-[0_0_20px_rgba(220,38,38,0.5)]" : ""
+                                    gameState === 'result' && playerScore !== null && bankerScore !== null && bankerScore > playerScore ? "shadow-[0_0_30px_rgba(220,38,38,0.6)] ring-2 ring-red-500/50 scale-110 bg-red-600/40 text-red-300" : ""
                                 )}>Banker</span>
-                                <div className="mt-2 text-4xl font-black text-white drop-shadow-[0_0_10px_rgba(220,38,38,0.5)]">
-                                    {(gameState === 'dealing' || gameState === 'result') ? '5' : '?'}
+                                <div className={cn("mt-2 md:mt-3 text-4xl md:text-6xl font-black transition-all font-mono", gameState === 'result' && playerScore !== null && bankerScore !== null && bankerScore > playerScore ? "text-white drop-shadow-[0_0_15px_rgba(220,38,38,0.8)] scale-110" : "text-white/80 drop-shadow-md")}>
+                                    {(gameState === 'dealing' || gameState === 'result') && bankerScore !== null ? bankerScore : '?'}
                                 </div>
                             </div>
                         </div>

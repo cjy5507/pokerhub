@@ -18,7 +18,7 @@ function getCardScore(value: string) {
 }
 
 function drawCard() {
-    const suits = ['♠', '♥', '♣', '♦'];
+    const suits = ['S', 'H', 'C', 'D'];
     const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
     const suit = suits[Math.floor(Math.random() * suits.length)];
     const value = values[Math.floor(Math.random() * values.length)];

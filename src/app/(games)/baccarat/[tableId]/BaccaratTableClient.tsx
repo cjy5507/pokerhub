@@ -17,6 +17,7 @@ type BetZone = 'player' | 'banker' | 'tie' | 'player_pair' | 'banker_pair';
 const PHASE_DEALING_MS = 5000;
 const CARD_REVEAL_INTERVAL_MS = 800;
 const CARD_DEAL_SOUND_INTERVAL_MS = 200;
+const STATE_SYNC_THROTTLE_MS = 350;
 
 interface BaccaratTableClientProps {
     tableId: string;
@@ -76,6 +77,9 @@ export function BaccaratTableClient({ tableId, userId, nickname, initialBalance 
     const [isDesktop, setIsDesktop] = useState(false);
     const gameStateRef = useRef<BaccaratState>('betting');
     const roundIdRef = useRef<string | null>(null);
+    const syncInFlightRef = useRef<Promise<void> | null>(null);
+    const syncQueuedRef = useRef(false);
+    const lastSyncAtRef = useRef(0);
 
     // Audio Refs using HTML Audio for simplicity and preloading
     const chipSoundRef = useRef<HTMLAudioElement | null>(null);
@@ -175,12 +179,37 @@ export function BaccaratTableClient({ tableId, userId, nickname, initialBalance 
         }
     }, [playSound]);
 
-    const fetchLatestState = useCallback(async () => {
-        try {
-            const data = await syncBaccaratState(tableId);
-            if (data && data.error) return;
-            if (data) applyState(data);
-        } catch { }
+    const requestStateSync = useCallback(async (force = false) => {
+        const now = Date.now();
+        if (!force && now - lastSyncAtRef.current < STATE_SYNC_THROTTLE_MS) {
+            return;
+        }
+
+        if (syncInFlightRef.current) {
+            syncQueuedRef.current = true;
+            return syncInFlightRef.current;
+        }
+
+        const runSync = async () => {
+            do {
+                syncQueuedRef.current = false;
+                lastSyncAtRef.current = Date.now();
+                try {
+                    const data = await syncBaccaratState(tableId);
+                    if (data && !data.error) {
+                        applyState(data);
+                    }
+                } catch {
+                    // no-op
+                }
+            } while (syncQueuedRef.current);
+        };
+
+        const task = runSync().finally(() => {
+            syncInFlightRef.current = null;
+        });
+        syncInFlightRef.current = task;
+        return task;
     }, [tableId, applyState]);
 
     // Countdown timer
@@ -205,7 +234,7 @@ export function BaccaratTableClient({ tableId, userId, nickname, initialBalance 
         let mounted = true;
         const supabase = createOptionalClient();
         if (!supabase) {
-            void fetchLatestState();
+            void requestStateSync(true);
             return;
         }
 
@@ -217,21 +246,21 @@ export function BaccaratTableClient({ tableId, userId, nickname, initialBalance 
         }).subscribe((status) => {
             if (!mounted) return;
             if (status === 'SUBSCRIBED') {
-                void fetchLatestState();
+                void requestStateSync(true);
             }
             if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
-                void fetchLatestState();
+                void requestStateSync(true);
             }
         });
 
-        void fetchLatestState();
+        void requestStateSync(true);
 
         const onFocus = () => {
-            void fetchLatestState();
+            void requestStateSync();
         };
         const onVisible = () => {
             if (document.visibilityState === 'visible') {
-                void fetchLatestState();
+                void requestStateSync();
             }
         };
 
@@ -244,7 +273,7 @@ export function BaccaratTableClient({ tableId, userId, nickname, initialBalance 
             document.removeEventListener('visibilitychange', onVisible);
             supabase.removeChannel(channel);
         };
-    }, [tableId, applyState, fetchLatestState]);
+    }, [tableId, applyState, requestStateSync]);
 
     // Phase boundary sync scheduler (no polling loop)
     useEffect(() => {
@@ -256,11 +285,11 @@ export function BaccaratTableClient({ tableId, userId, nickname, initialBalance 
         const delay = Math.max(120, msUntilPhaseEnd + 80 + jitter);
 
         const timer = setTimeout(() => {
-            void fetchLatestState();
+            void requestStateSync(true);
         }, delay);
 
         return () => clearTimeout(timer);
-    }, [phaseEndsAtMs, serverTimeOffsetMs, fetchLatestState]);
+    }, [phaseEndsAtMs, serverTimeOffsetMs, requestStateSync]);
 
     // Sequentially Deal and Reveal logic
     useEffect(() => {

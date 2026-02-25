@@ -10,6 +10,7 @@ import { randomUUID } from 'crypto';
 const PHASE_BETTING_MS = 15000;
 const PHASE_DEALING_MS = 5000;
 const PHASE_RESULT_MS = 6000;
+const BET_ACTION_RETRY_LIMIT = 1;
 
 function getCardScore(value: string) {
     if (['10', 'J', 'Q', 'K'].includes(value)) return 0;
@@ -67,6 +68,48 @@ function generateBaccaratHand() {
     return { player, banker, pScore, bScore };
 }
 
+function calculateBetWinAmount(
+    bet: { zone: string; amount: number },
+    roundResult: 'P' | 'B' | 'T',
+    isPlayerPair: boolean,
+    isBankerPair: boolean
+) {
+    if (roundResult === 'T' && (bet.zone === 'player' || bet.zone === 'banker')) {
+        return bet.amount;
+    }
+
+    if (bet.zone === 'player' && roundResult === 'P') return bet.amount * 2;
+    if (bet.zone === 'banker' && roundResult === 'B') return bet.amount + Math.floor(bet.amount * 0.95);
+    if (bet.zone === 'tie' && roundResult === 'T') return bet.amount * 9;
+    if (bet.zone === 'player_pair' && isPlayerPair) return bet.amount * 12;
+    if (bet.zone === 'banker_pair' && isBankerPair) return bet.amount * 12;
+    return 0;
+}
+
+async function loadUserBetsSummary(tableId: string, roundId: string, userId: string) {
+    if (!db) return {};
+
+    const rows = await db
+        .select({
+            zone: baccaratBets.zone,
+            total: sql<number>`sum(${baccaratBets.amount})`.mapWith(Number),
+        })
+        .from(baccaratBets)
+        .where(and(
+            eq(baccaratBets.tableId, tableId),
+            eq(baccaratBets.roundId, roundId),
+            eq(baccaratBets.userId, userId),
+            eq(baccaratBets.isResolved, false),
+        ))
+        .groupBy(baccaratBets.zone);
+
+    const summary: Record<string, number> = {};
+    for (const row of rows as Array<{ zone: string; total: number | null }>) {
+        summary[row.zone] = row.total || 0;
+    }
+    return summary;
+}
+
 // Ensure the table is running and in the right phase. This is the WATCHDOG loop.
 export async function syncBaccaratState(tableId: string) {
     try {
@@ -74,6 +117,7 @@ export async function syncBaccaratState(tableId: string) {
 
         let stateChanged = false;
         let requiresTransaction = false;
+        let lockUnavailable = false;
 
         // 1. Quick read outside transaction to save connections
         let tables = await db.select().from(baccaratTables).where(eq(baccaratTables.id, tableId)).limit(1);
@@ -92,6 +136,15 @@ export async function syncBaccaratState(tableId: string) {
         // 2. Only enter transaction if we need to progress the game state
         if (requiresTransaction) {
             await db.transaction(async (tx: any) => {
+                const lockResult = await tx.execute(
+                    sql`SELECT pg_try_advisory_xact_lock(hashtext(${tableId}::text)) as locked`
+                );
+                const locked = Boolean((lockResult as any)?.[0]?.locked);
+                if (!locked) {
+                    lockUnavailable = true;
+                    return;
+                }
+
                 let txTables = await tx.select().from(baccaratTables).where(eq(baccaratTables.id, tableId)).limit(1);
 
                 if (txTables.length === 0) {
@@ -158,7 +211,7 @@ export async function syncBaccaratState(tableId: string) {
                         const rounds = await tx.select().from(baccaratRounds).where(eq(baccaratRounds.id, currentRoundId)).limit(1);
                         if (rounds.length > 0) {
                             const round = rounds[0];
-                            const res = round.result || 'T';
+                            const res = (round.result || 'T') as 'P' | 'B' | 'T';
 
                             const pCards: any = round.playerCards || [];
                             const bCards: any = round.bankerCards || [];
@@ -166,29 +219,45 @@ export async function syncBaccaratState(tableId: string) {
                             const isBPair = bCards.length >= 2 && bCards[0].value === bCards[1].value;
 
                             const bets = await tx.select().from(baccaratBets).where(and(eq(baccaratBets.roundId, currentRoundId), eq(baccaratBets.isResolved, false)));
+                            const winningsByUser = new Map<string, number>();
 
                             for (const bet of bets) {
-                                let winAmount = 0;
-                                if (bet.zone === 'player' && res === 'P') winAmount = bet.amount * 2;
-                                else if (bet.zone === 'banker' && res === 'B') winAmount = bet.amount + Math.floor(bet.amount * 0.95);
-                                else if (bet.zone === 'tie' && res === 'T') winAmount = bet.amount * 9;
-                                else if (bet.zone === 'player_pair' && isPPair) winAmount = bet.amount * 12;
-                                else if (bet.zone === 'banker_pair' && isBPair) winAmount = bet.amount * 12;
-
-                                if (res === 'T' && (bet.zone === 'player' || bet.zone === 'banker')) winAmount = bet.amount;
-
+                                const winAmount = calculateBetWinAmount(bet, res, isPPair, isBPair);
                                 if (winAmount > 0) {
-                                    await tx.update(users).set({ points: sql`points + ${winAmount}` }).where(eq(users.id, bet.userId));
-                                    await tx.insert(pointTransactions).values({
-                                        userId: bet.userId,
-                                        amount: winAmount,
-                                        balanceAfter: 0,
+                                    winningsByUser.set(bet.userId, (winningsByUser.get(bet.userId) || 0) + winAmount);
+                                }
+                            }
+
+                            if (winningsByUser.size > 0) {
+                                const txRows: any[] = [];
+                                for (const [winnerId, totalWin] of winningsByUser.entries()) {
+                                    const [updatedUser] = await tx
+                                        .update(users)
+                                        .set({ points: sql`points + ${totalWin}` })
+                                        .where(eq(users.id, winnerId))
+                                        .returning({ points: users.points });
+
+                                    txRows.push({
+                                        userId: winnerId,
+                                        amount: totalWin,
+                                        balanceAfter: updatedUser?.points ?? 0,
                                         type: 'earn_game',
-                                        description: `Baccarat win (${bet.zone}): +${winAmount}P`,
+                                        description: `Baccarat win payout: +${totalWin}P`,
                                     });
                                 }
-                                await tx.update(baccaratBets).set({ isResolved: true }).where(eq(baccaratBets.id, bet.id));
+
+                                if (txRows.length > 0) {
+                                    await tx.insert(pointTransactions).values(txRows);
+                                }
                             }
+
+                            await tx
+                                .update(baccaratBets)
+                                .set({ isResolved: true })
+                                .where(and(
+                                    eq(baccaratBets.roundId, currentRoundId),
+                                    eq(baccaratBets.isResolved, false)
+                                ));
 
                             history.push(res);
                             if (history.length > 72) history.shift();
@@ -242,14 +311,7 @@ export async function syncBaccaratState(tableId: string) {
 
         // Fetch active bets for visual update (if betting phase)
         if (session?.userId && t.status === 'betting' && t.currentRoundId) {
-            const bets = await db.select().from(baccaratBets).where(and(
-                eq(baccaratBets.roundId, t.currentRoundId || ''),
-                eq(baccaratBets.userId, session.userId),
-                eq(baccaratBets.isResolved, false)
-            ));
-            bets.forEach((b: any) => {
-                myBets[b.zone] = (myBets[b.zone] || 0) + b.amount;
-            });
+            myBets = await loadUserBetsSummary(tableId, t.currentRoundId || '', session.userId);
         }
 
         const payload = {
@@ -261,6 +323,9 @@ export async function syncBaccaratState(tableId: string) {
         if (stateChanged) {
             // Non-blocking so sync responses are not delayed by realtime handshake/retry.
             void broadcastBaccaratState(tableId, payload);
+        } else if (lockUnavailable) {
+            // Another request is already advancing this table.
+            // Returning latest read state keeps request cheap under boundary bursts.
         }
         return { ...payload, myBets, balance };
 
@@ -274,73 +339,117 @@ export async function placeBaccaratBet(tableId: string, zone: any, amount: numbe
     if (!db) return { success: false, error: 'DB unavailable' };
     const session = await getSession();
     if (!session?.userId) return { success: false, error: 'Not logged in' };
+    const userId = session.userId;
 
-    // Make sure we're up to date first
-    await syncBaccaratState(tableId);
+    async function runPlaceBet() {
+        return await db.transaction(async (tx: any) => {
+            await tx.execute(sql`SELECT 1 FROM baccarat_tables WHERE id = ${tableId} FOR UPDATE`);
 
-    return await db.transaction(async (tx: any) => {
-        const tables = await tx.select().from(baccaratTables).where(eq(baccaratTables.id, tableId)).limit(1);
-        if (tables.length === 0) return { success: false, error: 'Table not found' };
-        const t = tables[0];
+            const tables = await tx.select().from(baccaratTables).where(eq(baccaratTables.id, tableId)).limit(1);
+            if (tables.length === 0) return { success: false, error: 'Table not found', needsSync: true as const };
+            const t = tables[0];
 
-        if (t.status !== 'betting') return { success: false, error: 'Not in betting phase' };
-        if (!t.currentRoundId) return { success: false, error: 'No active round' };
+            const now = Date.now();
+            const phaseEndsAtMs = t.phaseEndsAt ? t.phaseEndsAt.getTime() : 0;
+            if (!t.currentRoundId || phaseEndsAtMs === 0 || now >= phaseEndsAtMs) {
+                return { success: false, error: 'Round transitioning', needsSync: true as const };
+            }
 
-        const [usr] = await tx.update(users)
-            .set({ points: sql`points - ${amount}` })
-            .where(and(eq(users.id, session.userId), sql`points >= ${amount}`))
-            .returning({ points: users.points });
+            if (t.status !== 'betting') return { success: false, error: 'Not in betting phase' as const };
 
-        if (!usr) return { success: false, error: 'Insufficient points' };
+            const [usr] = await tx.update(users)
+                .set({ points: sql`points - ${amount}` })
+                .where(and(eq(users.id, userId), sql`points >= ${amount}`))
+                .returning({ points: users.points });
 
-        await tx.insert(baccaratBets).values({
-            tableId,
-            userId: session.userId,
-            zone,
-            amount,
-            roundId: t.currentRoundId,
+            if (!usr) return { success: false, error: 'Insufficient points' as const };
+
+            const existing = await tx
+                .update(baccaratBets)
+                .set({ amount: sql`${baccaratBets.amount} + ${amount}` })
+                .where(and(
+                    eq(baccaratBets.tableId, tableId),
+                    eq(baccaratBets.roundId, t.currentRoundId),
+                    eq(baccaratBets.userId, userId),
+                    eq(baccaratBets.zone, zone),
+                    eq(baccaratBets.isResolved, false)
+                ))
+                .returning({ id: baccaratBets.id });
+
+            if (existing.length === 0) {
+                await tx.insert(baccaratBets).values({
+                    tableId,
+                    userId,
+                    zone,
+                    amount,
+                    roundId: t.currentRoundId,
+                });
+            }
+
+            return { success: true, balance: usr.points as number };
         });
+    }
 
-        return { success: true, balance: usr.points };
-    });
+    for (let attempt = 0; attempt <= BET_ACTION_RETRY_LIMIT; attempt++) {
+        const result = await runPlaceBet();
+        if (!(result as any).needsSync) return result;
+        await syncBaccaratState(tableId);
+    }
+
+    return { success: false, error: 'Not in betting phase' };
 }
 
 export async function clearBaccaratBets(tableId: string) {
     if (!db) return { success: false, error: 'DB unavailable' };
     const session = await getSession();
     if (!session?.userId) return { success: false, error: 'Not logged in' };
+    const userId = session.userId;
 
-    await syncBaccaratState(tableId);
+    async function runClearBets() {
+        return await db.transaction(async (tx: any) => {
+            await tx.execute(sql`SELECT 1 FROM baccarat_tables WHERE id = ${tableId} FOR UPDATE`);
 
-    return await db.transaction(async (tx: any) => {
-        const tables = await tx.select().from(baccaratTables).where(eq(baccaratTables.id, tableId)).limit(1);
-        if (tables.length === 0) return { success: false, error: 'Table not found' };
-        const t = tables[0];
-        if (t.status !== 'betting') return { success: false, error: 'Not in betting phase' };
+            const tables = await tx.select().from(baccaratTables).where(eq(baccaratTables.id, tableId)).limit(1);
+            if (tables.length === 0) return { success: false, error: 'Table not found', needsSync: true as const };
+            const t = tables[0];
 
-        const bets = await tx.select().from(baccaratBets).where(and(
-            eq(baccaratBets.roundId, t.currentRoundId || ''),
-            eq(baccaratBets.userId, session.userId),
-            eq(baccaratBets.isResolved, false)
-        ));
+            const now = Date.now();
+            const phaseEndsAtMs = t.phaseEndsAt ? t.phaseEndsAt.getTime() : 0;
+            if (!t.currentRoundId || phaseEndsAtMs === 0 || now >= phaseEndsAtMs) {
+                return { success: false, error: 'Round transitioning', needsSync: true as const };
+            }
 
-        const totalRefund = bets.reduce((sum: number, b: any) => sum + b.amount, 0);
+            if (t.status !== 'betting') return { success: false, error: 'Not in betting phase' as const };
 
-        if (totalRefund > 0) {
-            await tx.delete(baccaratBets).where(and(
-                eq(baccaratBets.roundId, t.currentRoundId || ''),
-                eq(baccaratBets.userId, session.userId)
-            ));
+            const removed = await tx
+                .delete(baccaratBets)
+                .where(and(
+                    eq(baccaratBets.tableId, tableId),
+                    eq(baccaratBets.roundId, t.currentRoundId || ''),
+                    eq(baccaratBets.userId, userId),
+                    eq(baccaratBets.isResolved, false)
+                ))
+                .returning({ amount: baccaratBets.amount });
+
+            const totalRefund = removed.reduce((sum: number, row: { amount: number }) => sum + row.amount, 0);
+            if (totalRefund === 0) return { success: true as const };
 
             const [usr] = await tx.update(users)
                 .set({ points: sql`points + ${totalRefund}` })
-                .where(eq(users.id, session.userId))
+                .where(eq(users.id, userId))
                 .returning({ points: users.points });
 
-            return { success: true, balance: usr.points };
-        }
-        return { success: true };
-    });
+            return { success: true as const, balance: usr.points as number };
+        });
+    }
+
+    for (let attempt = 0; attempt <= BET_ACTION_RETRY_LIMIT; attempt++) {
+        const result = await runClearBets();
+        if (!(result as any).needsSync) return result;
+        await syncBaccaratState(tableId);
+    }
+
+    return { success: false, error: 'Not in betting phase' };
 }
 
 export async function getBaccaratState(tableId: string) {

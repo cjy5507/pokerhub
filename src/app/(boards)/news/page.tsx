@@ -15,8 +15,8 @@ export const metadata: Metadata = {
   },
 };
 
-// Revalidate every 30 minutes
-export const revalidate = 1800;
+// Force dynamic rendering since we depend on user cookies for bookmarks
+export const dynamic = 'force-dynamic';
 
 export default async function NewsPage() {
   const [{ items, total }, bookmarkIdsResult] = await Promise.all([

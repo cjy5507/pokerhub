@@ -339,7 +339,7 @@ export const BaccaratDealer: React.FC<BaccaratDealerProps> = ({
 
 // Extracted mini-components for readability
 
-const CardFront = ({ card }: { card: any }) => (
+const CardFront = ({ card }: { card: { suit: string; value: string } }) => (
     <div className={cn(
         "absolute inset-0 rounded-lg [backface-visibility:hidden] bg-white flex flex-col items-center justify-center shadow-[0_10px_30px_rgba(0,0,0,0.5)] border border-slate-200",
         getSuitColor(card.suit)

@@ -163,195 +163,175 @@ export const BaccaratDealer: React.FC<BaccaratDealerProps> = ({
                 </div>
             </div>
 
-            {/* Status Indicator */}
-            <div className="absolute top-20 lg:top-24 w-full flex justify-center z-20">
-                <AnimatePresence mode="wait">
-                    <motion.div
-                        key={gameState}
-                        initial={{ opacity: 0, y: -20, scale: 0.9 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 10, scale: 1.1 }}
-                        className={cn(
-                            "px-6 py-2 md:py-3 rounded-full border backdrop-blur-xl shadow-2xl",
-                            gameState === 'betting' ? "bg-amber-500/10 border-amber-500/50" :
-                                gameState === 'dealing' ? "bg-black/80 border-white/20" :
-                                    "bg-green-500/10 border-green-500/50"
+            {/* HEADER: PLAYER vs Timer vs BANKER */}
+            <div className="flex items-center justify-center w-full max-w-3xl mx-auto mt-20 md:mt-16 mb-2 md:mb-4 z-20">
+                <div className="flex-1 text-right pr-6 md:pr-10 relative">
+                    <span className="text-2xl md:text-4xl font-black text-blue-500 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] tracking-tight">PLAYER</span>
+                    {/* Player WIN Badge */}
+                    <AnimatePresence>
+                        {gameState === 'result' && playerScore !== null && bankerScore !== null && playerScore > bankerScore && (
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0, x: 20 }}
+                                animate={{ opacity: 1, scale: 1, x: 0 }}
+                                exit={{ opacity: 0, scale: 0 }}
+                                className="absolute -top-4 right-8 bg-blue-600 text-white px-3 py-0.5 rounded-full font-black text-[10px] md:text-xs tracking-widest shadow-[0_0_15px_rgba(37,99,235,0.8)] border border-blue-400 z-30"
+                            >
+                                WIN
+                            </motion.div>
                         )}
-                    >
-                        <div className={cn(
-                            "flex items-center justify-center gap-2 text-sm md:text-lg font-black uppercase tracking-widest",
-                            gameState === 'betting' ? "text-amber-500 animate-pulse" :
-                                gameState === 'dealing' ? "text-white" : "text-green-500"
-                        )}>
-                            {gameState === 'betting' ? (
-                                <>
-                                    <span>베팅해 주세요</span>
-                                    <span className="text-xs md:text-sm opacity-80 mt-0.5">({timeRemaining}초)</span>
-                                </>
-                            ) : gameState === 'dealing' ? "베팅 마감" : "결과"}
+                    </AnimatePresence>
+                </div>
+
+                {/* Central Circle (Score or Timer) */}
+                <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-[#111418] border-4 border-[#2a3038] flex items-center justify-center shadow-[0_0_20px_rgba(0,0,0,0.8)] relative z-30 shrink-0">
+                    {gameState === 'betting' ? (
+                        <div className="flex flex-col items-center relative z-10">
+                            <span className="text-xl md:text-2xl font-black text-yellow-500 leading-none">{timeRemaining}</span>
                         </div>
-                    </motion.div>
-                </AnimatePresence>
+                    ) : (
+                        <span className="text-sm font-black text-white/50 italic leading-none">VS</span>
+                    )}
+
+                    {/* Circular Progress Ring for Betting */}
+                    {gameState === 'betting' && (
+                        <svg className="absolute inset-0 w-full h-full -rotate-90">
+                            <circle cx="50%" cy="50%" r="46%" fill="none" stroke="rgba(234,179,8,0.15)" strokeWidth="8%" />
+                            <circle cx="50%" cy="50%" r="46%" fill="none" stroke="#eab308" strokeWidth="8%" strokeDasharray="290%" strokeDashoffset={`${290 - (290 * (timeRemaining / 15))}%`} className="transition-all duration-1000 ease-linear" />
+                        </svg>
+                    )}
+                </div>
+
+                <div className="flex-1 text-left pl-6 md:pl-10 relative">
+                    <span className="text-2xl md:text-4xl font-black text-red-500 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] tracking-tight">BANKER</span>
+                    {/* Banker WIN Badge */}
+                    <AnimatePresence>
+                        {gameState === 'result' && playerScore !== null && bankerScore !== null && bankerScore > playerScore && (
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0, x: -20 }}
+                                animate={{ opacity: 1, scale: 1, x: 0 }}
+                                exit={{ opacity: 0, scale: 0 }}
+                                className="absolute -top-4 left-8 bg-red-600 text-white px-3 py-0.5 rounded-full font-black text-[10px] md:text-xs tracking-widest shadow-[0_0_15px_rgba(220,38,38,0.8)] border border-red-400 z-30"
+                            >
+                                WIN
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
             </div>
 
-            {/* Cards Display */}
-            <div className="flex justify-center gap-8 md:gap-24 relative z-10 w-full px-4 mt-20 md:mt-12">
+            {/* Cards Display / Action Area */}
+            <div className="flex justify-center items-start gap-1 md:gap-4 relative z-10 w-full px-2 max-w-4xl mx-auto mb-4 md:mb-8">
 
-                {/* Player Side */}
-                <div className="flex flex-col items-center flex-1 max-w-[200px]">
-                    <div className="flex justify-center gap-2 relative min-h-[140px] md:min-h-[160px] w-full">
-                        <AnimatePresence>
-                            {playerCards.map((card, i) => {
-                                const dealIndex = i === 0 ? 0 : i === 1 ? 2 : 4;
-                                const isFlipped = revealedCards > dealIndex;
-                                return (
-                                    <motion.div
-                                        key={`p-${i}`}
-                                        initial={{ opacity: 0, x: 100, y: -250, scale: 0.1, rotateY: 180, rotateZ: 180 }}
-                                        animate={{
-                                            opacity: 1,
-                                            x: i === 2 ? 10 : 0,
-                                            y: i === 2 ? 10 : 0,
-                                            scale: isFlipped ? [1, 1.15, 1] : 1, // Squeeze effect
-                                            rotateY: isFlipped ? 0 : 180,
-                                            rotateZ: i === 2 ? 90 : 0
-                                        }}
-                                        transition={{
-                                            opacity: { duration: 0.3, delay: dealIndex * 0.15 },
-                                            x: { type: "spring", stiffness: 90, damping: 12, delay: dealIndex * 0.15 },
-                                            y: { type: "spring", stiffness: 90, damping: 12, delay: dealIndex * 0.15 },
-                                            rotateZ: { type: "spring", stiffness: 90, damping: 12, delay: dealIndex * 0.15 },
-                                            rotateY: { duration: 0.8, ease: [0.175, 0.885, 0.32, 1.1], delay: dealIndex * 0.4 }, // Dramatic flip
-                                            scale: { duration: 0.8, ease: "easeInOut", delay: dealIndex * 0.4 }
-                                        }}
-                                        className={cn(
-                                            "relative w-16 h-24 md:w-20 md:h-28 will-change-transform",
-                                            "[transform-style:preserve-3d]",
-                                            i === 2 ? "absolute -right-6 md:-right-10 top-2 lg:top-4 z-10" : "z-0"
-                                        )}
-                                    >
-                                        <CardFront card={card} />
-                                        <CardBack />
-                                    </motion.div>
-                                );
-                            })}
-                        </AnimatePresence>
-                        {/* Player WIN Badge */}
-                        <AnimatePresence>
-                            {gameState === 'result' && playerScore !== null && bankerScore !== null && playerScore > bankerScore && (
+                {/* Player Cards */}
+                <div className="flex justify-end gap-1 md:gap-2 relative min-h-[120px] w-[160px] md:w-[240px] shrink-0">
+                    <AnimatePresence>
+                        {playerCards.map((card, i) => {
+                            const dealIndex = i === 0 ? 0 : i === 1 ? 2 : 4;
+                            const isFlipped = revealedCards > dealIndex;
+                            return (
                                 <motion.div
-                                    initial={{ opacity: 0, scale: 0, y: 20 }}
-                                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                                    exit={{ opacity: 0, scale: 0 }}
-                                    className="absolute -top-6 left-1/2 -translate-x-1/2 bg-gradient-to-t from-yellow-600 to-yellow-300 text-black px-4 py-0.5 rounded-full font-black text-sm tracking-widest shadow-[0_0_20px_rgba(250,204,21,0.8)] border border-yellow-200 z-30"
+                                    key={`p-${i}`}
+                                    initial={{ opacity: 0, x: 100, y: -250, scale: 0.1, rotateY: 180, rotateZ: 45 }}
+                                    animate={{
+                                        opacity: 1,
+                                        x: 0,
+                                        y: i === 2 ? 10 : 0,
+                                        scale: isFlipped ? [1, 1.15, 1] : 1,
+                                        rotateY: isFlipped ? 0 : 180,
+                                        rotateZ: i === 2 ? 90 : 0
+                                    }}
+                                    transition={{
+                                        opacity: { duration: 0.3, delay: dealIndex * 0.15 },
+                                        x: { type: "spring", stiffness: 90, damping: 12, delay: dealIndex * 0.15 },
+                                        y: { type: "spring", stiffness: 90, damping: 12, delay: dealIndex * 0.15 },
+                                        rotateZ: { type: "spring", stiffness: 90, damping: 12, delay: dealIndex * 0.15 },
+                                        rotateY: { duration: 0.6, ease: [0.175, 0.885, 0.32, 1.1], delay: dealIndex * 0.4 },
+                                        scale: { duration: 0.6, ease: "easeInOut", delay: dealIndex * 0.4 }
+                                    }}
+                                    className={cn(
+                                        "relative w-14 h-20 md:w-20 md:h-28 will-change-transform shadow-[0_4px_10px_rgba(0,0,0,0.5)]",
+                                        "[transform-style:preserve-3d]",
+                                        i === 2 ? "absolute -right-8 md:-right-12 top-2 lg:top-4 z-10" : "z-0"
+                                    )}
                                 >
-                                    WIN
+                                    <CardFront card={card} />
+                                    <CardBack />
                                 </motion.div>
-                            )}
-                        </AnimatePresence>
+                            );
+                        })}
+                    </AnimatePresence>
+                    {playerCards.length === 0 && (
+                        <div className="flex gap-1 md:gap-2">
+                            <EmptyCardSlot />
+                            <EmptyCardSlot />
+                        </div>
+                    )}
+                </div>
 
-                        {playerCards.length === 0 && <EmptyCardSlot />}
-                    </div>
-
-                    <div className="mt-8 flex flex-col items-center">
-                        <span className={cn(
-                            "text-sm md:text-md font-black uppercase tracking-widest px-6 py-1 rounded-full",
-                            "bg-blue-600/20 text-blue-400 border border-blue-500/30",
-                            gameState === 'result' && playerScore !== null && bankerScore !== null && playerScore > bankerScore
-                                ? "shadow-[0_0_30px_rgba(59,130,246,0.6)] ring-2 ring-blue-500 scale-110 bg-blue-600/40 text-blue-300" : ""
-                        )}>플레이어</span>
-                        <motion.div
-                            key={playerScore}
-                            initial={{ scale: 0.5, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            className="mt-3 text-5xl md:text-6xl font-black font-mono text-white drop-shadow-md"
-                        >
+                {/* Scores VS Block */}
+                <div className="flex items-center justify-center px-1 md:px-4 shrink-0 mt-2 md:mt-4">
+                    <div className="flex items-center gap-2 md:gap-4 bg-[#111418] px-3 md:px-5 py-2 md:py-3 rounded-2xl border border-white/5 shadow-[0_4px_15px_rgba(0,0,0,0.6)]">
+                        <div className={cn(
+                            "text-2xl md:text-4xl font-black w-10 h-10 md:w-14 md:h-14 flex justify-center items-center rounded-xl shadow-inner border border-blue-500/20 transition-colors",
+                            playerScore !== null ? "bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)]" : "bg-[#1e2329] text-white/20"
+                        )}>
                             {(isDealing) && playerScore !== null ? playerScore : (playerCards.length > 0 ? (playerScore !== null ? playerScore : "?") : "-")}
-                        </motion.div>
-                    </div>
-                </div>
-
-                {/* VS */}
-                <div className="hidden lg:flex flex-col items-center justify-center px-4">
-                    <div className="w-[1px] h-12 bg-gradient-to-b from-transparent via-white/20 to-transparent" />
-                    <span className="text-white/30 text-xs font-black italic my-2 uppercase tracking-[0.3em]">VS</span>
-                    <div className="w-[1px] h-12 bg-gradient-to-b from-transparent via-white/20 to-transparent" />
-                </div>
-
-                {/* Banker Side */}
-                <div className="flex flex-col items-center flex-1 max-w-[200px]">
-                    <div className="flex justify-center gap-2 relative min-h-[140px] md:min-h-[160px] w-full">
-                        <AnimatePresence>
-                            {bankerCards.map((card, i) => {
-                                const dealIndex = i === 0 ? 1 : i === 1 ? 3 : 5;
-                                const isFlipped = revealedCards > dealIndex;
-                                return (
-                                    <motion.div
-                                        key={`b-${i}`}
-                                        initial={{ opacity: 0, x: -100, y: -250, scale: 0.1, rotateY: 180, rotateZ: -180 }}
-                                        animate={{
-                                            opacity: 1,
-                                            x: i === 2 ? -10 : 0,
-                                            y: i === 2 ? 10 : 0,
-                                            scale: isFlipped ? [1, 1.15, 1] : 1, // Squeeze effect
-                                            rotateY: isFlipped ? 0 : 180,
-                                            rotateZ: i === 2 ? -90 : 0
-                                        }}
-                                        transition={{
-                                            opacity: { duration: 0.3, delay: dealIndex * 0.15 },
-                                            x: { type: "spring", stiffness: 90, damping: 12, delay: dealIndex * 0.15 },
-                                            y: { type: "spring", stiffness: 90, damping: 12, delay: dealIndex * 0.15 },
-                                            rotateZ: { type: "spring", stiffness: 90, damping: 12, delay: dealIndex * 0.15 },
-                                            rotateY: { duration: 0.8, ease: [0.175, 0.885, 0.32, 1.1], delay: dealIndex * 0.4 }, // Dramatic flip
-                                            scale: { duration: 0.8, ease: "easeInOut", delay: dealIndex * 0.4 }
-                                        }}
-                                        className={cn(
-                                            "relative w-16 h-24 md:w-20 md:h-28 will-change-transform",
-                                            "[transform-style:preserve-3d]",
-                                            i === 2 ? "absolute -left-6 md:-left-10 top-2 lg:top-4 z-10" : "z-0"
-                                        )}
-                                    >
-                                        <CardFront card={card} />
-                                        <CardBack />
-                                    </motion.div>
-                                );
-                            })}
-                        </AnimatePresence>
-                        {/* Banker WIN Badge */}
-                        <AnimatePresence>
-                            {gameState === 'result' && playerScore !== null && bankerScore !== null && bankerScore > playerScore && (
-                                <motion.div
-                                    initial={{ opacity: 0, scale: 0, y: 20 }}
-                                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                                    exit={{ opacity: 0, scale: 0 }}
-                                    className="absolute -top-6 left-1/2 -translate-x-1/2 bg-gradient-to-t from-yellow-600 to-yellow-300 text-black px-4 py-0.5 rounded-full font-black text-sm tracking-widest shadow-[0_0_20px_rgba(250,204,21,0.8)] border border-yellow-200 z-30"
-                                >
-                                    WIN
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-
-                        {bankerCards.length === 0 && <EmptyCardSlot />}
-                    </div>
-
-                    <div className="mt-8 flex flex-col items-center">
-                        <span className={cn(
-                            "text-sm md:text-md font-black uppercase tracking-widest px-6 py-1 rounded-full",
-                            "bg-red-600/20 text-red-400 border border-red-500/30",
-                            gameState === 'result' && playerScore !== null && bankerScore !== null && bankerScore > playerScore
-                                ? "shadow-[0_0_30px_rgba(220,38,38,0.6)] ring-2 ring-red-500 scale-110 bg-red-600/40 text-red-300" : ""
-                        )}>뱅커</span>
-                        <motion.div
-                            key={bankerScore}
-                            initial={{ scale: 0.5, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            className="mt-3 text-5xl md:text-6xl font-black font-mono text-white drop-shadow-md"
-                        >
+                        </div>
+                        <span className="text-white/20 text-[10px] md:text-xs font-black italic mt-1 uppercase tracking-widest hidden sm:block">Score</span>
+                        <div className={cn(
+                            "text-2xl md:text-4xl font-black w-10 h-10 md:w-14 md:h-14 flex justify-center items-center rounded-xl shadow-inner border border-red-500/20 transition-colors",
+                            bankerScore !== null ? "bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]" : "bg-[#1e2329] text-white/20"
+                        )}>
                             {(isDealing) && bankerScore !== null ? bankerScore : (bankerCards.length > 0 ? (bankerScore !== null ? bankerScore : "?") : "-")}
-                        </motion.div>
+                        </div>
                     </div>
                 </div>
 
+                {/* Banker Cards */}
+                <div className="flex justify-start gap-1 md:gap-2 relative min-h-[120px] w-[160px] md:w-[240px] shrink-0">
+                    <AnimatePresence>
+                        {bankerCards.map((card, i) => {
+                            const dealIndex = i === 0 ? 1 : i === 1 ? 3 : 5;
+                            const isFlipped = revealedCards > dealIndex;
+                            return (
+                                <motion.div
+                                    key={`b-${i}`}
+                                    initial={{ opacity: 0, x: -100, y: -250, scale: 0.1, rotateY: 180, rotateZ: -45 }}
+                                    animate={{
+                                        opacity: 1,
+                                        x: 0,
+                                        y: i === 2 ? 10 : 0,
+                                        scale: isFlipped ? [1, 1.15, 1] : 1,
+                                        rotateY: isFlipped ? 0 : 180,
+                                        rotateZ: i === 2 ? -90 : 0
+                                    }}
+                                    transition={{
+                                        opacity: { duration: 0.3, delay: dealIndex * 0.15 },
+                                        x: { type: "spring", stiffness: 90, damping: 12, delay: dealIndex * 0.15 },
+                                        y: { type: "spring", stiffness: 90, damping: 12, delay: dealIndex * 0.15 },
+                                        rotateZ: { type: "spring", stiffness: 90, damping: 12, delay: dealIndex * 0.15 },
+                                        rotateY: { duration: 0.6, ease: [0.175, 0.885, 0.32, 1.1], delay: dealIndex * 0.4 },
+                                        scale: { duration: 0.6, ease: "easeInOut", delay: dealIndex * 0.4 }
+                                    }}
+                                    className={cn(
+                                        "relative w-14 h-20 md:w-20 md:h-28 will-change-transform shadow-[0_4px_10px_rgba(0,0,0,0.5)]",
+                                        "[transform-style:preserve-3d]",
+                                        i === 2 ? "absolute -left-8 md:-left-12 top-2 lg:top-4 z-10" : "z-0"
+                                    )}
+                                >
+                                    <CardFront card={card} />
+                                    <CardBack />
+                                </motion.div>
+                            );
+                        })}
+                    </AnimatePresence>
+                    {bankerCards.length === 0 && (
+                        <div className="flex gap-1 md:gap-2">
+                            <EmptyCardSlot />
+                            <EmptyCardSlot />
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
@@ -379,7 +359,7 @@ const CardBack = () => (
 );
 
 const EmptyCardSlot = () => (
-    <div className="w-16 h-24 md:w-20 md:h-28 border-2 border-dashed border-white/10 rounded-lg flex items-center justify-center bg-black/20">
-        <span className="text-white/20 text-[10px] uppercase font-bold tracking-widest">Card</span>
+    <div className="w-14 h-20 md:w-20 md:h-28 border-[1.5px] border-dashed border-white/20 rounded-lg flex items-center justify-center bg-black/40 shadow-inner">
+        <span className="text-white/20 text-[10px] md:text-xs uppercase font-bold tracking-widest">Card</span>
     </div>
 );

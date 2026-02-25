@@ -76,8 +76,7 @@ export async function syncBaccaratState(tableId: string) {
         let myBetsData: any = {};
 
         await db.transaction(async (tx: any) => {
-            const tQuery = await tx.execute(sql`SELECT * FROM baccarat_tables WHERE id = ${tableId} FOR UPDATE`);
-            let tables = tQuery.rows || await tx.select().from(baccaratTables).where(eq(baccaratTables.id, tableId)).limit(1);
+            let tables = await tx.select().from(baccaratTables).where(eq(baccaratTables.id, tableId)).limit(1);
 
             if (tables.length === 0) {
                 await tx.insert(baccaratTables).values({ id: tableId, status: 'betting', history: [] });

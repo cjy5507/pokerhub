@@ -187,13 +187,14 @@ export function BaccaratTableClient({ tableId, userId, nickname }: BaccaratTable
     return (
         <div className="w-full flex-1 min-h-[600px] h-[calc(100vh-120px)] bg-slate-900 dark:bg-[#0a0f12] rounded-xl flex flex-col overflow-hidden select-none relative font-sans text-white border border-white/10 shadow-2xl transition-colors">
 
-            {/* Dynamic Animated Background Filter */}
+            {/* Dynamic Animated Background Filter - Mystery Board Cafe Theme */}
             <div className={cn("absolute inset-0 opacity-40 pointer-events-none transition-all duration-[3000ms] ease-in-out",
-                gameState === 'betting' ? "bg-[radial-gradient(circle_at_50%_50%,#b45309_0%,transparent_30%),radial-gradient(circle_at_80%_80%,#991b1b_0%,transparent_40%)]" :
-                    gameState === 'dealing' ? "bg-[radial-gradient(circle_at_20%_20%,#0f172a_0%,transparent_40%),radial-gradient(circle_at_80%_20%,#1e3a8a_0%,transparent_40%)] blur-2xl opacity-50 scale-110" :
+                gameState === 'betting' ? "bg-[radial-gradient(circle_at_50%_50%,#7e22ce_0%,transparent_40%),radial-gradient(circle_at_80%_80%,#be185d_0%,transparent_30%)]" :
+                    gameState === 'dealing' ? "bg-[radial-gradient(circle_at_20%_20%,#0f172a_0%,transparent_40%),radial-gradient(circle_at_80%_20%,#4c1d95_0%,transparent_50%)] blur-2xl opacity-50 scale-110" :
                         "bg-[radial-gradient(circle_at_50%_40%,#eab308_0%,transparent_50%)] blur-xl opacity-30 scale-100"
             )} />
-            <div className="absolute inset-0 bg-gradient-to-b from-[#0a0f12]/60 via-[#0a0f12]/80 to-[#000000] pointer-events-none" />
+            {/* Wooden/Vintage dark overlay for the cafe table feel */}
+            <div className="absolute inset-0 bg-gradient-to-b from-[#1a1025]/80 via-[#100918]/90 to-[#05020a] pointer-events-none" />
 
             {/* TOP BAR */}
             <header className="flex-shrink-0 h-14 flex items-center justify-between px-4 z-30 border-b border-white/10 bg-black/40 backdrop-blur-md">
@@ -203,9 +204,9 @@ export function BaccaratTableClient({ tableId, userId, nickname }: BaccaratTable
                     </Link>
                     <div>
                         <h1 className="text-sm md:text-base font-bold flex items-center gap-2 text-white">
-                            바카라 <span className="text-yellow-500">프리미엄</span>
+                            미스테리 <span className="text-purple-400">보드카페</span>
                         </h1>
-                        <p className="text-[10px] md:text-xs text-white/50">테이블 {tableId.slice(0, 4)} • 최소 100 / 최대 1M</p>
+                        <p className="text-[10px] md:text-xs text-white/50">테이블 {tableId.slice(0, 4)} • 바카라 VIP</p>
                     </div>
                 </div>
 

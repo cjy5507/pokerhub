@@ -50,39 +50,66 @@ export const BaccaratDealer: React.FC<BaccaratDealerProps> = ({
             {/* Dealer Character */}
             <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center">
                 <motion.div animate={dealerMotion} className="relative flex flex-col items-center">
-                    {/* Hat */}
-                    <div className="relative z-10 w-14 h-5 md:w-16 md:h-6 bg-gradient-to-b from-slate-900 to-slate-800 dark:from-slate-700 dark:to-slate-800 rounded-full shadow-md border border-slate-600/50 flex items-center justify-center -mb-1">
-                        <div className="w-10 md:w-12 h-[2px] bg-yellow-400/80 rounded-full" />
+                    {/* Hair / Head top */}
+                    <div className="relative z-10 w-12 h-6 md:w-14 md:h-7 bg-slate-800 rounded-t-[2.5rem] shadow-inner -mb-2 overflow-hidden flex justify-center">
+                        <div className="w-full h-full bg-gradient-to-tr from-black via-slate-800 to-slate-700 opacity-90" />
+                        <div className="absolute top-1 right-2 w-3 h-3 bg-white/10 rounded-full blur-[2px]" />
                     </div>
-                    {/* Head */}
-                    <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-b from-amber-200 to-amber-300 dark:from-amber-300 dark:to-amber-400 mx-auto relative border-2 border-amber-400/50 shadow-md z-0 shadow-amber-900/50">
+                    {/* Face */}
+                    <div className="w-12 h-14 md:w-14 md:h-16 rounded-[2rem] rounded-b-[2.5rem] bg-gradient-to-b from-orange-200 to-orange-300 dark:from-orange-300 dark:to-orange-400 mx-auto relative border border-orange-400/30 shadow-md z-0 shadow-black/40 overflow-hidden">
                         {/* Eyes */}
-                        <div className="absolute top-[42%] left-[26%] w-1.5 h-2 md:w-2 md:h-2.5 bg-slate-800 rounded-full" />
-                        <div className="absolute top-[42%] right-[26%] w-1.5 h-2 md:w-2 md:h-2.5 bg-slate-800 rounded-full" />
-                        {/* Checkes */}
-                        <div className="absolute top-[55%] left-[15%] w-2 h-1.5 bg-rose-400/60 rounded-full blur-[1px]" />
-                        <div className="absolute top-[55%] right-[15%] w-2 h-1.5 bg-rose-400/60 rounded-full blur-[1px]" />
-                    </div>
-                    {/* Body */}
-                    <div className="w-16 h-10 md:w-20 md:h-12 bg-gradient-to-b from-red-900 to-red-950 rounded-b-2xl relative overflow-hidden border-x-2 border-b-2 border-red-800/50 -mt-1 shadow-inner shadow-black/50">
-                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-4 h-3 md:w-5 md:h-3">
-                            <div className="absolute inset-0 flex"><div className="w-1/2 h-full bg-black rounded-l-full" /><div className="w-1/2 h-full bg-black rounded-r-full" /></div>
+                        <div className="absolute top-[35%] left-[22%] w-2 h-1.5 md:w-2.5 md:h-2 bg-slate-900 rounded-full flex justify-center overflow-hidden">
+                            <div className="w-1 h-1 bg-white rounded-full translate-x-[1px]" />
                         </div>
-                        <div className="absolute top-3 left-1/2 -translate-x-1/2 w-[1px] h-full bg-white/20" />
+                        <div className="absolute top-[35%] right-[22%] w-2 h-1.5 md:w-2.5 md:h-2 bg-slate-900 rounded-full flex justify-center overflow-hidden">
+                            <div className="w-1 h-1 bg-white rounded-full -translate-x-[1px]" />
+                        </div>
+
+                        {/* THE BIG NOSE */}
+                        <div className="absolute top-[48%] left-1/2 -translate-x-1/2 w-4 h-6 md:w-5 md:h-7 bg-gradient-to-b from-orange-300 to-orange-400 rounded-full shadow-[0_4px_6px_rgba(0,0,0,0.2)] border-x border-b border-orange-500/40 z-10 flex flex-col items-center justify-end pb-1">
+                            {/* Nostrils */}
+                            <div className="flex gap-1.5">
+                                <div className="w-1 h-1 bg-orange-900/60 rounded-full" />
+                                <div className="w-1 h-1 bg-orange-900/60 rounded-full" />
+                            </div>
+                        </div>
+
+                        {/* Mouth */}
+                        <div className="absolute top-[80%] left-1/2 -translate-x-1/2 w-4 h-1 md:w-5 md:h-1.5 bg-gradient-to-b from-rose-900 to-rose-950 rounded-full opacity-80" />
+                    </div>
+                    {/* Neck & Bowtie */}
+                    <div className="w-4 h-3 md:w-5 md:h-4 bg-orange-400 relative -mt-1 z-10 shadow-inner">
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-3 bg-red-800 rounded-sm flex items-center justify-center shadow-sm">
+                            <div className="w-2 h-2 bg-red-900 rounded-full" />
+                        </div>
+                    </div>
+                    {/* Body (Vest & Shirt) */}
+                    <div className="w-16 h-12 md:w-20 md:h-14 bg-gradient-to-b from-slate-950 to-black rounded-b-3xl relative overflow-hidden border border-slate-800 -mt-1 shadow-[0_10px_20px_rgba(0,0,0,0.5)] z-0">
+                        {/* White Shirt Triangle */}
+                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-10 md:w-8 md:h-12 bg-white flex justify-center" style={{ clipPath: 'polygon(0 0, 100% 0, 50% 100%)' }}>
+                            {/* Buttons */}
+                            <div className="mt-3 flex flex-col gap-1.5">
+                                <div className="w-1 h-1 bg-black rounded-full" />
+                                <div className="w-1 h-1 bg-black rounded-full" />
+                            </div>
+                        </div>
                     </div>
                     {/* Dealer Arms (Hidden in idle, move when dealing) */}
                     <motion.div
-                        animate={gameState === 'dealing' ? { y: [0, 15, 0], x: [-5, -15, -5], scaleY: [1, 1.2, 1], rotate: [0, 15, 0] } : {}}
+                        animate={gameState === 'dealing' ? { y: [0, 15, 0], x: [-5, -15, -5], scaleY: [1, 1.2, 1], rotate: [0, 20, 0] } : {}}
                         transition={{ duration: 0.6, repeat: Infinity }}
-                        className="absolute top-14 -left-1 w-3 h-8 bg-red-950 rounded-full border border-red-900/50 shadow-md origin-top -z-10"
+                        className="absolute top-16 -left-1 w-3.5 h-10 bg-slate-900 rounded-full border border-slate-800 shadow-md origin-top -z-10"
                     />
                     <motion.div
-                        animate={gameState === 'dealing' ? { y: [0, 15, 0], x: [5, 15, 5], scaleY: [1, 1.2, 1], rotate: [0, -15, 0] } : {}}
+                        animate={gameState === 'dealing' ? { y: [0, 15, 0], x: [5, 15, 5], scaleY: [1, 1.2, 1], rotate: [0, -20, 0] } : {}}
                         transition={{ duration: 0.6, repeat: Infinity, delay: 0.3 }}
-                        className="absolute top-14 -right-1 w-3 h-8 bg-red-950 rounded-full border border-red-900/50 shadow-md origin-top -z-10"
+                        className="absolute top-16 -right-1 w-3.5 h-10 bg-slate-900 rounded-full border border-slate-800 shadow-md origin-top -z-10"
                     />
                 </motion.div>
-                <span className="text-[10px] font-bold text-slate-400 dark:text-white/30 mt-2 uppercase tracking-widest drop-shadow-md">딜러</span>
+                <div className="flex flex-col items-center mt-2">
+                    <span className="text-xs font-black text-white px-2 py-0.5 bg-black/50 rounded-md border border-white/20 shadow-md">TERRY</span>
+                    <span className="text-[9px] font-bold text-slate-400 dark:text-white/40 uppercase tracking-widest drop-shadow-md">딜러</span>
+                </div>
             </div>
 
             {/* Status Indicator */}

@@ -24,6 +24,7 @@ export function SnailRaceClient({ tableId, userId, initialBalance }: SnailRaceCl
     gameState, timeRemaining, isMuted, setIsMuted,
     selectedChip, setSelectedChip, balance, myBets, history,
     raceResult, isMounted, isDesktop, placeBet, clearBets,
+    participants, odds,
   } = useSnailRace(tableId, userId, initialBalance);
 
   if (!isMounted) {
@@ -160,6 +161,7 @@ export function SnailRaceClient({ tableId, userId, initialBalance }: SnailRaceCl
             gameState={gameState}
             raceResult={raceResult}
             timeRemaining={timeRemaining}
+            participants={participants}
           />
 
           {/* Results overlay */}
@@ -168,6 +170,7 @@ export function SnailRaceClient({ tableId, userId, initialBalance }: SnailRaceCl
             raceResult={raceResult}
             myBets={myBets}
             balance={balance}
+            odds={odds}
           />
         </div>
       </div>
@@ -186,15 +189,26 @@ export function SnailRaceClient({ tableId, userId, initialBalance }: SnailRaceCl
         setSelectedChip={setSelectedChip}
         placeBet={placeBet}
         clearBets={clearBets}
+        participants={participants}
+        odds={odds}
       />
     </div>
   );
 }
 
 // Desktop sidebar shows history as vertical list of podiums
+const SNAIL_COLORS_SIDEBAR: Record<number, string> = {
+  0: '#ef4444', 1: '#3b82f6', 2: '#22c55e',
+  3: '#f59e0b', 4: '#a855f7', 5: '#ec4899', 6: '#06b6d4',
+};
+const SNAIL_NAMES_SIDEBAR: Record<number, string> = {
+  0: '지나', 1: '해연', 2: '영',
+  3: '뻥카', 4: '우성', 5: '테리', 6: '경원',
+};
+
 function SnailRaceHistorySidebar({ history }: { history: Array<{ first: number; second: number; third: number }> }) {
-  const SNAIL_COLORS: Record<number, string> = { 0: '#ef4444', 1: '#3b82f6', 2: '#22c55e' };
-  const SNAIL_NAMES: Record<number, string> = { 0: '테리', 1: '강욱', 2: '경원' };
+  const SNAIL_COLORS = SNAIL_COLORS_SIDEBAR;
+  const SNAIL_NAMES = SNAIL_NAMES_SIDEBAR;
 
   if (history.length === 0) {
     return (

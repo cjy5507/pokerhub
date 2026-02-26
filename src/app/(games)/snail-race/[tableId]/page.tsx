@@ -11,9 +11,13 @@ export default async function SnailRacePage({ params }: { params: Promise<{ tabl
   const { tableId } = await params;
 
   let initialBalance = 0;
-  if (session?.userId) {
-    const [u] = await db.select({ points: users.points }).from(users).where(eq(users.id, session.userId)).limit(1);
-    if (u) initialBalance = u.points;
+  try {
+    if (session?.userId) {
+      const [u] = await db.select({ points: users.points }).from(users).where(eq(users.id, session.userId)).limit(1);
+      if (u) initialBalance = u.points;
+    }
+  } catch (e) {
+    console.error('SnailRacePage DB error:', e);
   }
 
   return (

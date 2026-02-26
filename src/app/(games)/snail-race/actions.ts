@@ -1,3 +1,6 @@
+// Run this SQL in Supabase SQL Editor:
+// ALTER TABLE snail_race_rounds ADD COLUMN IF NOT EXISTS participants jsonb DEFAULT '[]';
+
 'use server';
 
 import { baccaratDb as db } from '@/lib/db';
@@ -17,18 +20,14 @@ const ROOM_IDLE_EXPIRY_MS = 60 * 60 * 1000;
 const MAX_CATCHUP_ITERATIONS = 10;
 
 export const SNAILS = [
-    { id: 0, name: '테리', color: '#ef4444' },
-    { id: 1, name: '강욱', color: '#3b82f6' },
-    { id: 2, name: '경원', color: '#22c55e' },
+    { id: 0, name: '지나', color: '#ef4444' },
+    { id: 1, name: '해연', color: '#3b82f6' },
+    { id: 2, name: '영', color: '#22c55e' },
+    { id: 3, name: '뻥카', color: '#f59e0b' },
+    { id: 4, name: '우성', color: '#a855f7' },
+    { id: 5, name: '테리', color: '#ec4899' },
+    { id: 6, name: '경원', color: '#06b6d4' },
 ] as const;
-
-const BET_ODDS: Record<string, number> = {
-    win: 2.7,
-    place: 1.3,
-    exacta_box: 1.8,
-    exacta: 4.5,
-    trifecta: 5.0,
-};
 
 function sleep(ms: number): Promise<void> { return new Promise(r => setTimeout(r, ms)); }
 
@@ -36,37 +35,76 @@ function newId(): string {
     return typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : randomUUID();
 }
 
-function generateRaceResult(): { raceSeed: string; finishOrder: number[] } {
-    const raceSeed = newId();
-    // Fisher-Yates shuffle of [0, 1, 2]
-    const arr = [0, 1, 2];
-    for (let i = arr.length - 1; i > 0; i--) {
+function fisherYates(arr: number[]): number[] {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
+        [a[i], a[j]] = [a[j], a[i]];
     }
-    return { raceSeed, finishOrder: arr };
+    return a;
 }
 
-function calculateSnailBetPayout(bet: { betType: string; snails: number[]; amount: number }, finishOrder: number[]): number {
-    const { betType, snails, amount } = bet;
+function selectParticipants(): number[] {
+    const all = [0, 1, 2, 3, 4, 5, 6];
+    return fisherYates(all).slice(0, 3);
+}
 
-    let won = false;
-    if (betType === 'win') {
-        won = snails[0] === finishOrder[0];
-    } else if (betType === 'place') {
-        won = finishOrder.slice(0, 2).includes(snails[0]);
-    } else if (betType === 'exacta_box') {
-        const betSet = new Set(snails);
-        const topSet = new Set(finishOrder.slice(0, 2));
-        won = betSet.size === topSet.size && [...betSet].every(s => topSet.has(s));
-    } else if (betType === 'exacta') {
-        won = snails[0] === finishOrder[0] && snails[1] === finishOrder[1];
-    } else if (betType === 'trifecta') {
-        won = snails[0] === finishOrder[0] && snails[1] === finishOrder[1] && snails[2] === finishOrder[2];
+function generateRaceResult(participants: number[]): { raceSeed: string; finishOrder: number[]; participants: number[] } {
+    const raceSeed = newId();
+    const finishOrder = fisherYates(participants);
+    return { raceSeed, finishOrder, participants };
+}
+
+export async function getSnailOdds(tableId: string): Promise<Record<number, number>> {
+    if (!db) return {};
+
+    const rounds = await db
+        .select({ finishOrder: snailRaceRounds.finishOrder, participants: snailRaceRounds.participants })
+        .from(snailRaceRounds)
+        .where(eq(snailRaceRounds.tableId, tableId))
+        .orderBy(sql`${snailRaceRounds.createdAt} DESC`)
+        .limit(30);
+
+    const appearances: Record<number, number> = {};
+    const wins: Record<number, number> = {};
+
+    for (const round of rounds) {
+        const participants = round.participants as number[] | null;
+        const finishOrder = round.finishOrder as number[] | null;
+        if (!participants || !finishOrder) continue;
+
+        for (const snailId of participants) {
+            appearances[snailId] = (appearances[snailId] ?? 0) + 1;
+        }
+        const winner = finishOrder[0];
+        if (winner !== undefined) {
+            wins[winner] = (wins[winner] ?? 0) + 1;
+        }
     }
 
+    const odds: Record<number, number> = {};
+    for (let i = 0; i < 7; i++) {
+        const app = appearances[i] ?? 0;
+        const w = wins[i] ?? 0;
+        if (app < 5) {
+            odds[i] = 3.0;
+        } else {
+            const winRate = w / app;
+            const rawOdds = 1 / winRate;
+            const edgeOdds = rawOdds * 0.9;
+            odds[i] = Math.max(1.5, Math.min(5.0, edgeOdds));
+        }
+    }
+    return odds;
+}
+
+function calculateSnailBetPayout(
+    bet: { snails: number[]; amount: number; odds: number },
+    finishOrder: number[]
+): number {
+    const won = bet.snails[0] === finishOrder[0];
     if (!won) return 0;
-    return Math.floor(amount * (BET_ODDS[betType] ?? 0));
+    return Math.floor(bet.amount * bet.odds);
 }
 
 export async function syncSnailRaceState(tableId: string) {
@@ -169,13 +207,15 @@ export async function syncSnailRaceState(tableId: string) {
                     dbUpdates++;
 
                     if (currentStatus === 'betting') {
-                        // betting -> racing: generate race result, insert round
-                        const { raceSeed, finishOrder } = generateRaceResult();
+                        // betting -> racing: select participants, generate race result, insert round
+                        const participants = selectParticipants();
+                        const { raceSeed, finishOrder } = generateRaceResult(participants);
                         await tx.insert(snailRaceRounds).values({
                             id: currentRoundId,
                             tableId,
                             raceSeed,
                             finishOrder,
+                            participants,
                         });
                         currentStatus = 'racing';
                         txEndsAt += PHASE_RACING_MS;
@@ -196,12 +236,17 @@ export async function syncSnailRaceState(tableId: string) {
                                 eq(snailRaceBets.isResolved, false)
                             ));
 
+                            // Get current odds at payout time
+                            const oddsSnapshot = await getSnailOdds(tableId);
+
                             const winningsByUser = new Map<string, number>();
                             for (const bet of bets) {
+                                const snailId = (bet.snails as number[])[0];
+                                const betOdds = oddsSnapshot[snailId] ?? 3.0;
                                 const payout = calculateSnailBetPayout({
-                                    betType: bet.betType,
                                     snails: bet.snails as number[],
                                     amount: bet.amount,
+                                    odds: betOdds,
                                 }, finishOrder);
                                 if (payout > 0) {
                                     winningsByUser.set(bet.userId, (winningsByUser.get(bet.userId) || 0) + payout);
@@ -244,11 +289,15 @@ export async function syncSnailRaceState(tableId: string) {
                     }
                 }
 
+                // App-level history slicing instead of Postgres JSONB slice
+                const existingHistory = (txT.history as number[][] || []);
+                const combined = [...existingHistory, ...newResults].slice(-36);
+
                 await tx.update(snailRaceTables).set({
                     status: currentStatus as 'betting' | 'racing' | 'result',
                     currentRoundId,
                     ...(newResults.length > 0 ? {
-                        history: sql`(COALESCE(${snailRaceTables.history}, '[]'::jsonb) || ${JSON.stringify(newResults)}::jsonb)[(-36):]`,
+                        history: JSON.stringify(combined),
                     } : {}),
                     phaseEndsAt: new Date(txEndsAt),
                     updatedAt: new Date(),
@@ -279,6 +328,17 @@ export async function syncSnailRaceState(tableId: string) {
             roundData = rounds[0] || null;
         }
 
+        // Get participants for current round
+        let currentParticipants: number[] = [];
+        if (t.currentRoundId) {
+            const roundRows = await db.select({ participants: snailRaceRounds.participants }).from(snailRaceRounds).where(eq(snailRaceRounds.id, t.currentRoundId)).limit(1);
+            if (roundRows[0]) {
+                currentParticipants = (roundRows[0].participants as number[]) || [];
+            }
+        }
+
+        const odds = await getSnailOdds(tableId);
+
         if (session?.userId && t.currentRoundId) {
             myBets = await db.select().from(snailRaceBets).where(and(
                 eq(snailRaceBets.tableId, tableId),
@@ -292,6 +352,8 @@ export async function syncSnailRaceState(tableId: string) {
             table: t,
             round: roundData,
             serverTime: Date.now(),
+            participants: currentParticipants,
+            odds,
         };
 
         if (stateChanged) {
@@ -306,28 +368,20 @@ export async function syncSnailRaceState(tableId: string) {
     }
 }
 
-export async function placeSnailRaceBet(tableId: string, betType: string, snails: number[], amount: number) {
+export async function placeSnailRaceBet(tableId: string, snailId: number, amount: number) {
     if (!db) return { success: false, error: 'DB unavailable' };
     const session = await getSession();
     if (!session?.userId) return { success: false, error: 'Not logged in' };
     const userId = session.userId;
 
-    // Validate betType
-    const validBetTypes = ['win', 'place', 'exacta_box', 'exacta', 'trifecta'];
-    if (!validBetTypes.includes(betType)) return { success: false, error: 'Invalid bet type' };
-
-    // Validate snails length
-    const expectedLengths: Record<string, number> = { win: 1, place: 1, exacta_box: 2, exacta: 2, trifecta: 3 };
-    if (!Array.isArray(snails) || snails.length !== expectedLengths[betType]) {
-        return { success: false, error: 'Invalid snails selection' };
-    }
-    if (snails.some(s => s < 0 || s > 2 || !Number.isInteger(s))) {
+    if (!Number.isInteger(snailId) || snailId < 0 || snailId > 6) {
         return { success: false, error: 'Invalid snail id' };
     }
     if (amount <= 0 || !Number.isInteger(amount)) return { success: false, error: 'Invalid amount' };
 
     async function runPlaceBet() {
         return await db.transaction(async (tx: any) => {
+            await tx.execute(sql`SET LOCAL statement_timeout = '5000'`);
             await tx.execute(sql`SELECT 1 FROM snail_race_tables WHERE id = ${tableId} FOR UPDATE`);
 
             const tables = await tx.select().from(snailRaceTables).where(eq(snailRaceTables.id, tableId)).limit(1);
@@ -342,6 +396,32 @@ export async function placeSnailRaceBet(tableId: string, betType: string, snails
 
             if (t.status !== 'betting') return { success: false, error: 'Not in betting phase' as const };
 
+            // Validate snailId is in current round's participants
+            const roundRows = await tx.select({ participants: snailRaceRounds.participants }).from(snailRaceRounds).where(eq(snailRaceRounds.id, t.currentRoundId)).limit(1);
+            const participants: number[] = roundRows[0] ? ((roundRows[0].participants as number[]) || []) : [];
+            if (participants.length > 0 && !participants.includes(snailId)) {
+                return { success: false, error: 'Snail not participating in this round' as const };
+            }
+
+            // One bet per round per user: if existing bet, refund old one first
+            const existingBets = await tx.select().from(snailRaceBets).where(and(
+                eq(snailRaceBets.tableId, tableId),
+                eq(snailRaceBets.roundId, t.currentRoundId),
+                eq(snailRaceBets.userId, userId),
+                eq(snailRaceBets.isResolved, false),
+            ));
+
+            if (existingBets.length > 0) {
+                const totalRefund = existingBets.reduce((sum: number, b: { amount: number }) => sum + b.amount, 0);
+                await tx.delete(snailRaceBets).where(and(
+                    eq(snailRaceBets.tableId, tableId),
+                    eq(snailRaceBets.roundId, t.currentRoundId),
+                    eq(snailRaceBets.userId, userId),
+                    eq(snailRaceBets.isResolved, false),
+                ));
+                await tx.update(users).set({ points: sql`points + ${totalRefund}` }).where(eq(users.id, userId));
+            }
+
             const [usr] = await tx.update(users)
                 .set({ points: sql`points - ${amount}` })
                 .where(and(eq(users.id, userId), sql`points >= ${amount}`))
@@ -352,8 +432,8 @@ export async function placeSnailRaceBet(tableId: string, betType: string, snails
             await tx.insert(snailRaceBets).values({
                 tableId,
                 userId,
-                betType,
-                snails,
+                betType: 'win' as const,
+                snails: [snailId],
                 amount,
                 roundId: t.currentRoundId,
             });
@@ -392,6 +472,7 @@ export async function clearSnailRaceBets(tableId: string) {
 
     async function runClearBets() {
         return await db.transaction(async (tx: any) => {
+            await tx.execute(sql`SET LOCAL statement_timeout = '5000'`);
             await tx.execute(sql`SELECT 1 FROM snail_race_tables WHERE id = ${tableId} FOR UPDATE`);
 
             const tables = await tx.select().from(snailRaceTables).where(eq(snailRaceTables.id, tableId)).limit(1);

@@ -5,26 +5,14 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const SNAILS = [
-  { id: 0, name: '테리', color: '#ef4444' },
-  { id: 1, name: '강욱', color: '#3b82f6' },
-  { id: 2, name: '경원', color: '#22c55e' },
+  { id: 0, name: '지나', color: '#ef4444', shellLight: '#fca5a5', bodyColor: '#fde68a' },
+  { id: 1, name: '해연', color: '#3b82f6', shellLight: '#93c5fd', bodyColor: '#bbf7d0' },
+  { id: 2, name: '영', color: '#22c55e', shellLight: '#86efac', bodyColor: '#fde68a' },
+  { id: 3, name: '뻥카', color: '#f59e0b', shellLight: '#fcd34d', bodyColor: '#fef3c7' },
+  { id: 4, name: '우성', color: '#a855f7', shellLight: '#c4b5fd', bodyColor: '#ede9fe' },
+  { id: 5, name: '테리', color: '#ec4899', shellLight: '#f9a8d4', bodyColor: '#fce7f3' },
+  { id: 6, name: '경원', color: '#06b6d4', shellLight: '#67e8f9', bodyColor: '#cffafe' },
 ] as const;
-
-const BET_ODDS: Record<string, number> = {
-  win: 2.7,
-  place: 1.3,
-  exacta_box: 1.8,
-  exacta: 4.5,
-  trifecta: 5.0,
-};
-
-const BET_LABELS: Record<string, string> = {
-  win: '단승',
-  place: '연승',
-  exacta_box: '복승',
-  exacta: '쌍승',
-  trifecta: '삼쌍승',
-};
 
 const PODIUM_RANK_LABELS = ['1위 🥇', '2위 🥈', '3위 🥉'];
 
@@ -35,46 +23,38 @@ interface SnailRaceResultsProps {
   raceResult: RaceResult;
   myBets: Record<string, number>;
   balance: number;
+  odds: Record<number, number>;
 }
 
-function calcPayout(betType: string, snails: number[], amount: number, finishOrder: number[]): number {
-  let won = false;
-  if (betType === 'win') {
-    won = snails[0] === finishOrder[0];
-  } else if (betType === 'place') {
-    won = finishOrder.slice(0, 2).includes(snails[0]);
-  } else if (betType === 'exacta_box') {
-    const betSet = new Set(snails);
-    const topSet = new Set(finishOrder.slice(0, 2));
-    won = betSet.size === topSet.size && [...betSet].every(s => topSet.has(s));
-  } else if (betType === 'exacta') {
-    won = snails[0] === finishOrder[0] && snails[1] === finishOrder[1];
-  } else if (betType === 'trifecta') {
-    won = snails[0] === finishOrder[0] && snails[1] === finishOrder[1] && snails[2] === finishOrder[2];
-  }
+function calcPayout(snailId: number, amount: number, finishOrder: number[], odds: Record<number, number>): number {
+  const won = snailId === finishOrder[0];
   if (!won) return 0;
-  return Math.floor(amount * (BET_ODDS[betType] ?? 0));
+  const multiplier = odds[snailId] ?? 2.0;
+  return Math.floor(amount * multiplier);
 }
 
 export const SnailRaceResults = React.memo(function SnailRaceResults({
   gameState,
   raceResult,
   myBets,
+  odds,
 }: SnailRaceResultsProps) {
   const visible = gameState === 'result' && raceResult !== null;
 
-  // Compute user's bet outcomes
+  // Extract the single bet if any (format: "win:snailId")
   const betOutcomes = React.useMemo(() => {
     if (!raceResult) return [];
     return Object.entries(myBets)
       .filter(([, amt]) => amt > 0)
       .map(([key, amount]) => {
-        const [betTypeKey, ...snailParts] = key.split(':');
-        const snailIds = (snailParts.join(':') || '').split(',').map(Number).filter(n => !isNaN(n));
-        const payout = calcPayout(betTypeKey, snailIds, amount, raceResult.finishOrder);
-        return { key, betTypeKey, snailIds, amount, payout, won: payout > 0 };
-      });
-  }, [myBets, raceResult]);
+        const parts = key.split(':');
+        const snailId = Number(parts[1]);
+        if (isNaN(snailId)) return null;
+        const payout = calcPayout(snailId, amount, raceResult.finishOrder, odds);
+        return { key, snailId, amount, payout, won: payout > 0 };
+      })
+      .filter(Boolean) as Array<{ key: string; snailId: number; amount: number; payout: number; won: boolean }>;
+  }, [myBets, raceResult, odds]);
 
   const totalPayout = betOutcomes.reduce((s, b) => s + b.payout, 0);
   const totalBet = betOutcomes.reduce((s, b) => s + b.amount, 0);
@@ -137,7 +117,9 @@ export const SnailRaceResults = React.memo(function SnailRaceResults({
               {betOutcomes.length > 0 && (
                 <div className="px-4 pb-3 border-t border-white/5 pt-3 flex flex-col gap-1.5">
                   {betOutcomes.map((outcome) => {
-                    const snailDots = outcome.snailIds.map(sid => SNAILS.find(s => s.id === sid));
+                    const snail = SNAILS.find(s => s.id === outcome.snailId);
+                    const winnerSnailId = raceResult.finishOrder[0];
+                    const winnerOdds = odds[winnerSnailId] ?? 2.0;
                     return (
                       <div
                         key={outcome.key}
@@ -149,21 +131,23 @@ export const SnailRaceResults = React.memo(function SnailRaceResults({
                         )}
                       >
                         <div className="flex items-center gap-2">
-                          <div className="flex gap-0.5">
-                            {snailDots.map((snail, i) => snail ? (
-                              <span
-                                key={i}
-                                className="w-3 h-3 rounded-full inline-block"
-                                style={{ backgroundColor: snail.color }}
-                              />
-                            ) : null)}
-                          </div>
+                          {snail && (
+                            <span
+                              className="w-3 h-3 rounded-full inline-block flex-shrink-0"
+                              style={{ backgroundColor: snail.color }}
+                            />
+                          )}
                           <span className="text-[10px] font-bold text-white/60">
-                            {BET_LABELS[outcome.betTypeKey] ?? outcome.betTypeKey}
+                            {snail?.name ?? `#${outcome.snailId}`} 단승
                           </span>
                           <span className="text-[10px] text-white/40">
                             {outcome.amount >= 1000 ? `${outcome.amount / 1000}K` : outcome.amount}P
                           </span>
+                          {outcome.won && (
+                            <span className="text-[10px] text-yellow-400 font-mono">
+                              {winnerOdds.toFixed(1)}x
+                            </span>
+                          )}
                         </div>
                         <span className={cn(
                           'text-xs font-black',

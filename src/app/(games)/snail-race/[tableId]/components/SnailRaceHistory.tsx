@@ -7,12 +7,20 @@ const SNAIL_COLORS: Record<number, string> = {
   0: '#ef4444',
   1: '#3b82f6',
   2: '#22c55e',
+  3: '#f59e0b',
+  4: '#a855f7',
+  5: '#ec4899',
+  6: '#06b6d4',
 };
 
 const SNAIL_NAMES: Record<number, string> = {
-  0: '테리',
-  1: '강욱',
-  2: '경원',
+  0: '지나',
+  1: '해연',
+  2: '영',
+  3: '뻥카',
+  4: '우성',
+  5: '테리',
+  6: '경원',
 };
 
 type HistoryEntry = { first: number; second: number; third: number };

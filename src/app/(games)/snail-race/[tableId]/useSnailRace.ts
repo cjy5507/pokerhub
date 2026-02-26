@@ -53,6 +53,8 @@ export function useSnailRace(tableId: string, userId: string | null, initialBala
   const [raceResult, setRaceResult] = useState<RaceResult>(null);
   const [isMounted, setIsMounted] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
+  const [participants, setParticipants] = useState<number[]>([]);
+  const [odds, setOdds] = useState<Record<number, number>>({});
 
   const gameStateRef = useRef<SnailRaceState>('betting');
   const roundIdRef = useRef<string | null>(null);
@@ -87,7 +89,7 @@ export function useSnailRace(tableId: string, userId: string | null, initialBala
 
   const applyState = useCallback((data: any) => {
     if (!data || !data.table) return;
-    const { table, round, serverTime, myBets: betsMap, balance: serverBalance } = data;
+    const { table, round, serverTime, myBets: betsMap, balance: serverBalance, odds: serverOdds } = data;
 
     if (gameStateRef.current !== 'result' && table.status === 'result') playSound(winSoundRef.current);
     if (gameStateRef.current !== 'racing' && table.status === 'racing') playSound(raceSoundRef.current);
@@ -98,13 +100,26 @@ export function useSnailRace(tableId: string, userId: string | null, initialBala
       setGameState(table.status);
     }
 
+    // Update odds
+    if (serverOdds && typeof serverOdds === 'object') {
+      setOdds(serverOdds);
+    }
+
     const nextRoundId = table.currentRoundId ?? null;
     if (roundIdRef.current !== nextRoundId) {
       roundIdRef.current = nextRoundId;
-      if (table.status === 'betting' && betsMap === undefined) {
-        setMyBets(prev => Object.keys(prev).length === 0 ? prev : {});
+      if (table.status === 'betting') {
+        setMyBets({});
       }
       setRaceResult(null);
+    }
+
+    // Update participants from round
+    if (round && Array.isArray(round.participants)) {
+      setParticipants(prev => {
+        if (prev.length === round.participants.length && prev.every((id: number, i: number) => id === round.participants[i])) return prev;
+        return round.participants;
+      });
     }
 
     if (table.status === 'betting' && betsMap !== undefined) {
@@ -203,17 +218,15 @@ export function useSnailRace(tableId: string, userId: string | null, initialBala
     return () => clearTimeout(timer);
   }, [phaseEndsAtMs, serverTimeOffsetMs, requestStateSync]);
 
-  const placeBet = useCallback(async (betType: string, snails: number | number[]) => {
+  const placeBet = useCallback(async (snailId: number) => {
     if (gameState !== 'betting') return;
-    const snailsArr = Array.isArray(snails) ? snails : [snails];
-    const snailKey = snailsArr.join(',');
-    const betKey = `${betType}:${snailKey}`;
     try {
-      const res = await placeSnailRaceBet(tableId, betType, snailsArr, selectedChip);
-      if (res && res.success) {
-        setMyBets(prev => ({ ...prev, [betKey]: (prev[betKey] || 0) + selectedChip }));
+      const res = await placeSnailRaceBet(tableId, snailId, selectedChip);
+      if (res?.success) {
+        // Simple single bet: replace any existing
+        setMyBets({ [`win:${snailId}`]: selectedChip });
         if (typeof res.balance === 'number') setBalance(res.balance);
-      } else if (res && res.error) {
+      } else if (res?.error) {
         alert(res.error);
       }
     } catch (err: any) {
@@ -240,5 +253,6 @@ export function useSnailRace(tableId: string, userId: string | null, initialBala
     gameState, timeRemaining, isMuted, setIsMuted,
     selectedChip, setSelectedChip, balance, myBets, history,
     raceResult, isMounted, isDesktop, placeBet, clearBets,
+    participants, odds,
   };
 }

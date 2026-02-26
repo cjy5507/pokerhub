@@ -3,12 +3,16 @@
 import React, { useMemo, useEffect, useRef, useState } from 'react';
 
 /* ─────────────────────────────────────────────────────────
-   SNAIL ROSTER
+   SNAIL ROSTER (all 7)
 ───────────────────────────────────────────────────────── */
 const SNAILS = [
-  { id: 0, name: '테리',  color: '#ef4444', shellLight: '#fca5a5', bodyColor: '#fde68a' },
-  { id: 1, name: '강욱',  color: '#3b82f6', shellLight: '#93c5fd', bodyColor: '#bbf7d0' },
-  { id: 2, name: '경원',  color: '#22c55e', shellLight: '#86efac', bodyColor: '#fde68a' },
+  { id: 0, name: '지나',  color: '#ef4444', shellLight: '#fca5a5', bodyColor: '#fde68a' },
+  { id: 1, name: '해연',  color: '#3b82f6', shellLight: '#93c5fd', bodyColor: '#bbf7d0' },
+  { id: 2, name: '영',    color: '#22c55e', shellLight: '#86efac', bodyColor: '#fde68a' },
+  { id: 3, name: '뻥카',  color: '#f59e0b', shellLight: '#fcd34d', bodyColor: '#fef3c7' },
+  { id: 4, name: '우성',  color: '#a855f7', shellLight: '#c4b5fd', bodyColor: '#ede9fe' },
+  { id: 5, name: '테리',  color: '#ec4899', shellLight: '#f9a8d4', bodyColor: '#fce7f3' },
+  { id: 6, name: '경원',  color: '#06b6d4', shellLight: '#67e8f9', bodyColor: '#cffafe' },
 ] as const;
 
 /* ─────────────────────────────────────────────────────────
@@ -19,6 +23,8 @@ export interface SnailRaceTrackProps {
   raceResult: { seed: string; finishOrder: number[] } | null;
   /** milliseconds remaining in the current phase */
   timeRemaining?: number;
+  /** IDs of the 3 snails participating in this round */
+  participants?: number[];
 }
 
 /* ─────────────────────────────────────────────────────────
@@ -63,7 +69,10 @@ function buildRaceData(seed: string, finishOrder: number[]): RaceData {
   const cssBlocks: string[] = [];
   const snails: SnailInfo[] = [];
 
-  SNAILS.forEach((snail) => {
+  // Only build data for snails in the finishOrder
+  finishOrder.forEach((snailId) => {
+    const snail = SNAILS.find(s => s.id === snailId);
+    if (!snail) return;
     const rng = mulberry32((seedNum ^ (snail.id * 0x9e3779b9)) >>> 0);
     const place = finishOrder.indexOf(snail.id);
     const safePlace = place < 0 ? 2 : Math.min(place, 2);
@@ -729,6 +738,7 @@ const SnailRaceTrackComponent: React.FC<SnailRaceTrackProps> = ({
   gameState,
   raceResult,
   timeRemaining = 0,
+  participants,
 }) => {
   const raceData = useMemo<RaceData | null>(() => {
     if (!raceResult) return null;
@@ -741,6 +751,23 @@ const SnailRaceTrackComponent: React.FC<SnailRaceTrackProps> = ({
   const isActive  = isRacing || isResult;
 
   const winnerId = isResult && raceResult ? (raceResult.finishOrder[0] ?? -1) : -1;
+
+  // Determine which snails to show:
+  // - During racing/result: use finishOrder
+  // - During betting: use participants if provided
+  // - Fallback: show all 7 (should not happen in normal flow)
+  const activeSnailIds: number[] = useMemo(() => {
+    if (isActive && raceResult) return raceResult.finishOrder;
+    if (participants && participants.length > 0) return participants;
+    return [];
+  }, [isActive, raceResult, participants]);
+
+  const activeSnails = SNAILS.filter(s => activeSnailIds.includes(s.id));
+
+  // Waiting — only shown during betting
+  const waitingSnails = isBetting && participants && participants.length > 0
+    ? SNAILS.filter(s => !participants.includes(s.id))
+    : [];
 
   return (
     <div className="w-full select-none overflow-hidden">
@@ -818,168 +845,193 @@ const SnailRaceTrackComponent: React.FC<SnailRaceTrackProps> = ({
             </div>
           )}
 
-          {SNAILS.map((snail, laneIndex) => {
-            const info    = raceData?.snails.find((s) => s.id === snail.id);
-            const isWinner = isResult && winnerId === snail.id;
-            const place    = info?.place ?? laneIndex;
+          {/* No participants yet */}
+          {activeSnails.length === 0 ? (
+            <div
+              className="flex items-center justify-center py-8 text-sm text-white/40 font-bold tracking-widest"
+            >
+              다음 라운드 대기 중...
+            </div>
+          ) : (
+            activeSnails.map((snail, laneIndex) => {
+              const info    = raceData?.snails.find((s) => s.id === snail.id);
+              const isWinner = isResult && winnerId === snail.id;
+              const place    = info?.place ?? laneIndex;
 
-            // Snail position style: animate left% from PRNG keyframes, or sit at 0 during betting
-            const snailContainerStyle: React.CSSProperties =
-              isActive && info
-                ? {
-                    position: 'absolute',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    left: 0,
-                    animation: `${info.animName} 15s linear forwards`,
-                    zIndex: 20,
-                  }
-                : {
-                    position: 'absolute',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    left: 0,
-                    zIndex: 20,
-                  };
+              // Snail position style: animate left% from PRNG keyframes, or sit at 0 during betting
+              const snailContainerStyle: React.CSSProperties =
+                isActive && info
+                  ? {
+                      position: 'absolute',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      left: 0,
+                      animation: `${info.animName} 15s linear forwards`,
+                      zIndex: 20,
+                    }
+                  : {
+                      position: 'absolute',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      left: 0,
+                      zIndex: 20,
+                    };
 
-            return (
-              <div
-                key={snail.id}
-                className="relative overflow-hidden"
-                style={{
-                  height: 82,
-                  marginBottom: laneIndex < SNAILS.length - 1 ? 4 : 0,
-                  borderRadius: 10,
-                  // Dirt path inside grass
-                  background:
-                    laneIndex % 2 === 0
-                      ? 'linear-gradient(180deg, rgba(133,77,14,0.20) 0%, rgba(120,53,15,0.32) 100%)'
-                      : 'linear-gradient(180deg, rgba(101,67,33,0.22) 0%, rgba(133,77,14,0.28) 100%)',
-                  border: `1px solid ${snail.color}28`,
-                  boxShadow: `inset 0 1px 0 rgba(255,255,255,0.04), 0 2px 5px rgba(0,0,0,0.35)`,
-                }}
-              >
-                {/* Dirt floor gradient */}
+              return (
                 <div
-                  className="absolute inset-0 pointer-events-none"
+                  key={snail.id}
+                  className="relative overflow-hidden"
                   style={{
+                    height: 82,
+                    marginBottom: laneIndex < activeSnails.length - 1 ? 4 : 0,
+                    borderRadius: 10,
+                    // Dirt path inside grass
                     background:
-                      'linear-gradient(180deg, rgba(200,150,80,0.06) 0%, rgba(101,67,33,0.18) 50%, rgba(200,150,80,0.06) 100%)',
+                      laneIndex % 2 === 0
+                        ? 'linear-gradient(180deg, rgba(133,77,14,0.20) 0%, rgba(120,53,15,0.32) 100%)'
+                        : 'linear-gradient(180deg, rgba(101,67,33,0.22) 0%, rgba(133,77,14,0.28) 100%)',
+                    border: `1px solid ${snail.color}28`,
+                    boxShadow: `inset 0 1px 0 rgba(255,255,255,0.04), 0 2px 5px rgba(0,0,0,0.35)`,
                   }}
-                />
-
-                {/* Sheen during racing */}
-                {isRacing && (
+                >
+                  {/* Dirt floor gradient */}
                   <div
-                    className="absolute top-0 bottom-0 pointer-events-none"
+                    className="absolute inset-0 pointer-events-none"
                     style={{
-                      width: '32%',
                       background:
-                        'linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent)',
-                      animation: `laneShine ${2.8 + laneIndex * 0.65}s linear ${laneIndex * 0.4}s infinite`,
+                        'linear-gradient(180deg, rgba(200,150,80,0.06) 0%, rgba(101,67,33,0.18) 50%, rgba(200,150,80,0.06) 100%)',
                     }}
                   />
-                )}
 
-                {/* Decorative flora */}
-                <LaneDecorations laneIndex={laneIndex} />
-
-                {/* Label sidebar */}
-                <div
-                  className="absolute left-0 top-0 bottom-0 flex flex-col items-center justify-center z-20 shrink-0"
-                  style={{
-                    width: 68,
-                    background: `linear-gradient(90deg, rgba(0,0,0,0.52) 0%, rgba(0,0,0,0.12) 100%)`,
-                    borderRight: `2px solid ${snail.color}45`,
-                    gap: 3,
-                  }}
-                >
-                  <div
-                    style={{
-                      width: 10,
-                      height: 10,
-                      borderRadius: '50%',
-                      backgroundColor: snail.color,
-                      boxShadow: `0 0 8px ${snail.color}`,
-                      flexShrink: 0,
-                    }}
-                  />
-                  <span className="text-[11px] font-black text-white/90 leading-tight">
-                    {snail.name}
-                  </span>
-                  {isResult && (
-                    <span
-                      className="text-[10px] font-black leading-tight"
+                  {/* Sheen during racing */}
+                  {isRacing && (
+                    <div
+                      className="absolute top-0 bottom-0 pointer-events-none"
                       style={{
-                        color:
-                          place === 0 ? '#fbbf24' : place === 1 ? '#94a3b8' : '#b87333',
+                        width: '32%',
+                        background:
+                          'linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent)',
+                        animation: `laneShine ${2.8 + laneIndex * 0.65}s linear ${laneIndex * 0.4}s infinite`,
                       }}
-                    >
-                      {PLACE_LABELS[place]}
-                    </span>
+                    />
                   )}
-                </div>
 
-                {/* Start gate (thin striped bar) */}
-                <div
-                  className="absolute top-2 bottom-2 z-10 pointer-events-none"
-                  style={{
-                    left: 68,
-                    width: 4,
-                    background: `repeating-linear-gradient(180deg, #fff 0px, #fff 5px, #1a1a1a 5px, #1a1a1a 10px)`,
-                    opacity: 0.35,
-                    borderRadius: 1,
-                  }}
-                />
+                  {/* Decorative flora */}
+                  <LaneDecorations laneIndex={laneIndex} />
 
-                {/* Track area */}
-                <div
-                  className="absolute top-0 bottom-0 right-0 overflow-hidden"
-                  style={{ left: 72 }}
-                >
-                  {/* Finish line — checkered */}
+                  {/* Label sidebar */}
                   <div
-                    className="absolute top-0 bottom-0 right-3 z-10 pointer-events-none"
+                    className="absolute left-0 top-0 bottom-0 flex flex-col items-center justify-center z-20 shrink-0"
                     style={{
-                      width: 10,
-                      backgroundImage:
-                        'repeating-conic-gradient(#eab308 0% 25%, #0f0f0f 0% 50%)',
-                      backgroundSize: '5px 5px',
-                      opacity: 0.9,
-                      boxShadow: `2px 0 8px rgba(234,179,8,0.3), -2px 0 8px rgba(234,179,8,0.3)`,
-                      animation: isRacing ? 'finishFlicker 1.4s ease-in-out infinite' : undefined,
+                      width: 68,
+                      background: `linear-gradient(90deg, rgba(0,0,0,0.52) 0%, rgba(0,0,0,0.12) 100%)`,
+                      borderRight: `2px solid ${snail.color}45`,
+                      gap: 3,
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 10,
+                        height: 10,
+                        borderRadius: '50%',
+                        backgroundColor: snail.color,
+                        boxShadow: `0 0 8px ${snail.color}`,
+                        flexShrink: 0,
+                      }}
+                    />
+                    <span className="text-[11px] font-black text-white/90 leading-tight">
+                      {snail.name}
+                    </span>
+                    {isResult && (
+                      <span
+                        className="text-[10px] font-black leading-tight"
+                        style={{
+                          color:
+                            place === 0 ? '#fbbf24' : place === 1 ? '#94a3b8' : '#b87333',
+                        }}
+                      >
+                        {PLACE_LABELS[place]}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Start gate (thin striped bar) */}
+                  <div
+                    className="absolute top-2 bottom-2 z-10 pointer-events-none"
+                    style={{
+                      left: 68,
+                      width: 4,
+                      background: `repeating-linear-gradient(180deg, #fff 0px, #fff 5px, #1a1a1a 5px, #1a1a1a 10px)`,
+                      opacity: 0.35,
+                      borderRadius: 1,
                     }}
                   />
 
-                  {/* Slime trail */}
-                  {isActive && info && (
-                    <SlimeTrail color={snail.color} finalLeftPct={info.finalLeft} />
-                  )}
-
-                  {/* Snail + speed lines wrapper */}
-                  <div style={snailContainerStyle}>
-                    {isRacing && (
-                      <div
-                        className="absolute pointer-events-none"
-                        style={{ right: '100%', top: '50%', transform: 'translateY(-50%)', width: 30 }}
-                      >
-                        <SpeedLines color={snail.color} />
-                      </div>
-                    )}
-                    <SnailCharacter
-                      color={snail.color}
-                      shellLight={snail.shellLight}
-                      bodyColor={snail.bodyColor}
-                      isWinner={isWinner}
-                      isRacing={isRacing}
-                      isBetting={isBetting}
-                      place={place}
+                  {/* Track area */}
+                  <div
+                    className="absolute top-0 bottom-0 right-0 overflow-hidden"
+                    style={{ left: 72 }}
+                  >
+                    {/* Finish line — checkered */}
+                    <div
+                      className="absolute top-0 bottom-0 right-3 z-10 pointer-events-none"
+                      style={{
+                        width: 10,
+                        backgroundImage:
+                          'repeating-conic-gradient(#eab308 0% 25%, #0f0f0f 0% 50%)',
+                        backgroundSize: '5px 5px',
+                        opacity: 0.9,
+                        boxShadow: `2px 0 8px rgba(234,179,8,0.3), -2px 0 8px rgba(234,179,8,0.3)`,
+                        animation: isRacing ? 'finishFlicker 1.4s ease-in-out infinite' : undefined,
+                      }}
                     />
+
+                    {/* Slime trail */}
+                    {isActive && info && (
+                      <SlimeTrail color={snail.color} finalLeftPct={info.finalLeft} />
+                    )}
+
+                    {/* Snail + speed lines wrapper */}
+                    <div style={snailContainerStyle}>
+                      {isRacing && (
+                        <div
+                          className="absolute pointer-events-none"
+                          style={{ right: '100%', top: '50%', transform: 'translateY(-50%)', width: 30 }}
+                        >
+                          <SpeedLines color={snail.color} />
+                        </div>
+                      )}
+                      <SnailCharacter
+                        color={snail.color}
+                        shellLight={snail.shellLight}
+                        bodyColor={snail.bodyColor}
+                        isWinner={isWinner}
+                        isRacing={isRacing}
+                        isBetting={isBetting}
+                        place={place}
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })
+          )}
+
+          {/* Waiting snails row during betting */}
+          {isBetting && waitingSnails.length > 0 && (
+            <div className="flex items-center gap-1.5 px-2 pt-2 pb-1 flex-wrap">
+              <span className="text-[9px] text-white/30 font-bold tracking-wider">대기:</span>
+              {waitingSnails.map(snail => (
+                <span
+                  key={snail.id}
+                  className="flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-white/5 text-white/40 border border-white/10"
+                >
+                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: snail.color }} />
+                  {snail.name}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* ── Result podium footer ─────────────────── */}

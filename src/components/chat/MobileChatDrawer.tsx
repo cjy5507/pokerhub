@@ -159,7 +159,7 @@ export function MobileChatDrawer() {
                     )}
 
                     {/* Message Content */}
-                    <div className={cn('flex flex-col', isOwn ? 'items-end' : 'items-start')}>
+                    <div className={cn('flex flex-col max-w-[75%]', isOwn ? 'items-end' : 'items-start')}>
                       {!isOwn && (
                         <div className="flex items-center gap-2 mb-1 px-1">
                           <span className="text-xs font-medium text-op-text">
@@ -174,7 +174,7 @@ export function MobileChatDrawer() {
                       {/* Bubble */}
                       <div
                         className={cn(
-                          'px-4 py-2.5 rounded-2xl max-w-[75%]',
+                          'px-4 py-2.5 rounded-2xl',
                           isOwn
                             ? 'bg-op-gold/20 text-op-text rounded-br-sm'
                             : 'bg-op-surface text-op-text rounded-bl-sm'

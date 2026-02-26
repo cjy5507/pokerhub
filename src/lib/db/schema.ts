@@ -760,6 +760,7 @@ export const snailRaceRounds = pgTable('snail_race_rounds', {
   tableId: varchar('table_id', { length: 50 }).notNull().references(() => snailRaceTables.id, { onDelete: 'cascade' }),
   raceSeed: varchar('race_seed', { length: 64 }),
   finishOrder: jsonb('finish_order'),
+  participants: jsonb('participants').default('[]'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 

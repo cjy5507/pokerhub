@@ -15,7 +15,7 @@ if (!isValidDatabaseUrl && process.env.NODE_ENV !== 'production') {
 // For query purposes - only create connection if URL is valid
 const queryClient = isValidDatabaseUrl
   ? postgres(databaseUrl, {
-      max: 10,           // max pool size
+      max: 3,            // keep low for serverless (each instance gets its own pool)
       idle_timeout: 20,  // close idle connections after 20s
       connect_timeout: 10, // connection timeout 10s
     })
@@ -28,7 +28,7 @@ export const db = queryClient ? drizzle(queryClient, { schema: { ...schema, ...r
 const poolerUrl = (process.env.SUPABASE_POOLER_URL || '').trim();
 const poolerClient = poolerUrl.startsWith('postgres')
   ? postgres(poolerUrl, {
-      max: 20,
+      max: 5,            // keep low for serverless to avoid connection storms
       idle_timeout: 10,
       connect_timeout: 10,
       prepare: false,  // required for pgbouncer transaction mode

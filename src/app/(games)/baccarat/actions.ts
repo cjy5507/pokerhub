@@ -13,6 +13,8 @@ const PHASE_RESULT_MS = 6000;
 const BET_ACTION_RETRY_LIMIT = 3;
 const MAX_BET_RETRY_MS = 700;
 const BET_RETRY_DELAYS = [100, 200, 400] as const;
+const ROOM_IDLE_EXPIRY_MS = 60 * 60 * 1000; // 1 hour — reset room if idle longer than this
+const MAX_CATCHUP_ITERATIONS = 10; // Cap catch-up to prevent serverless timeout
 
 function sleep(ms: number): Promise<void> { return new Promise(r => setTimeout(r, ms)); }
 
@@ -178,7 +180,32 @@ export async function syncBaccaratState(tableId: string) {
 
                 if (now < txEndsAt) return; // Another request already advanced it
 
-                // Mathematical Catch-Up Loop
+                // If room has been idle for more than 1 hour, reset to fresh betting phase
+                if (now - txEndsAt > ROOM_IDLE_EXPIRY_MS) {
+                    const freshRoundId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : randomUUID();
+                    // Resolve any stale unresolved bets by refunding them
+                    const staleBets = await tx.select().from(baccaratBets).where(and(eq(baccaratBets.tableId, tableId), eq(baccaratBets.isResolved, false)));
+                    const refundByUser = new Map<string, number>();
+                    for (const bet of staleBets) {
+                        refundByUser.set(bet.userId, (refundByUser.get(bet.userId) || 0) + bet.amount);
+                    }
+                    for (const [uid, refund] of refundByUser.entries()) {
+                        await tx.update(users).set({ points: sql`points + ${refund}` }).where(eq(users.id, uid));
+                    }
+                    if (staleBets.length > 0) {
+                        await tx.update(baccaratBets).set({ isResolved: true }).where(and(eq(baccaratBets.tableId, tableId), eq(baccaratBets.isResolved, false)));
+                    }
+                    await tx.update(baccaratTables).set({
+                        status: 'betting',
+                        currentRoundId: freshRoundId,
+                        phaseEndsAt: new Date(now + PHASE_BETTING_MS),
+                        history: sql`'[]'::jsonb`,
+                    }).where(eq(baccaratTables.id, tableId));
+                    stateChanged = true;
+                    return;
+                }
+
+                // Mathematical Catch-Up Loop (capped to prevent serverless timeout)
                 const cycleMs = PHASE_BETTING_MS + PHASE_DEALING_MS + PHASE_RESULT_MS;
                 if (now - txEndsAt > cycleMs * 50) {
                     const skipCycles = Math.floor((now - txEndsAt) / cycleMs) - 50;
@@ -190,7 +217,7 @@ export async function syncBaccaratState(tableId: string) {
                 let newResults: string[] = [];
                 let dbUpdates = 0;
 
-                while (now >= txEndsAt && dbUpdates < 200) {
+                while (now >= txEndsAt && dbUpdates < MAX_CATCHUP_ITERATIONS) {
                     dbUpdates++;
                     if (currentStatus === 'betting') {
                         const hand = generateBaccaratHand();

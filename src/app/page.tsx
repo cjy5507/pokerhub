@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 
+export const revalidate = 300; // ISR: regenerate every 5 minutes
+
 export const metadata: Metadata = {
   title: 'Open Poker - 포커 커뮤니티',
   description: '포커 전략, 핸드 분석, 실시간 게임을 즐기는 포커 커뮤니티',

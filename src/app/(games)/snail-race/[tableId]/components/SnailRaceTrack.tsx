@@ -1,19 +1,29 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useRef, useState } from 'react';
 
+/* ─────────────────────────────────────────────────────────
+   SNAIL ROSTER
+───────────────────────────────────────────────────────── */
 const SNAILS = [
-  { id: 0, name: '테리', color: '#ef4444' },
-  { id: 1, name: '강욱', color: '#3b82f6' },
-  { id: 2, name: '경원', color: '#22c55e' },
+  { id: 0, name: '테리',  color: '#ef4444', shellLight: '#fca5a5', bodyColor: '#fde68a' },
+  { id: 1, name: '강욱',  color: '#3b82f6', shellLight: '#93c5fd', bodyColor: '#bbf7d0' },
+  { id: 2, name: '경원',  color: '#22c55e', shellLight: '#86efac', bodyColor: '#fde68a' },
 ] as const;
 
+/* ─────────────────────────────────────────────────────────
+   PROPS
+───────────────────────────────────────────────────────── */
 export interface SnailRaceTrackProps {
   gameState: 'betting' | 'racing' | 'result';
   raceResult: { seed: string; finishOrder: number[] } | null;
+  /** milliseconds remaining in the current phase */
+  timeRemaining?: number;
 }
 
-// Mulberry32 PRNG — deterministic, same seed always yields same sequence
+/* ─────────────────────────────────────────────────────────
+   PRNG — untouched from original
+───────────────────────────────────────────────────────── */
 function mulberry32(seed: number): () => number {
   return function () {
     seed |= 0;
@@ -28,12 +38,12 @@ function seedFromHex(hex: string): number {
   return parseInt(hex.replace(/-/g, '').slice(0, 8), 16);
 }
 
-// Final `left` % for the snail element by finish place (1st/2nd/3rd)
-// Conservative values so snail doesn't overflow the track area on narrow screens
+/* ─────────────────────────────────────────────────────────
+   RACE DATA — untouched from original
+───────────────────────────────────────────────────────── */
 const FINISH_LEFT = [83, 71, 59];
-
-const PLACE_LABELS = ['1위 🥇', '2위 🥈', '3위 🥉'];
 const MEDALS = ['🥇', '🥈', '🥉'];
+const PLACE_LABELS = ['1위', '2위', '3위'];
 
 interface SnailInfo {
   id: number;
@@ -54,15 +64,12 @@ function buildRaceData(seed: string, finishOrder: number[]): RaceData {
   const snails: SnailInfo[] = [];
 
   SNAILS.forEach((snail) => {
-    // Each snail gets its own PRNG stream derived from the global seed
     const rng = mulberry32((seedNum ^ (snail.id * 0x9e3779b9)) >>> 0);
-
     const place = finishOrder.indexOf(snail.id);
     const safePlace = place < 0 ? 2 : Math.min(place, 2);
     const finalLeft = FINISH_LEFT[safePlace] ?? 59;
     const animName = `snailRace_${snail.id}_${shortSeed}`;
 
-    // Racing archetype: 0 = explosive start, 1 = strong finish
     const character = rng();
     const earlyBurst = [0.30, 0.25, 0.20, 0.15, 0.10];
     const lateSurge  = [0.10, 0.15, 0.20, 0.25, 0.30];
@@ -79,25 +86,20 @@ function buildRaceData(seed: string, finishOrder: number[]): RaceData {
       weights = balanced.map((b) => b * (0.7 + rng() * 0.6));
     }
 
-    // Normalize
     const total = weights.reduce((a, b) => a + b, 0);
     const normWeights = weights.map((w) => w / total);
-
-    // Build positions at 0%, 20%, 40%, 60%, 80%, 100%
-    // Intermediate positions can reach 1st-place territory for drama / overtakes
     const maxIntermediate = FINISH_LEFT[0] ?? 83;
     const positions: number[] = [0];
     let cumulative = 0;
 
     for (let seg = 0; seg < 4; seg++) {
       cumulative += normWeights[seg] * finalLeft;
-      const jitter = (rng() - 0.5) * 10; // ±5% drama
+      const jitter = (rng() - 0.5) * 10;
       const pos = Math.max(0, Math.min(maxIntermediate, cumulative + jitter));
       positions.push(pos);
     }
     positions.push(finalLeft);
 
-    // Allow ≤5% backtracking (realistic deceleration, no teleporting)
     for (let i = 2; i < positions.length - 1; i++) {
       positions[i] = Math.max(positions[i], positions[i - 1] - 5);
     }
@@ -113,9 +115,620 @@ function buildRaceData(seed: string, finishOrder: number[]): RaceData {
   return { css: cssBlocks.join('\n\n'), snails };
 }
 
+/* ─────────────────────────────────────────────────────────
+   GLOBAL KEYFRAMES
+───────────────────────────────────────────────────────── */
+const GLOBAL_CSS = `
+/* ── Whole-body bob (racing) ── */
+@keyframes snailBob {
+  0%   { transform: translateY(0px) scaleX(1); }
+  25%  { transform: translateY(-3px) scaleX(1.06); }
+  50%  { transform: translateY(-5px) scaleX(0.96); }
+  75%  { transform: translateY(-3px) scaleX(1.04); }
+  100% { transform: translateY(0px) scaleX(1); }
+}
+
+/* ── Peristaltic body stretch (the "crawl" illusion) ── */
+@keyframes snailBodyCrawl {
+  0%   { transform: scaleX(1)    scaleY(1);    }
+  20%  { transform: scaleX(1.14) scaleY(0.82); }
+  45%  { transform: scaleX(0.90) scaleY(1.12); }
+  70%  { transform: scaleX(1.10) scaleY(0.88); }
+  100% { transform: scaleX(1)    scaleY(1);    }
+}
+
+/* ── Gentle idle sway ── */
+@keyframes snailIdle {
+  from { transform: translateY(0px) rotate(-1.5deg); }
+  to   { transform: translateY(-3px) rotate(1.5deg); }
+}
+
+/* ── Winner bounce ── */
+@keyframes snailWinBounce {
+  0%   { transform: translateY(0px) scale(1); }
+  100% { transform: translateY(-9px) scale(1.1); }
+}
+
+/* ── Trophy float ── */
+@keyframes trophyFloat {
+  from { transform: translateX(-50%) translateY(0px); }
+  to   { transform: translateX(-50%) translateY(-5px); }
+}
+
+/* ── Shell shimmer on win ── */
+@keyframes shellShimmer {
+  0%   { filter: brightness(1) saturate(1.2); }
+  50%  { filter: brightness(1.4) saturate(1.8); }
+  100% { filter: brightness(1) saturate(1.2); }
+}
+
+/* ── Shell independent bob during crawl ── */
+@keyframes shellBob {
+  0%   { transform: translateY(0px) rotate(0deg); }
+  30%  { transform: translateY(-3px) rotate(-2deg); }
+  60%  { transform: translateY(-1px) rotate(1deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+}
+
+/* ── Antenna independent sway ── */
+@keyframes antennaSway {
+  0%   { transform: rotate(0deg); }
+  40%  { transform: rotate(-8deg); }
+  70%  { transform: rotate(6deg); }
+  100% { transform: rotate(0deg); }
+}
+
+/* ── GO! flash ── */
+@keyframes goFlash {
+  0%   { transform: scale(0.4) rotate(-8deg); opacity: 0; }
+  25%  { transform: scale(1.2) rotate(2deg); opacity: 1; }
+  70%  { transform: scale(1) rotate(0deg); opacity: 1; }
+  100% { transform: scale(1.05) rotate(0deg); opacity: 0; }
+}
+
+/* ── Countdown urgency ── */
+@keyframes urgentPulse {
+  from { transform: scale(1); filter: brightness(1); }
+  to   { transform: scale(1.15); filter: brightness(1.3); }
+}
+@keyframes gentlePulse {
+  from { transform: scale(0.96); }
+  to   { transform: scale(1.04); }
+}
+
+/* ── Confetti fall ── */
+@keyframes confettiFall {
+  0%   { transform: translateY(-8px) rotate(0deg) scale(1); opacity: 1; }
+  100% { transform: translateY(70px) rotate(720deg) scale(0.5); opacity: 0; }
+}
+
+/* ── Speed lines ── */
+@keyframes speedLine {
+  0%   { transform: translateX(6px) scaleX(0.2); opacity: 0.8; }
+  100% { transform: translateX(-16px) scaleX(1); opacity: 0; }
+}
+
+/* ── Lane shine sweep ── */
+@keyframes laneShine {
+  0%   { left: -45%; }
+  100% { left: 145%; }
+}
+
+/* ── Finish line flicker ── */
+@keyframes finishFlicker {
+  0%, 100% { opacity: 0.9; }
+  50%       { opacity: 0.5; }
+}
+
+/* ── Grass/flora sway ── */
+@keyframes grassSway {
+  from { transform: rotate(-4deg); }
+  to   { transform: rotate(4deg); }
+}
+
+/* ── Slime trail grow ── */
+@keyframes slimeGrow {
+  from { width: 0%; }
+}
+
+/* ── Status badge pulse ── */
+@keyframes statusBadgePulse {
+  from { box-shadow: 0 0 0 0 rgba(74,222,128,0.4); }
+  to   { box-shadow: 0 0 0 6px rgba(74,222,128,0); }
+}
+`;
+
+/* ─────────────────────────────────────────────────────────
+   CSS-DRAWN SNAIL CHARACTER
+───────────────────────────────────────────────────────── */
+interface SnailCharacterProps {
+  color: string;
+  shellLight: string;
+  bodyColor: string;
+  isWinner: boolean;
+  isRacing: boolean;
+  isBetting: boolean;
+  place: number;
+}
+
+function SnailCharacter({
+  color, shellLight, bodyColor, isWinner, isRacing, isBetting, place,
+}: SnailCharacterProps) {
+  // Whole-character animation
+  const wrapperAnim = isWinner
+    ? 'snailWinBounce 0.45s ease-in-out infinite alternate'
+    : isRacing
+    ? 'snailBob 0.42s ease-in-out infinite'
+    : isBetting
+    ? 'snailIdle 1.9s ease-in-out infinite alternate'
+    : undefined;
+
+  // Body peristaltic crawl — independent of wrapper
+  const bodyAnim = isRacing
+    ? 'snailBodyCrawl 0.42s ease-in-out infinite'
+    : isBetting
+    ? 'snailBodyCrawl 2.2s ease-in-out infinite'
+    : undefined;
+
+  // Shell independent bob
+  const shellAnim = isWinner
+    ? 'shellShimmer 0.9s ease-in-out infinite'
+    : isRacing
+    ? 'shellBob 0.42s ease-in-out infinite'
+    : isBetting
+    ? 'shellBob 2s ease-in-out infinite'
+    : undefined;
+
+  // Antenna sway
+  const antennaAnimL = isRacing
+    ? 'antennaSway 0.35s ease-in-out infinite alternate'
+    : 'antennaSway 2.5s ease-in-out infinite alternate';
+  const antennaAnimR = isRacing
+    ? 'antennaSway 0.35s ease-in-out 0.12s infinite alternate-reverse'
+    : 'antennaSway 2.5s ease-in-out 0.6s infinite alternate-reverse';
+
+  return (
+    <div className="relative" style={{ width: 54, height: 44, animation: wrapperAnim }}>
+
+      {/* Trophy — winner only */}
+      {isWinner && (
+        <div
+          className="absolute left-1/2 text-sm"
+          style={{
+            top: -22,
+            animation: 'trophyFloat 0.55s ease-in-out infinite alternate',
+            transform: 'translateX(-50%)',
+            zIndex: 30,
+            filter: 'drop-shadow(0 0 4px #fbbf24)',
+          }}
+        >
+          🏆
+        </div>
+      )}
+
+      {/* Medal for silver / bronze */}
+      {!isWinner && place > 0 && (
+        <div
+          className="absolute left-1/2 text-xs"
+          style={{ top: -20, transform: 'translateX(-50%)', zIndex: 30 }}
+        >
+          {MEDALS[place]}
+        </div>
+      )}
+
+      {/* Body — peristaltic crawl applied here */}
+      <div
+        className="absolute bottom-0 left-0"
+        style={{
+          width: 46,
+          height: 16,
+          borderRadius: '55% 55% 38% 38% / 70% 70% 38% 38%',
+          backgroundColor: bodyColor,
+          boxShadow: '0 3px 7px rgba(0,0,0,0.45)',
+          transformOrigin: 'left center',
+          animation: bodyAnim,
+        }}
+      />
+
+      {/* Neck */}
+      <div
+        className="absolute"
+        style={{
+          bottom: 13,
+          left: 33,
+          width: 10,
+          height: 14,
+          borderRadius: '50% 50% 0 0',
+          backgroundColor: bodyColor,
+        }}
+      />
+
+      {/* Head */}
+      <div
+        className="absolute"
+        style={{
+          bottom: 23,
+          left: 31,
+          width: 15,
+          height: 13,
+          borderRadius: '50%',
+          backgroundColor: bodyColor,
+          boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+        }}
+      >
+        {/* Eye */}
+        <div
+          className="absolute"
+          style={{
+            top: 2,
+            right: 2,
+            width: 5,
+            height: 5,
+            borderRadius: '50%',
+            backgroundColor: '#1e1b4b',
+          }}
+        >
+          <div
+            style={{
+              position: 'absolute',
+              top: 1,
+              left: 1,
+              width: 2,
+              height: 2,
+              borderRadius: '50%',
+              backgroundColor: 'rgba(255,255,255,0.7)',
+            }}
+          />
+        </div>
+
+        {/* Antenna L — independent sway */}
+        <div
+          className="absolute"
+          style={{
+            top: -9,
+            left: 3,
+            width: 2,
+            height: 10,
+            borderRadius: 2,
+            backgroundColor: bodyColor,
+            transformOrigin: 'bottom center',
+            transform: 'rotate(-12deg)',
+            animation: antennaAnimL,
+          }}
+        >
+          <div
+            style={{
+              width: 5,
+              height: 5,
+              borderRadius: '50%',
+              backgroundColor: color,
+              marginLeft: -1.5,
+              marginTop: -2,
+              boxShadow: `0 0 4px ${color}`,
+            }}
+          />
+        </div>
+
+        {/* Antenna R — independent sway (offset phase) */}
+        <div
+          className="absolute"
+          style={{
+            top: -9,
+            left: 9,
+            width: 2,
+            height: 10,
+            borderRadius: 2,
+            backgroundColor: bodyColor,
+            transformOrigin: 'bottom center',
+            transform: 'rotate(12deg)',
+            animation: antennaAnimR,
+          }}
+        >
+          <div
+            style={{
+              width: 5,
+              height: 5,
+              borderRadius: '50%',
+              backgroundColor: shellLight,
+              marginLeft: -1.5,
+              marginTop: -2,
+              boxShadow: `0 0 4px ${shellLight}`,
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Shell — independent bob */}
+      <div
+        className="absolute"
+        style={{
+          bottom: 10,
+          left: 3,
+          width: 34,
+          height: 30,
+          borderRadius: '50%',
+          background: `conic-gradient(from 0deg, ${color}, ${shellLight}, ${color}CC, ${shellLight}99, ${color}AA, ${shellLight}, ${color})`,
+          boxShadow: isWinner
+            ? `0 0 18px ${color}, 0 0 36px #fbbf2455, inset 0 -4px 8px rgba(0,0,0,0.35)`
+            : `0 3px 10px rgba(0,0,0,0.55), inset 0 -3px 6px rgba(0,0,0,0.3)`,
+          transformOrigin: 'center bottom',
+          animation: shellAnim,
+        }}
+      >
+        {/* Highlight */}
+        <div
+          className="absolute inset-0 rounded-full"
+          style={{
+            background: `radial-gradient(circle at 33% 33%, ${shellLight}BB 0%, transparent 55%)`,
+          }}
+        />
+        {/* Inner ring */}
+        <div
+          className="absolute"
+          style={{
+            top: '26%',
+            left: '26%',
+            width: '48%',
+            height: '48%',
+            borderRadius: '50%',
+            border: `2px solid ${color}77`,
+            background: `radial-gradient(circle at 38% 38%, ${shellLight}44 0%, transparent 60%)`,
+          }}
+        />
+        {/* Centre dot */}
+        <div
+          className="absolute"
+          style={{
+            top: '42%',
+            left: '42%',
+            width: '16%',
+            height: '16%',
+            borderRadius: '50%',
+            backgroundColor: color,
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────
+   SLIME TRAIL
+───────────────────────────────────────────────────────── */
+function SlimeTrail({ color, finalLeftPct }: { color: string; finalLeftPct: number }) {
+  return (
+    <div
+      className="absolute pointer-events-none"
+      style={{
+        left: 0,
+        top: '50%',
+        transform: 'translateY(-50%)',
+        width: `calc(${finalLeftPct}% + 30px)`,
+        height: 7,
+        background: `linear-gradient(90deg, transparent 0%, ${color}18 25%, ${color}50 70%, ${color}28 100%)`,
+        borderRadius: 4,
+        filter: 'blur(1.5px)',
+        zIndex: 4,
+        animation: 'slimeGrow 15s linear forwards',
+      }}
+    />
+  );
+}
+
+/* ─────────────────────────────────────────────────────────
+   SPEED LINES
+───────────────────────────────────────────────────────── */
+function SpeedLines({ color }: { color: string }) {
+  return (
+    <>
+      {[0, 1, 2].map((i) => (
+        <div
+          key={i}
+          className="absolute pointer-events-none"
+          style={{
+            right: 4,
+            top: `${28 + i * 16}%`,
+            width: 12 + i * 5,
+            height: 2,
+            backgroundColor: color,
+            opacity: 0.45,
+            borderRadius: 1,
+            animation: `speedLine 0.32s ease-out ${i * 0.09}s infinite`,
+            transformOrigin: 'right center',
+          }}
+        />
+      ))}
+    </>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────
+   LANE DECORATIONS (flowers / mushrooms)
+───────────────────────────────────────────────────────── */
+function LaneDecorations({ laneIndex }: { laneIndex: number }) {
+  const sets = [
+    ['🌸', '🍄', '🌿', '🌸', '🍄', '🌼'],
+    ['🌿', '🌼', '🍄', '🌿', '🌸', '🍄'],
+    ['🌼', '🌸', '🌿', '🍄', '🌼', '🌿'],
+  ];
+  const items = sets[laneIndex % sets.length] ?? sets[0];
+  const positions = [6, 17, 30, 48, 64, 78];
+  const onTop = laneIndex % 2 === 0;
+
+  return (
+    <>
+      {items.map((item, i) => (
+        <span
+          key={i}
+          className="absolute text-[8px] select-none pointer-events-none"
+          style={{
+            left: `${positions[i]}%`,
+            top: onTop ? 1 : 'auto',
+            bottom: onTop ? 'auto' : 1,
+            opacity: 0.5,
+            animation: `grassSway ${1.1 + i * 0.25}s ease-in-out ${i * 0.18}s infinite alternate`,
+            transformOrigin: 'bottom center',
+            zIndex: 3,
+          }}
+        >
+          {item}
+        </span>
+      ))}
+    </>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────
+   CONFETTI BURST (winner celebration)
+───────────────────────────────────────────────────────── */
+function WinnerConfetti() {
+  const colors = ['#ef4444', '#fbbf24', '#22c55e', '#3b82f6', '#a855f7', '#ec4899', '#f97316'];
+  return (
+    <>
+      {Array.from({ length: 14 }).map((_, i) => (
+        <div
+          key={i}
+          className="absolute pointer-events-none"
+          style={{
+            width: i % 3 === 0 ? 8 : 5,
+            height: i % 3 === 0 ? 5 : 8,
+            borderRadius: i % 2 === 0 ? '50%' : 2,
+            left: `${5 + i * 6.5}%`,
+            top: '8%',
+            backgroundColor: colors[i % colors.length],
+            animation: `confettiFall ${0.75 + (i % 5) * 0.18}s ease-in ${i * 0.07}s forwards`,
+            transform: `rotate(${i * 26}deg)`,
+            zIndex: 50,
+          }}
+        />
+      ))}
+    </>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────
+   COUNTDOWN OVERLAY
+───────────────────────────────────────────────────────── */
+function CountdownOverlay({
+  gameState,
+  timeRemaining,
+}: {
+  gameState: string;
+  timeRemaining: number;
+}) {
+  const [showGo, setShowGo] = useState(false);
+  const prevStateRef = useRef(gameState);
+
+  useEffect(() => {
+    if (prevStateRef.current !== 'racing' && gameState === 'racing') {
+      setShowGo(true);
+      const t = setTimeout(() => setShowGo(false), 1900);
+      prevStateRef.current = gameState;
+      return () => clearTimeout(t);
+    }
+    prevStateRef.current = gameState;
+  }, [gameState]);
+
+  if (showGo) {
+    return (
+      <div
+        className="absolute inset-0 flex items-center justify-center pointer-events-none z-40"
+        style={{ backdropFilter: 'blur(2px)', background: 'rgba(0,0,0,0.15)' }}
+      >
+        <span
+          className="font-black tracking-widest select-none"
+          style={{
+            fontSize: 76,
+            color: '#4ade80',
+            textShadow: '0 0 28px #22c55e, 0 0 56px #22c55e88, 0 4px 0 #14532d',
+            animation: 'goFlash 1.9s ease-out forwards',
+          }}
+        >
+          GO!
+        </span>
+      </div>
+    );
+  }
+
+  const isBetting = gameState === 'betting';
+  if (!isBetting || timeRemaining <= 0) return null;
+
+  // timeRemaining is already in seconds (integer)
+  const secRemaining = timeRemaining;
+  const isUrgent = secRemaining <= 5;
+
+  // Assume betting phase is 30s total; draw arc proportional to time left
+  const PHASE_TOTAL_SEC = 30;
+  const fraction = Math.min(1, secRemaining / PHASE_TOTAL_SEC);
+  const radius = 30;
+  const circ = 2 * Math.PI * radius;
+  const dashOffset = circ * (1 - fraction);
+
+  return (
+    <div
+      className="absolute inset-0 flex items-center justify-center pointer-events-none z-40"
+      style={{ backdropFilter: 'blur(1px)' }}
+    >
+      <div className="relative flex items-center justify-center" style={{ width: 86, height: 86 }}>
+        {/* SVG ring */}
+        <svg
+          width={86}
+          height={86}
+          className="absolute inset-0"
+          style={{ transform: 'rotate(-90deg)' }}
+        >
+          {/* Track */}
+          <circle
+            cx={43}
+            cy={43}
+            r={radius}
+            fill="rgba(0,0,0,0.45)"
+            stroke={isUrgent ? 'rgba(239,68,68,0.2)' : 'rgba(251,191,36,0.2)'}
+            strokeWidth={5}
+          />
+          {/* Arc */}
+          <circle
+            cx={43}
+            cy={43}
+            r={radius}
+            fill="none"
+            stroke={isUrgent ? '#ef4444' : '#fbbf24'}
+            strokeWidth={5}
+            strokeDasharray={circ}
+            strokeDashoffset={dashOffset}
+            strokeLinecap="round"
+            style={{ transition: 'stroke-dashoffset 0.85s ease, stroke 0.3s ease' }}
+          />
+        </svg>
+        {/* Number */}
+        <span
+          className="font-black tabular-nums select-none"
+          style={{
+            fontSize: 34,
+            lineHeight: 1,
+            color: isUrgent ? '#ef4444' : '#fbbf24',
+            textShadow: isUrgent
+              ? '0 0 22px #ef444499, 0 2px 0 rgba(0,0,0,0.6)'
+              : '0 0 18px #fbbf2477, 0 2px 0 rgba(0,0,0,0.6)',
+            animation: isUrgent
+              ? 'urgentPulse 0.45s ease-in-out infinite alternate'
+              : 'gentlePulse 1.1s ease-in-out infinite alternate',
+          }}
+        >
+          {secRemaining}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────
+   MAIN COMPONENT
+───────────────────────────────────────────────────────── */
 const SnailRaceTrackComponent: React.FC<SnailRaceTrackProps> = ({
   gameState,
   raceResult,
+  timeRemaining = 0,
 }) => {
   const raceData = useMemo<RaceData | null>(() => {
     if (!raceResult) return null;
@@ -127,150 +740,275 @@ const SnailRaceTrackComponent: React.FC<SnailRaceTrackProps> = ({
   const isResult  = gameState === 'result';
   const isActive  = isRacing || isResult;
 
+  const winnerId = isResult && raceResult ? (raceResult.finishOrder[0] ?? -1) : -1;
+
   return (
-    <div className="w-full rounded-xl border border-white/10 bg-gray-900/80 backdrop-blur-sm overflow-hidden select-none">
-      {/* Dynamic @keyframes — generated from seed so every client is in sync */}
+    <div className="w-full select-none overflow-hidden">
+      {/* Global keyframes */}
+      <style dangerouslySetInnerHTML={{ __html: GLOBAL_CSS }} />
+
+      {/* Race-specific keyframes (seed-derived) */}
       {raceData && (
         <style dangerouslySetInnerHTML={{ __html: raceData.css }} />
       )}
 
-      {/* Header bar */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/5 bg-black/40">
-        <span className="text-xs font-black text-white/30 tracking-widest uppercase">
-          🏁 달팽이 경주
-        </span>
-        <span
-          className={`px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-wider uppercase border transition-colors ${
-            isBetting
-              ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
-              : isRacing
-              ? 'bg-green-500/20 text-green-400 border-green-500/30 animate-pulse'
-              : 'bg-white/10 text-white/50 border-white/10'
-          }`}
+      {/* ── Outer track ─────────────────────────────── */}
+      <div
+        className="relative w-full rounded-2xl overflow-hidden"
+        style={{
+          background: 'linear-gradient(180deg, #14532d 0%, #166534 15%, #16a34a 50%, #166534 85%, #14532d 100%)',
+          border: '3px solid #15803d',
+          boxShadow:
+            '0 8px 40px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -2px 0 rgba(0,0,0,0.3)',
+        }}
+      >
+        {/* Grass texture — subtle horizontal lines */}
+        <div
+          className="absolute inset-0 pointer-events-none opacity-[0.12]"
+          style={{
+            backgroundImage:
+              'repeating-linear-gradient(0deg, rgba(0,0,0,0.5) 0px, rgba(0,0,0,0.5) 1px, transparent 1px, transparent 6px)',
+          }}
+        />
+
+        {/* Header strip */}
+        <div
+          className="relative z-10 flex items-center justify-between px-4 py-2.5"
+          style={{
+            background: 'rgba(0,0,0,0.40)',
+            borderBottom: '1px solid rgba(255,255,255,0.07)',
+          }}
         >
-          {isBetting ? '배팅 중' : isRacing ? 'RACING!' : '결과 확인'}
-        </span>
-      </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-black text-white/60 tracking-[0.2em] uppercase">
+              🏁 달팽이 레이스
+            </span>
+          </div>
+          <div
+            className="px-3 py-0.5 rounded-full text-[10px] font-black tracking-wider uppercase border"
+            style={{
+              background: isBetting
+                ? 'rgba(234,179,8,0.18)'
+                : isRacing
+                ? 'rgba(74,222,128,0.18)'
+                : 'rgba(96,165,250,0.18)',
+              color: isBetting ? '#fbbf24' : isRacing ? '#4ade80' : '#93c5fd',
+              borderColor: isBetting
+                ? 'rgba(234,179,8,0.38)'
+                : isRacing
+                ? 'rgba(74,222,128,0.38)'
+                : 'rgba(96,165,250,0.38)',
+              animation: isRacing ? 'statusBadgePulse 1s ease-out infinite' : undefined,
+            }}
+          >
+            {isBetting ? '배팅 중' : isRacing ? '레이싱!' : '결과 확인'}
+          </div>
+        </div>
 
-      {/* Race lanes */}
-      <div className="flex flex-col gap-2 p-3">
-        {SNAILS.map((snail) => {
-          const info = raceData?.snails.find((s) => s.id === snail.id);
-          const isWinner = isResult && raceResult?.finishOrder[0] === snail.id;
+        {/* ── Lanes container ──────────────────────── */}
+        <div className="relative flex flex-col" style={{ padding: '6px 6px 8px' }}>
 
-          const snailStyle: React.CSSProperties =
-            isActive && info
-              ? { animation: `${info.animName} 15s linear forwards` }
-              : { left: 0 };
+          {/* Countdown + GO overlay (spans all lanes) */}
+          <CountdownOverlay gameState={gameState} timeRemaining={timeRemaining} />
 
-          return (
-            <div
-              key={snail.id}
-              className="relative h-16 md:h-20 rounded-lg overflow-hidden"
-              style={{ borderLeft: `3px solid ${snail.color}60` }}
-            >
-              {/* Lane fill */}
-              <div className="absolute inset-0 bg-black/30" />
-
-              {/* Speed stripes (subtle) */}
-              <div
-                className="absolute inset-0 opacity-[0.025]"
-                style={{
-                  backgroundImage:
-                    'repeating-linear-gradient(90deg, transparent 0px, transparent 39px, white 39px, white 40px)',
-                }}
-              />
-
-              {/* Lane content row */}
-              <div className="relative h-full flex items-center">
-                {/* Snail label */}
-                <div className="w-[80px] md:w-[92px] shrink-0 flex items-center gap-2 px-2 z-10">
-                  <div
-                    className="w-2.5 h-2.5 rounded-full shrink-0"
-                    style={{
-                      backgroundColor: snail.color,
-                      boxShadow: `0 0 6px ${snail.color}`,
-                    }}
-                  />
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-[11px] md:text-xs font-bold text-white/80 truncate">
-                      {snail.name}
-                    </span>
-                    {isResult && info && (
-                      <span
-                        className="text-[10px] font-black leading-tight"
-                        style={{
-                          color:
-                            info.place === 0
-                              ? '#fbbf24'
-                              : info.place === 1
-                              ? '#94a3b8'
-                              : '#cd853f',
-                        }}
-                      >
-                        {PLACE_LABELS[info.place] ?? ''}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Start line */}
-                <div className="absolute left-[80px] md:left-[92px] top-1 bottom-1 w-px bg-white/15 z-10" />
-
-                {/* Race track area */}
-                <div className="relative flex-1 h-full overflow-hidden">
-                  {/* Finish line — dashed yellow */}
-                  <div
-                    className="absolute right-1.5 top-1 bottom-1 w-0.5 z-10"
-                    style={{
-                      backgroundImage:
-                        'repeating-linear-gradient(180deg, #eab308 0px, #eab308 4px, transparent 4px, transparent 8px)',
-                    }}
-                  />
-
-                  {/* Snail character */}
-                  <div
-                    className={`absolute top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center text-xl md:text-2xl z-20 ${
-                      isWinner ? 'animate-pulse' : ''
-                    }`}
-                    style={{
-                      backgroundColor: `${snail.color}22`,
-                      border: `2px solid ${snail.color}90`,
-                      boxShadow: isWinner
-                        ? `0 0 16px ${snail.color}, 0 0 32px #fbbf2460`
-                        : `0 0 8px ${snail.color}50`,
-                      ...snailStyle,
-                    }}
-                  >
-                    🐌
-                  </div>
-                </div>
-              </div>
+          {/* Confetti (spans all lanes) */}
+          {isResult && winnerId >= 0 && (
+            <div className="absolute inset-0 pointer-events-none z-50">
+              <WinnerConfetti />
             </div>
-          );
-        })}
-      </div>
+          )}
 
-      {/* Result podium */}
-      {isResult && raceResult && (
-        <div className="flex items-center justify-center gap-6 px-4 py-3 border-t border-white/5 bg-black/20">
-          {raceResult.finishOrder.map((snailId, place) => {
-            const snail = SNAILS.find((s) => s.id === snailId);
-            if (!snail) return null;
+          {SNAILS.map((snail, laneIndex) => {
+            const info    = raceData?.snails.find((s) => s.id === snail.id);
+            const isWinner = isResult && winnerId === snail.id;
+            const place    = info?.place ?? laneIndex;
+
+            // Snail position style: animate left% from PRNG keyframes, or sit at 0 during betting
+            const snailContainerStyle: React.CSSProperties =
+              isActive && info
+                ? {
+                    position: 'absolute',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    left: 0,
+                    animation: `${info.animName} 15s linear forwards`,
+                    zIndex: 20,
+                  }
+                : {
+                    position: 'absolute',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    left: 0,
+                    zIndex: 20,
+                  };
+
             return (
-              <div key={snailId} className="flex items-center gap-1.5">
-                <span className="text-base">{MEDALS[place] ?? ''}</span>
-                <span
-                  className="text-xs font-bold"
-                  style={{ color: snail.color }}
+              <div
+                key={snail.id}
+                className="relative overflow-hidden"
+                style={{
+                  height: 82,
+                  marginBottom: laneIndex < SNAILS.length - 1 ? 4 : 0,
+                  borderRadius: 10,
+                  // Dirt path inside grass
+                  background:
+                    laneIndex % 2 === 0
+                      ? 'linear-gradient(180deg, rgba(133,77,14,0.20) 0%, rgba(120,53,15,0.32) 100%)'
+                      : 'linear-gradient(180deg, rgba(101,67,33,0.22) 0%, rgba(133,77,14,0.28) 100%)',
+                  border: `1px solid ${snail.color}28`,
+                  boxShadow: `inset 0 1px 0 rgba(255,255,255,0.04), 0 2px 5px rgba(0,0,0,0.35)`,
+                }}
+              >
+                {/* Dirt floor gradient */}
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    background:
+                      'linear-gradient(180deg, rgba(200,150,80,0.06) 0%, rgba(101,67,33,0.18) 50%, rgba(200,150,80,0.06) 100%)',
+                  }}
+                />
+
+                {/* Sheen during racing */}
+                {isRacing && (
+                  <div
+                    className="absolute top-0 bottom-0 pointer-events-none"
+                    style={{
+                      width: '32%',
+                      background:
+                        'linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent)',
+                      animation: `laneShine ${2.8 + laneIndex * 0.65}s linear ${laneIndex * 0.4}s infinite`,
+                    }}
+                  />
+                )}
+
+                {/* Decorative flora */}
+                <LaneDecorations laneIndex={laneIndex} />
+
+                {/* Label sidebar */}
+                <div
+                  className="absolute left-0 top-0 bottom-0 flex flex-col items-center justify-center z-20 shrink-0"
+                  style={{
+                    width: 68,
+                    background: `linear-gradient(90deg, rgba(0,0,0,0.52) 0%, rgba(0,0,0,0.12) 100%)`,
+                    borderRight: `2px solid ${snail.color}45`,
+                    gap: 3,
+                  }}
                 >
-                  {snail.name}
-                </span>
+                  <div
+                    style={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: '50%',
+                      backgroundColor: snail.color,
+                      boxShadow: `0 0 8px ${snail.color}`,
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span className="text-[11px] font-black text-white/90 leading-tight">
+                    {snail.name}
+                  </span>
+                  {isResult && (
+                    <span
+                      className="text-[10px] font-black leading-tight"
+                      style={{
+                        color:
+                          place === 0 ? '#fbbf24' : place === 1 ? '#94a3b8' : '#b87333',
+                      }}
+                    >
+                      {PLACE_LABELS[place]}
+                    </span>
+                  )}
+                </div>
+
+                {/* Start gate (thin striped bar) */}
+                <div
+                  className="absolute top-2 bottom-2 z-10 pointer-events-none"
+                  style={{
+                    left: 68,
+                    width: 4,
+                    background: `repeating-linear-gradient(180deg, #fff 0px, #fff 5px, #1a1a1a 5px, #1a1a1a 10px)`,
+                    opacity: 0.35,
+                    borderRadius: 1,
+                  }}
+                />
+
+                {/* Track area */}
+                <div
+                  className="absolute top-0 bottom-0 right-0 overflow-hidden"
+                  style={{ left: 72 }}
+                >
+                  {/* Finish line — checkered */}
+                  <div
+                    className="absolute top-0 bottom-0 right-3 z-10 pointer-events-none"
+                    style={{
+                      width: 10,
+                      backgroundImage:
+                        'repeating-conic-gradient(#eab308 0% 25%, #0f0f0f 0% 50%)',
+                      backgroundSize: '5px 5px',
+                      opacity: 0.9,
+                      boxShadow: `2px 0 8px rgba(234,179,8,0.3), -2px 0 8px rgba(234,179,8,0.3)`,
+                      animation: isRacing ? 'finishFlicker 1.4s ease-in-out infinite' : undefined,
+                    }}
+                  />
+
+                  {/* Slime trail */}
+                  {isActive && info && (
+                    <SlimeTrail color={snail.color} finalLeftPct={info.finalLeft} />
+                  )}
+
+                  {/* Snail + speed lines wrapper */}
+                  <div style={snailContainerStyle}>
+                    {isRacing && (
+                      <div
+                        className="absolute pointer-events-none"
+                        style={{ right: '100%', top: '50%', transform: 'translateY(-50%)', width: 30 }}
+                      >
+                        <SpeedLines color={snail.color} />
+                      </div>
+                    )}
+                    <SnailCharacter
+                      color={snail.color}
+                      shellLight={snail.shellLight}
+                      bodyColor={snail.bodyColor}
+                      isWinner={isWinner}
+                      isRacing={isRacing}
+                      isBetting={isBetting}
+                      place={place}
+                    />
+                  </div>
+                </div>
               </div>
             );
           })}
         </div>
-      )}
+
+        {/* ── Result podium footer ─────────────────── */}
+        {isResult && raceResult && (
+          <div
+            className="flex items-center justify-center gap-6 px-4 py-3 z-10 relative"
+            style={{
+              background: 'rgba(0,0,0,0.45)',
+              borderTop: '1px solid rgba(255,255,255,0.06)',
+            }}
+          >
+            {raceResult.finishOrder.map((snailId, place) => {
+              const snail = SNAILS.find((s) => s.id === snailId);
+              if (!snail) return null;
+              return (
+                <div key={snailId} className="flex items-center gap-1.5">
+                  <span className="text-base">{MEDALS[place] ?? ''}</span>
+                  <span
+                    className="text-xs font-black"
+                    style={{ color: snail.color }}
+                  >
+                    {snail.name}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

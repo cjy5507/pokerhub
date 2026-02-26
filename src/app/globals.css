@@ -727,6 +727,12 @@
   filter: brightness(1.05);
 }
 
+/* Snail race phase indicator shake */
+@keyframes wiggle {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
+}
+
 @keyframes heroCardDeal3D {
   0% {
     transform: scale(0.3) translateY(-80px) perspective(600px) rotateX(15deg) rotateY(180deg);

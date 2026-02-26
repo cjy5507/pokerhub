@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, Volume2, VolumeX } from 'lucide-react';
+import { ArrowLeft, Flag, Trophy, Volume2, VolumeX } from 'lucide-react';
 import Link from 'next/link';
 import { useSnailRace } from './useSnailRace';
 import { SnailRaceTrack } from './components/SnailRaceTrack';
@@ -18,11 +18,6 @@ const LOADING_STYLE = 'w-full flex-1 min-h-[calc(100dvh-80px)] md:min-h-0 md:h-[
 const TABLE_STYLE = 'w-full flex-1 min-h-[calc(100dvh-80px)] md:min-h-0 md:h-[calc(100vh-120px)] bg-slate-50 dark:bg-[#1a1c20] rounded-xl flex flex-col overflow-hidden select-none relative font-sans text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 shadow-2xl transition-colors';
 const BG_GRID_STYLE = { backgroundSize: '40px 40px' } as const;
 
-const PHASE_LABELS: Record<string, string> = {
-  betting: '베팅 중',
-  racing: '레이스 중!',
-  result: '결과 발표',
-};
 
 export function SnailRaceClient({ tableId, userId, initialBalance }: SnailRaceClientProps) {
   const {
@@ -41,9 +36,9 @@ export function SnailRaceClient({ tableId, userId, initialBalance }: SnailRaceCl
     );
   }
 
-  const timeDisplay = timeRemaining > 0
-    ? `${Math.ceil(timeRemaining / 1000)}s`
-    : '—';
+  const timeDisplay = timeRemaining > 0 ? timeRemaining : 0;
+  const isUrgent = gameState === 'betting' && timeDisplay > 0 && timeDisplay < 5;
+  const isWarning = gameState === 'betting' && timeDisplay >= 5 && timeDisplay <= 10;
 
   return (
     <div className={TABLE_STYLE}>
@@ -55,45 +50,92 @@ export function SnailRaceClient({ tableId, userId, initialBalance }: SnailRaceCl
       />
 
       {/* Header */}
-      <header className="flex-shrink-0 h-14 flex items-center justify-between px-4 z-30 border-b border-slate-200/50 dark:border-white/5 bg-white/60 dark:bg-black/60 backdrop-blur-md">
-        <div className="flex items-center gap-4">
+      <header className="flex-shrink-0 flex items-center justify-between px-3 md:px-4 z-30 border-b border-slate-200/50 dark:border-white/5 bg-white/60 dark:bg-black/60 backdrop-blur-md" style={{ height: '52px' }}>
+        {/* Left: back + title + phase */}
+        <div className="flex items-center gap-2 md:gap-3 min-w-0">
           <Link
             href="/lottery"
-            className="text-slate-500 hover:text-slate-900 dark:text-white/50 dark:hover:text-white transition-colors p-2 rounded-md bg-slate-200/50 hover:bg-slate-300/50 dark:bg-white/5 dark:hover:bg-white/10"
+            className="flex-shrink-0 text-slate-500 hover:text-slate-900 dark:text-white/50 dark:hover:text-white transition-colors p-1.5 rounded-md bg-slate-200/50 hover:bg-slate-300/50 dark:bg-white/5 dark:hover:bg-white/10"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4" />
           </Link>
-          <div>
-            <h1 className="text-sm md:text-base font-bold flex items-center gap-2 text-slate-800 dark:text-white/90">
+
+          <div className="flex items-center gap-2 min-w-0">
+            <h1 className="text-xs md:text-sm font-bold text-slate-800 dark:text-white/90 whitespace-nowrap">
               🐌 달팽이 레이스
-              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                gameState === 'betting'
-                  ? 'bg-green-500/20 text-green-600 dark:text-green-400'
-                  : gameState === 'racing'
-                    ? 'bg-yellow-500/20 text-yellow-600 dark:text-yellow-400'
-                    : 'bg-blue-500/20 text-blue-600 dark:text-blue-400'
-              }`}>
-                {PHASE_LABELS[gameState]}
-              </span>
             </h1>
-            <p className="text-[10px] md:text-xs text-slate-500 dark:text-white/40">
-              [{tableId.slice(0, 4)}] · 남은 시간: {timeDisplay}
-            </p>
+
+            {/* Phase indicator */}
+            {gameState === 'betting' && (
+              <span className="flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-green-500/20 text-green-600 dark:text-green-400 whitespace-nowrap">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                베팅 중
+              </span>
+            )}
+            {gameState === 'racing' && (
+              <span className="flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 whitespace-nowrap animate-[wiggle_0.4s_ease-in-out_infinite]">
+                <Flag className="w-2.5 h-2.5" />
+                레이스!
+              </span>
+            )}
+            {gameState === 'result' && (
+              <span className="flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-blue-500/20 text-blue-600 dark:text-blue-400 whitespace-nowrap">
+                <Trophy className="w-2.5 h-2.5" />
+                결과
+              </span>
+            )}
           </div>
         </div>
 
-        <div className="flex items-center gap-3 md:gap-6">
+        {/* Center: Prominent countdown timer */}
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-baseline gap-1">
+          {gameState === 'betting' && (
+            <>
+              <span
+                className={`text-2xl md:text-3xl font-black tabular-nums leading-none transition-colors ${
+                  isUrgent
+                    ? 'text-red-500 dark:text-red-400 animate-pulse'
+                    : isWarning
+                    ? 'text-yellow-500 dark:text-yellow-400'
+                    : 'text-green-600 dark:text-green-400'
+                }`}
+              >
+                {timeDisplay > 0 ? timeDisplay : '—'}
+              </span>
+              {timeDisplay > 0 && (
+                <span className={`text-xs font-bold ${
+                  isUrgent ? 'text-red-400' : isWarning ? 'text-yellow-400' : 'text-green-500 dark:text-green-500'
+                }`}>
+                  초
+                </span>
+              )}
+            </>
+          )}
+          {gameState === 'racing' && (
+            <span className="text-sm md:text-base font-black text-yellow-500 dark:text-yellow-400 tracking-wide">
+              레이스 중!
+            </span>
+          )}
+          {gameState === 'result' && (
+            <span className="text-sm md:text-base font-black text-blue-500 dark:text-blue-400 tracking-wide">
+              결과 발표
+            </span>
+          )}
+        </div>
+
+        {/* Right: balance + mute */}
+        <div className="flex items-center gap-2 md:gap-4">
           <div className="flex flex-col items-end">
-            <span className="text-[10px] text-slate-500 dark:text-white/40 uppercase tracking-wider font-bold">보유 포인트</span>
-            <span className="text-sm md:text-base font-black text-yellow-600 dark:text-yellow-500 tabular-nums">
+            <span className="text-[9px] md:text-[10px] text-slate-500 dark:text-white/40 uppercase tracking-wider font-bold leading-none">포인트</span>
+            <span className="text-xs md:text-sm font-black text-yellow-600 dark:text-yellow-500 tabular-nums leading-tight">
               ₩{balance.toLocaleString('en-US')}
             </span>
           </div>
           <button
             onClick={() => setIsMuted(m => !m)}
-            className="p-2 text-slate-500 hover:text-slate-900 dark:text-white/50 dark:hover:text-white transition-colors rounded-full hover:bg-slate-200/50 dark:hover:bg-white/10"
+            className="flex-shrink-0 p-1.5 text-slate-500 hover:text-slate-900 dark:text-white/50 dark:hover:text-white transition-colors rounded-full hover:bg-slate-200/50 dark:hover:bg-white/10"
           >
-            {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+            {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
           </button>
         </div>
       </header>
@@ -117,6 +159,7 @@ export function SnailRaceClient({ tableId, userId, initialBalance }: SnailRaceCl
           <SnailRaceTrack
             gameState={gameState}
             raceResult={raceResult}
+            timeRemaining={timeRemaining}
           />
 
           {/* Results overlay */}

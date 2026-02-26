@@ -1,5 +1,3 @@
-'use client';
-
 import Link from 'next/link';
 import { Users, FileText, Spade, TrendingUp } from 'lucide-react';
 

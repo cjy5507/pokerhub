@@ -3,9 +3,9 @@ import Link from 'next/link';
 export default function Footer() {
   return (
     <footer className="bg-op-footer border-t border-op-border mt-auto">
-      <div className="mx-auto max-w-[1560px] px-4 py-6 lg:py-8">
+      <div className="mx-auto max-w-[1560px] px-3 sm:px-4 lg:px-6 py-5 sm:py-6 lg:py-8">
         {/* Links */}
-        <div className="flex flex-wrap justify-center gap-4 lg:gap-6 mb-4 lg:mb-6 text-sm">
+        <div className="flex flex-wrap justify-center gap-3 sm:gap-4 lg:gap-6 mb-3 sm:mb-4 lg:mb-6 text-sm">
           <Link
             href="/terms"
             className="text-op-text-muted hover:text-op-gold transition-colors"

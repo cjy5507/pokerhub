@@ -123,6 +123,7 @@ export const posts = pgTable('posts', {
   boardIdIdx: index('posts_board_id_idx').on(table.boardId),
   authorIdIdx: index('posts_author_id_idx').on(table.authorId),
   createdAtIdx: index('posts_created_at_idx').on(table.createdAt),
+  boardCreatedAtIdx: index('posts_board_created_at_idx').on(table.boardId, table.createdAt),
 }));
 
 export const comments = pgTable('comments', {
@@ -138,6 +139,7 @@ export const comments = pgTable('comments', {
 }, (table) => ({
   postIdIdx: index('comments_post_id_idx').on(table.postId),
   authorIdIdx: index('comments_author_id_idx').on(table.authorId),
+  parentIdIdx: index('comments_parent_id_idx').on(table.parentId),
 }));
 
 export const postLikes = pgTable('post_likes', {
@@ -372,6 +374,7 @@ export const pointTransactions = pgTable('point_transactions', {
 }, (table) => ({
   userIdIdx: index('point_transactions_user_id_idx').on(table.userId),
   createdAtIdx: index('point_transactions_created_at_idx').on(table.createdAt),
+  userCreatedAtIdx: index('point_transactions_user_created_at_idx').on(table.userId, table.createdAt),
 }));
 
 export const xpTransactions = pgTable('xp_transactions', {

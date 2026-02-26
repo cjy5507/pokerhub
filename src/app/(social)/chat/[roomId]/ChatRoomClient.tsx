@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { ArrowLeft, Send, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { formatRelativeTime } from '@/lib/utils/time';
 import { cn } from '@/lib/utils';
-import { sendChatMessage } from '../actions';
+import { sendChatMessage, getChatMessages } from '../actions';
 import type { ChatRoomData, ChatMessageData } from '../actions';
 import { useSession } from '@/components/providers/SessionProvider';
+import { createOptionalClient } from '@/lib/supabase/client';
 
 interface ChatRoomClientProps {
   room: ChatRoomData;
@@ -22,16 +23,90 @@ export default function ChatRoomClient({ room, initialMessages }: ChatRoomClient
   const [isSending, setIsSending] = useState(false);
   const [sseRetry, setSseRetry] = useState(0);
   const [sendError, setSendError] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(initialMessages.length >= 20);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const nextCursorRef = useRef<string | undefined>(
+    initialMessages.length > 0 ? initialMessages[0].createdAt : undefined
+  );
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const topSentinelRef = useRef<HTMLDivElement>(null);
+  const scrollHeightBeforeRef = useRef(0);
+  const needsScrollCorrectionRef = useRef(false);
+  const senderCacheRef = useRef<Map<string, { nickname: string; avatarUrl: string | null; level: number }>>(new Map());
 
-  // Scroll to bottom on new messages
+  // Keep sender cache in sync for Realtime message construction
   useEffect(() => {
+    messages.forEach(msg => {
+      if (!senderCacheRef.current.has(msg.sender.id)) {
+        senderCacheRef.current.set(msg.sender.id, {
+          nickname: msg.sender.nickname,
+          avatarUrl: msg.sender.avatarUrl,
+          level: msg.sender.level,
+        });
+      }
+    });
+  }, [messages]);
+
+  const loadMore = async () => {
+    if (isLoadingMore || !hasMore || !nextCursorRef.current) return;
+    const container = scrollContainerRef.current;
+    scrollHeightBeforeRef.current = container?.scrollHeight ?? 0;
+    needsScrollCorrectionRef.current = true;
+    setIsLoadingMore(true);
+    try {
+      const result = await getChatMessages(room.id, nextCursorRef.current);
+      if (result.messages && result.messages.length > 0) {
+        setMessages((prev) => {
+          const existingIds = new Set(prev.map((m) => m.id));
+          const older = result.messages.filter((m) => !existingIds.has(m.id));
+          return [...older, ...prev];
+        });
+      }
+      nextCursorRef.current = result.nextCursor;
+      setHasMore(result.hasMore ?? false);
+    } catch (error) {
+      console.error('Failed to load older messages:', error);
+      needsScrollCorrectionRef.current = false;
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
+
+  // Restore scroll position after prepending older messages
+  useLayoutEffect(() => {
+    if (needsScrollCorrectionRef.current && scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop +=
+        scrollContainerRef.current.scrollHeight - scrollHeightBeforeRef.current;
+      needsScrollCorrectionRef.current = false;
+    }
+  }, [messages]);
+
+  // IntersectionObserver: load older messages when top sentinel enters viewport
+  useEffect(() => {
+    const sentinel = topSentinelRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) loadMore();
+      },
+      { threshold: 0.1 }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasMore, isLoadingMore]);
+
+  // Scroll to bottom on new messages (skip when prepending older ones)
+  useEffect(() => {
+    if (needsScrollCorrectionRef.current) return;
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // SSE: real-time message subscription
+  // SSE: real-time message subscription (fallback when NEXT_PUBLIC_CHAT_USE_REALTIME is not set)
   useEffect(() => {
+    if (process.env.NEXT_PUBLIC_CHAT_USE_REALTIME === 'true') return;
     const eventSource = new EventSource(`/api/chat/${room.id}`);
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -62,6 +137,45 @@ export default function ChatRoomClient({ room, initialMessages }: ChatRoomClient
       if (reconnectTimer) clearTimeout(reconnectTimer);
     };
   }, [room.id, sseRetry]);
+
+  // Supabase Realtime subscription (active when NEXT_PUBLIC_CHAT_USE_REALTIME=true)
+  useEffect(() => {
+    if (process.env.NEXT_PUBLIC_CHAT_USE_REALTIME !== 'true') return;
+
+    const supabase = createOptionalClient();
+    if (!supabase) return;
+
+    const channel = supabase
+      .channel(`chat-room:${room.id}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `room_id=eq.${room.id}` },
+        (payload) => {
+          const row = payload.new as { id: string; content: string; sender_id: string; created_at: string };
+          if (!row?.id) return;
+
+          const cachedSender = senderCacheRef.current.get(row.sender_id);
+          const newMessage: ChatMessageData = {
+            id: row.id,
+            content: row.content,
+            createdAt: row.created_at,
+            sender: cachedSender
+              ? { id: row.sender_id, ...cachedSender }
+              : { id: row.sender_id, nickname: '...', avatarUrl: null, level: 1 },
+          };
+
+          setMessages((prev) => {
+            if (prev.some((m) => m.id === newMessage.id)) return prev;
+            return [...prev, newMessage];
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [room.id]);
 
   const handleSendMessage = async () => {
     if (!input.trim() || isSending) return;
@@ -121,7 +235,12 @@ export default function ChatRoomClient({ room, initialMessages }: ChatRoomClient
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+        {/* Top sentinel for infinite scroll */}
+        <div ref={topSentinelRef} className="h-1" />
+        {isLoadingMore && (
+          <div className="text-center py-2 text-xs text-op-text-muted">이전 메시지 불러오는 중...</div>
+        )}
         {messages.map((message) => {
           const isOwn = message.sender.id === session?.userId;
 

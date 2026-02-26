@@ -1,5 +1,3 @@
-'use client';
-
 import Link from 'next/link';
 import { Newspaper, ChevronRight, Megaphone, Flame } from 'lucide-react';
 import { formatRelativeTime } from '@/lib/utils/time';

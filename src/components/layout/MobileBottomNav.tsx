@@ -46,15 +46,11 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
     <nav
       className={cn(
         'fixed bottom-0 left-0 right-0 z-50 bg-op-surface border-t border-op-border',
-        'lg:hidden',
+        'lg:hidden bottom-nav',
         className
       )}
-      style={{
-        height: 'calc(60px + env(safe-area-inset-bottom))',
-        paddingBottom: 'env(safe-area-inset-bottom)',
-      }}
     >
-      <div className="flex items-center justify-around h-[60px]">
+      <div className="flex items-center justify-around bottom-nav-inner">
         {navItems.map((item) => {
           const isChatButton = item.href === null;
           const isActive = isChatButton
@@ -82,7 +78,7 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
                   strokeWidth={isActive ? 2.5 : 2}
                 />
                 <span className={cn(
-                  'text-[10px] font-medium',
+                  'text-[10px] font-medium bottom-nav-label',
                   isActive ? 'text-op-gold' : 'text-op-text-muted'
                 )}>
                   {item.label}

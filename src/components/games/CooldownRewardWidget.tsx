@@ -23,6 +23,7 @@ export function CooldownRewardWidget() {
     totalToday: 0,
   });
   const [showCelebration, setShowCelebration] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const celebrationTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // Cleanup celebration timer on unmount
@@ -88,6 +89,7 @@ export function CooldownRewardWidget() {
     try {
       const result = await claimCooldownReward();
 
+      setErrorMessage(null);
       if (result.success && result.pointsEarned) {
         // Update localStorage
         if (result.nextClaimAt) {
@@ -114,9 +116,12 @@ export function CooldownRewardWidget() {
         // Hide celebration after 2 seconds
         celebrationTimer.current = setTimeout(() => setShowCelebration(false), 2000);
       } else {
+        const msg = result.error === 'TOO_FAST' ? '너무 빨라요! 잠시 후 다시 시도해주세요.' : (result.error ?? '수확에 실패했습니다');
+        setErrorMessage(msg);
         console.error('Failed to claim reward:', result.error);
       }
     } catch (error) {
+      setErrorMessage('수확에 실패했습니다');
       console.error('Error claiming reward:', error);
     } finally {
       setIsClaiming(false);
@@ -190,6 +195,11 @@ export function CooldownRewardWidget() {
           )}
         </span>
       </button>
+
+      {/* Error message */}
+      {errorMessage && (
+        <p className="mt-2 text-xs text-red-400 text-center font-medium">{errorMessage}</p>
+      )}
 
       {/* Stats */}
       <div className="mt-2 space-y-1 text-sm">

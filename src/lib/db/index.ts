@@ -22,5 +22,21 @@ const queryClient = isValidDatabaseUrl
   : null as any;
 export const db = queryClient ? drizzle(queryClient, { schema: { ...schema, ...relations } }) : null as any;
 
+// Connection pooler client for high-contention baccarat endpoints.
+// Set SUPABASE_POOLER_URL to the Supabase pgbouncer transaction-mode URL (port 6543).
+// Falls back to the main db if not configured.
+const poolerUrl = (process.env.SUPABASE_POOLER_URL || '').trim();
+const poolerClient = poolerUrl.startsWith('postgres')
+  ? postgres(poolerUrl, {
+      max: 20,
+      idle_timeout: 10,
+      connect_timeout: 10,
+      prepare: false,  // required for pgbouncer transaction mode
+    })
+  : null;
+export const baccaratDb = poolerClient
+  ? drizzle(poolerClient, { schema: { ...schema, ...relations } })
+  : db;
+
 // For migrations
 export const migrationClient = isValidDatabaseUrl ? postgres(databaseUrl, { max: 1 }) : null as any;

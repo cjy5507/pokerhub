@@ -1,6 +1,6 @@
 'use server';
 
-import { db } from '@/lib/db';
+import { baccaratDb as db } from '@/lib/db';
 import { baccaratTables, baccaratBets, baccaratRounds, users, pointTransactions } from '@/lib/db/schema';
 import { getSession } from '@/lib/auth/session';
 import { eq, and, sql } from 'drizzle-orm';
@@ -10,7 +10,11 @@ import { randomUUID } from 'crypto';
 const PHASE_BETTING_MS = 15000;
 const PHASE_DEALING_MS = 5000;
 const PHASE_RESULT_MS = 6000;
-const BET_ACTION_RETRY_LIMIT = 1;
+const BET_ACTION_RETRY_LIMIT = 3;
+const MAX_BET_RETRY_MS = 700;
+const BET_RETRY_DELAYS = [100, 200, 400] as const;
+
+function sleep(ms: number): Promise<void> { return new Promise(r => setTimeout(r, ms)); }
 
 function getCardScore(value: string) {
     if (['10', 'J', 'Q', 'K'].includes(value)) return 0;
@@ -136,6 +140,8 @@ export async function syncBaccaratState(tableId: string) {
         // 2. Only enter transaction if we need to progress the game state
         if (requiresTransaction) {
             await db.transaction(async (tx: any) => {
+                await tx.execute(sql`SET LOCAL statement_timeout = '5000'`);
+
                 const lockResult = await tx.execute(
                     sql`SELECT pg_try_advisory_xact_lock(hashtext(${tableId}::text)) as locked`
                 );
@@ -181,7 +187,7 @@ export async function syncBaccaratState(tableId: string) {
 
                 let currentStatus = txT.status;
                 let currentRoundId = txT.currentRoundId;
-                let history = Array.isArray(txT.history) ? [...txT.history] : [];
+                let newResults: string[] = [];
                 let dbUpdates = 0;
 
                 while (now >= txEndsAt && dbUpdates < 200) {
@@ -259,8 +265,7 @@ export async function syncBaccaratState(tableId: string) {
                                     eq(baccaratBets.isResolved, false)
                                 ));
 
-                            history.push(res);
-                            if (history.length > 72) history.shift();
+                            newResults.push(res);
                         }
 
                         currentRoundId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : randomUUID();
@@ -269,17 +274,14 @@ export async function syncBaccaratState(tableId: string) {
                     }
                 }
 
-                // Commit final state
-                txT.status = currentStatus;
-                txT.currentRoundId = currentRoundId;
-                txT.history = history;
-                txT.phaseEndsAt = new Date(txEndsAt);
-
+                // Commit final state — use jsonb append+trim for history to avoid full column replacement
                 await tx.update(baccaratTables).set({
-                    status: txT.status as "betting" | "dealing" | "result",
-                    currentRoundId: txT.currentRoundId,
-                    history: txT.history,
-                    phaseEndsAt: txT.phaseEndsAt,
+                    status: currentStatus as "betting" | "dealing" | "result",
+                    currentRoundId: currentRoundId,
+                    ...(newResults.length > 0 ? {
+                        history: sql`(COALESCE(${baccaratTables.history}, '[]'::jsonb) || ${JSON.stringify(newResults)}::jsonb)[(-36):]`,
+                    } : {}),
+                    phaseEndsAt: new Date(txEndsAt),
                 }).where(eq(baccaratTables.id, tableId));
                 stateChanged = true;
             });
@@ -390,13 +392,26 @@ export async function placeBaccaratBet(tableId: string, zone: any, amount: numbe
         });
     }
 
+    const retryStart = Date.now();
     for (let attempt = 0; attempt <= BET_ACTION_RETRY_LIMIT; attempt++) {
+        if (attempt > 0) {
+            const elapsed = Date.now() - retryStart;
+            if (elapsed >= MAX_BET_RETRY_MS) {
+                console.warn('[baccarat] bet retry cap exceeded', { tableId, attempt, latencyMs: elapsed });
+                break;
+            }
+            const baseDelay = BET_RETRY_DELAYS[Math.min(attempt - 1, BET_RETRY_DELAYS.length - 1)];
+            const jitter = Math.floor(Math.random() * 50);
+            console.warn('[baccarat] lock contention', { tableId, attempt, latencyMs: elapsed });
+            await sleep(baseDelay + jitter);
+            if (Date.now() - retryStart >= MAX_BET_RETRY_MS) break;
+        }
         const result = await runPlaceBet();
         if (!(result as any).needsSync) return result;
         await syncBaccaratState(tableId);
     }
 
-    return { success: false, error: 'Not in betting phase' };
+    return { success: false, error: 'Bet failed: table is transitioning' };
 }
 
 export async function clearBaccaratBets(tableId: string) {
@@ -443,13 +458,26 @@ export async function clearBaccaratBets(tableId: string) {
         });
     }
 
+    const retryStart = Date.now();
     for (let attempt = 0; attempt <= BET_ACTION_RETRY_LIMIT; attempt++) {
+        if (attempt > 0) {
+            const elapsed = Date.now() - retryStart;
+            if (elapsed >= MAX_BET_RETRY_MS) {
+                console.warn('[baccarat] clear retry cap exceeded', { tableId, attempt, latencyMs: elapsed });
+                break;
+            }
+            const baseDelay = BET_RETRY_DELAYS[Math.min(attempt - 1, BET_RETRY_DELAYS.length - 1)];
+            const jitter = Math.floor(Math.random() * 50);
+            console.warn('[baccarat] clear lock contention', { tableId, attempt, latencyMs: elapsed });
+            await sleep(baseDelay + jitter);
+            if (Date.now() - retryStart >= MAX_BET_RETRY_MS) break;
+        }
         const result = await runClearBets();
         if (!(result as any).needsSync) return result;
         await syncBaccaratState(tableId);
     }
 
-    return { success: false, error: 'Not in betting phase' };
+    return { success: false, error: 'Bet clear failed: table is transitioning' };
 }
 
 export async function getBaccaratState(tableId: string) {

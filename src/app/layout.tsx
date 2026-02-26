@@ -81,14 +81,14 @@ export default async function RootLayout({
           `,
         }} />
       </head>
-      <body className={`${inter.variable} antialiased bg-op-bg text-op-text min-h-screen flex flex-col`}>
+      <body className={`${inter.variable} antialiased bg-op-bg text-op-text min-h-screen flex flex-col text-[15px] md:text-[16px]`}>
         <SessionProvider session={session}>
           <ThemeProvider>
             <ChatProvider>
               <Header />
 
-              <div className="flex-1 mx-auto w-full max-w-[1560px] px-4 py-4 lg:py-6">
-                <div className="flex gap-4 lg:gap-6">
+              <div className="flex-1 mx-auto w-full max-w-[1560px] px-3 sm:px-4 lg:px-6 py-3 sm:py-4 lg:py-6">
+                <div className="flex gap-3 sm:gap-4 lg:gap-6">
                   {/* Main Content */}
                   <main className="flex-1 min-w-0">
                     {children}

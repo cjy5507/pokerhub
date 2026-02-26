@@ -202,7 +202,7 @@ export default function Header() {
   return (
     <>
       <header className="sticky top-0 z-40 bg-op-header border-b border-op-border">
-        <div className="mx-auto max-w-[1560px] px-4">
+        <div className="mx-auto max-w-[1560px] px-3 sm:px-4 lg:px-6">
           <div className="flex h-14 lg:h-16 items-center justify-between gap-4">
             {/* Left: Logo */}
             <Link

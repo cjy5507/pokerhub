@@ -1,6 +1,4 @@
-'use client';
-
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 type RankingType = 'level' | 'points' | 'posts' | 'hands' | 'likes';
 
@@ -36,11 +34,6 @@ interface RankingsClientProps {
 }
 
 export function RankingsClient({ rankedUsers, currentUserId, activeTab }: RankingsClientProps) {
-  const router = useRouter();
-
-  const setActiveTab = (tab: RankingType) => {
-    router.push(`/rankings?tab=${tab}`);
-  };
 
   // Get metric value for display
   const getMetricValue = (user: RankedUser): string => {
@@ -84,9 +77,9 @@ export function RankingsClient({ rankedUsers, currentUserId, activeTab }: Rankin
             {RANKING_TABS.map((tab) => {
               const isActive = activeTab === tab.key;
               return (
-                <button
+                <Link
                   key={tab.key}
-                  onClick={() => setActiveTab(tab.key)}
+                  href={`/rankings?tab=${tab.key}`}
                   className={`
                     py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors
                     ${
@@ -97,7 +90,7 @@ export function RankingsClient({ rankedUsers, currentUserId, activeTab }: Rankin
                   `}
                 >
                   {tab.label}
-                </button>
+                </Link>
               );
             })}
           </div>

@@ -84,7 +84,7 @@ export default async function BoardPage({ params, searchParams }: BoardPageProps
       {/* Controls: Sort + Search + Write Button */}
       <div className="mb-4 flex flex-col lg:flex-row lg:items-center gap-4">
         {/* Sort tabs */}
-        <BoardSortTabs currentSort={sort} boardSlug={slug} />
+        <BoardSortTabs currentSort={sort} boardSlug={slug} currentSearch={searchQuery} currentTarget={searchTarget} />
 
         {/* Spacer */}
         <div className="flex-1" />

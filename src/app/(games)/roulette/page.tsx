@@ -100,7 +100,8 @@ export default function RoulettePage() {
       const serverResult = await spinRoulette(betAmount);
 
       if (!serverResult.success) {
-        setErrorMessage(serverResult.error || '룰렛 실행에 실패했습니다');
+        const errMsg = serverResult.error === 'TOO_FAST' ? '너무 빨라요! 잠시 후 다시 시도해주세요.' : (serverResult.error || '룰렛 실행에 실패했습니다');
+        setErrorMessage(errMsg);
         setIsSpinning(false);
         return;
       }
@@ -130,6 +131,11 @@ export default function RoulettePage() {
         setShowResult(true);
         if (segmentIndex >= 0) {
           setWinningSegmentIndex(segmentIndex);
+        }
+
+        // Haptic feedback on win
+        if (winAmount > 0 && typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+          navigator.vibrate(200);
         }
 
         // Refresh real balance from server
@@ -210,9 +216,13 @@ export default function RoulettePage() {
             <Crown className="w-4 h-4 text-op-gold" />
             보유 포인트
           </div>
-          <div className="text-3xl sm:text-4xl font-black text-op-gold drop-shadow-[0_0_15px_rgba(201,162,39,0.5)]">
-            {isLoadingPoints ? '...' : `${currentPoints.toLocaleString()}P`}
-          </div>
+          {isLoadingPoints ? (
+            <div className="h-10 w-32 mx-auto rounded-lg bg-op-gold/20 animate-pulse" />
+          ) : (
+            <div className="text-3xl sm:text-4xl font-black text-op-gold drop-shadow-[0_0_15px_rgba(201,162,39,0.5)]">
+              {currentPoints.toLocaleString()}P
+            </div>
+          )}
         </div>
       </div>
 
@@ -327,7 +337,7 @@ export default function RoulettePage() {
                   onClick={() => setBetAmount(amount)}
                   disabled={isSpinning}
                   className={cn(
-                    "py-3 rounded-xl font-bold text-sm sm:text-base transition-all duration-200 relative overflow-hidden group",
+                    "py-3 min-h-[44px] rounded-xl font-bold text-sm sm:text-base transition-all duration-200 relative overflow-hidden group",
                     betAmount === amount
                       ? "bg-gradient-to-b from-op-gold to-op-gold-hover text-black shadow-[0_0_20px_rgba(201,162,39,0.5)] transform scale-[1.03]"
                       : "bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-slate-600 dark:text-white/70 hover:bg-black/10 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white",

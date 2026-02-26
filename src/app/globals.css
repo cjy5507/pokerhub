@@ -469,6 +469,35 @@
   display: none;
 }
 
+/* ============================================================
+ * Bottom Navigation - Height, Safe Area & Landscape
+ * ============================================================ */
+
+.bottom-nav {
+  height: calc(60px + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+  /* Ensure safe-area padding is always applied for notched devices */
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+.bottom-nav-inner {
+  height: 60px;
+}
+
+/* Landscape on phones: reduce height and hide labels to preserve content area */
+@media (orientation: landscape) and (max-height: 480px) {
+  .bottom-nav {
+    height: calc(40px + env(safe-area-inset-bottom));
+  }
+  .bottom-nav-inner {
+    height: 40px;
+  }
+  .bottom-nav-label {
+    display: none;
+  }
+}
+
 /* ═══════════════════════════════════════════════════════════
  * Poker Table Animations
  * ═══════════════════════════════════════════════════════════ */

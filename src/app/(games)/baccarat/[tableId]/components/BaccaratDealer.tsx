@@ -39,6 +39,7 @@ const BaccaratDealerComponent: React.FC<BaccaratDealerProps> = ({
     revealedCards
 }) => {
     const isDealing = gameState === 'dealing' || gameState === 'result';
+    const isAnimating = gameState === 'dealing' && revealedCards < (playerCards.length + bankerCards.length);
 
     // The dealer head motion
     const dealerMotion: any = gameState === 'dealing'
@@ -249,8 +250,9 @@ const BaccaratDealerComponent: React.FC<BaccaratDealerProps> = ({
                                         scale: { duration: 0.6, ease: "easeInOut", delay: dealIndex * 0.4 }
                                     }}
                                     className={cn(
-                                        "relative w-12 h-[4.5rem] sm:w-14 sm:h-20 md:w-20 md:h-28 will-change-transform shadow-[0_4px_10px_rgba(0,0,0,0.2)] dark:shadow-[0_4px_10px_rgba(0,0,0,0.5)]",
+                                        "relative w-12 h-[4.5rem] sm:w-14 sm:h-20 md:w-20 md:h-28 shadow-[0_4px_10px_rgba(0,0,0,0.2)] dark:shadow-[0_4px_10px_rgba(0,0,0,0.5)]",
                                         "[transform-style:preserve-3d]",
+                                        isAnimating && "will-change-transform",
                                         i === 2 ? "absolute -right-6 sm:-right-8 md:-right-12 top-1 sm:top-2 lg:top-4 z-10" : "z-0"
                                     )}
                                 >
@@ -314,8 +316,9 @@ const BaccaratDealerComponent: React.FC<BaccaratDealerProps> = ({
                                         scale: { duration: 0.6, ease: "easeInOut", delay: dealIndex * 0.4 }
                                     }}
                                     className={cn(
-                                        "relative w-12 h-[4.5rem] sm:w-14 sm:h-20 md:w-20 md:h-28 will-change-transform shadow-[0_4px_10px_rgba(0,0,0,0.2)] dark:shadow-[0_4px_10px_rgba(0,0,0,0.5)]",
+                                        "relative w-12 h-[4.5rem] sm:w-14 sm:h-20 md:w-20 md:h-28 shadow-[0_4px_10px_rgba(0,0,0,0.2)] dark:shadow-[0_4px_10px_rgba(0,0,0,0.5)]",
                                         "[transform-style:preserve-3d]",
+                                        isAnimating && "will-change-transform",
                                         i === 2 ? "absolute -left-6 sm:-left-8 md:-left-12 top-1 sm:top-2 lg:top-4 z-10" : "z-0"
                                     )}
                                 >

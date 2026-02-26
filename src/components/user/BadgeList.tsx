@@ -1,5 +1,3 @@
-'use client';
-
 import { Trophy, Star, Shield, Award } from 'lucide-react';
 import type { UserBadge } from '@/lib/gamification/badges';
 

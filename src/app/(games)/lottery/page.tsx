@@ -76,6 +76,10 @@ export default function LotteryPage() {
     try {
       const result = await buyLotteryTicket();
 
+      if ('error' in result && result.error === 'TOO_FAST') {
+        setErrorMessage('너무 빨라요! 잠시 후 다시 시도해주세요.');
+        return;
+      }
       if (result.success && result.ticket) {
         // Refresh real balance from server
         await refreshBalance();
@@ -105,6 +109,11 @@ export default function LotteryPage() {
     flipTimerRef.current = setTimeout(() => {
       setIsFlipping(false);
       setIsRevealed(true);
+
+      // Haptic feedback on win
+      if (currentTicket.tier !== 'none' && typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+        navigator.vibrate(200);
+      }
 
       // Add to history
       setHistory(prev => [currentTicket, ...prev].slice(0, 10));
@@ -150,9 +159,13 @@ export default function LotteryPage() {
                 <Crown className="text-op-gold w-5 h-5 sm:w-6 sm:h-6" />
                 <span className="text-xs sm:text-sm font-medium text-slate-500 dark:text-white/50">보유 포인트</span>
               </div>
-              <span className="text-2xl sm:text-3xl font-black text-op-gold drop-shadow-[0_0_15px_rgba(201,162,39,0.5)] relative z-10">
-                {isLoadingPoints ? '...' : `${userPoints.toLocaleString()}P`}
-              </span>
+              {isLoadingPoints ? (
+                <div className="h-8 w-28 rounded-lg bg-op-gold/20 animate-pulse" />
+              ) : (
+                <span className="text-2xl sm:text-3xl font-black text-op-gold drop-shadow-[0_0_15px_rgba(201,162,39,0.5)] relative z-10">
+                  {userPoints.toLocaleString()}P
+                </span>
+              )}
             </div>
 
             {/* Daily Limit */}
@@ -195,7 +208,7 @@ export default function LotteryPage() {
                 {currentTicket && isRevealed && (
                   <button
                     onClick={handleReset}
-                    className="flex items-center gap-2 px-4 py-2 bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 rounded-xl text-sm font-bold text-slate-900 dark:text-white transition-colors border border-black/10 dark:border-white/10"
+                    className="flex items-center gap-2 px-4 py-2 min-h-[44px] bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 rounded-xl text-sm font-bold text-slate-900 dark:text-white transition-colors border border-black/10 dark:border-white/10"
                   >
                     <Ticket className="w-4 h-4" />새 복권
                   </button>

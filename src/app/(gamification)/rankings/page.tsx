@@ -261,7 +261,7 @@ export default async function RankingsPage({
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-6 overflow-x-auto pb-1">
+      <div className="flex gap-1 mb-6 overflow-x-auto pb-1 scrollbar-hide">
         {TABS.map((t) => (
           <Link
             key={t.key}

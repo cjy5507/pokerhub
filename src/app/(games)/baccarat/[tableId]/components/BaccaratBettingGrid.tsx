@@ -76,9 +76,9 @@ const BaccaratBettingGridComponent: React.FC<BaccaratBettingGridProps> = ({
 
             {/* Action Bar (Chips) */}
             <div className="bg-white dark:bg-[#0a0a0a] p-2 md:p-4 border-t border-slate-200 dark:border-white/10 shadow-[0_-20px_40px_rgba(0,0,0,0.05)] dark:shadow-[0_-20px_40px_rgba(0,0,0,0.9)] pb-[calc(0.5rem+env(safe-area-inset-bottom))] transition-colors z-30">
-                <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
+                <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center gap-2 sm:gap-4 sm:justify-between">
                     {/* Chip Selection */}
-                    <div className="flex gap-2 md:gap-4 overflow-x-auto scrollbar-hide flex-1 justify-center px-2 py-1 items-end min-h-[70px]">
+                    <div className="flex flex-wrap justify-center gap-2 md:gap-4 w-full sm:flex-1 sm:flex-nowrap px-2 py-1 items-center sm:items-end min-h-[60px] sm:min-h-[70px]">
                         {chips.map(chip => {
                             const isSelected = selectedChip === chip;
                             return (
@@ -117,7 +117,7 @@ const BaccaratBettingGridComponent: React.FC<BaccaratBettingGridProps> = ({
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex md:flex-col gap-1 sm:gap-2 shrink-0">
+                    <div className="flex sm:flex-col gap-2 shrink-0 w-full sm:w-auto justify-center">
                         <button
                             disabled={gameState !== 'betting'}
                             className="px-2 sm:px-4 md:px-6 py-3 min-w-[50px] whitespace-nowrap rounded-xl border border-slate-300 dark:border-white/10 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 active:bg-slate-300 dark:active:bg-white/20 text-slate-700 dark:text-white/90 text-[10px] md:text-xs font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed uppercase tracking-wider shadow-sm flex-1"

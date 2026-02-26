@@ -1,5 +1,3 @@
-'use client';
-
 import { PokerTableClient } from '../[tableId]/PokerTableClient';
 import type { GameState } from '@/lib/poker/types';
 

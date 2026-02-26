@@ -7,6 +7,8 @@ import { getSession } from '@/lib/auth/session';
 /**
  * Server-Sent Events endpoint for real-time chat messages.
  * Polls DB every 2 seconds for new messages in the room.
+ * Used as fallback when NEXT_PUBLIC_CHAT_USE_REALTIME is not 'true'.
+ * When Supabase Realtime is enabled, clients subscribe directly and this endpoint is bypassed.
  */
 export async function GET(
   request: NextRequest,

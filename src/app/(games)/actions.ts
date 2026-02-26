@@ -18,6 +18,23 @@ const MAX_REWARD = 100;
 const LOTTERY_COST = 100;
 const DAILY_LOTTERY_LIMIT = 5;
 
+// In-memory rate limiter: max 1 game play per 3 seconds per user
+const GAME_RATE_LIMIT_MS = 3000;
+const gameRateLimitMap = new Map<string, number>(); // userId -> lastActionTimestamp
+
+function checkGameRateLimit(userId: string): { limited: boolean; retryAfter?: number } {
+  const now = Date.now();
+  const last = gameRateLimitMap.get(userId);
+  if (last !== undefined) {
+    const elapsed = now - last;
+    if (elapsed < GAME_RATE_LIMIT_MS) {
+      return { limited: true, retryAfter: GAME_RATE_LIMIT_MS - elapsed };
+    }
+  }
+  gameRateLimitMap.set(userId, now);
+  return { limited: false };
+}
+
 function getRandomReward(): number {
   return randomInt(MIN_REWARD, MAX_REWARD + 1);
 }
@@ -192,6 +209,12 @@ export async function buyLotteryTicket() {
 
     const userId = session.userId;
 
+    // Rate limit: max 1 game play per 3 seconds
+    const rateCheck = checkGameRateLimit(userId);
+    if (rateCheck.limited) {
+      return { success: false, error: 'TOO_FAST', retryAfter: rateCheck.retryAfter };
+    }
+
     // Determine ticket tier and prize before entering transaction
     const { tier, prize } = determineLotteryTier();
 
@@ -311,6 +334,12 @@ export async function spinRoulette(betAmount: number) {
     }
 
     const userId = session.userId;
+
+    // Rate limit: max 1 game play per 3 seconds
+    const rateCheck = checkGameRateLimit(userId);
+    if (rateCheck.limited) {
+      return { success: false, error: 'TOO_FAST', retryAfter: rateCheck.retryAfter };
+    }
 
     // Get user points
     const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);

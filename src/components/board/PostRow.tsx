@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { cn } from '@/lib/utils';
 import { AuthorBadge } from '../user/AuthorBadge';
 import { Eye, Heart, MessageSquare, Pin } from 'lucide-react';
@@ -23,7 +24,7 @@ export interface PostRowProps {
   className?: string;
 }
 
-export function PostRow({
+function PostRowBase({
   postId,
   boardSlug,
   title,
@@ -169,3 +170,5 @@ function formatNumber(num: number): string {
   }
   return num.toString();
 }
+
+export const PostRow = React.memo(PostRowBase);

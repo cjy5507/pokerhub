@@ -82,6 +82,7 @@ export function ProfileHeader({
             src={user.bannerUrl}
             alt="Banner"
             fill
+            priority
             className="object-cover"
           />
         ) : (
@@ -107,6 +108,7 @@ export function ProfileHeader({
                     alt={user.nickname}
                     width={160}
                     height={160}
+                    priority
                     className="object-cover w-full h-full"
                   />
                 ) : (

@@ -22,24 +22,24 @@ export interface TableVisualizerProps {
 }
 
 const seatPositions6Max = {
-  BTN: 'bottom-4 right-4',
-  SB: 'bottom-4 left-4',
-  BB: 'left-4 top-1/2 -translate-y-1/2',
-  UTG: 'top-4 left-8',
-  MP: 'top-4 right-8',
-  CO: 'right-4 top-1/2 -translate-y-1/2',
+  BTN: 'bottom-[6%] right-[5%]',
+  SB: 'bottom-[6%] left-[5%]',
+  BB: 'left-[2%] top-1/2 -translate-y-1/2',
+  UTG: 'top-[6%] left-[12%]',
+  MP: 'top-[6%] right-[12%]',
+  CO: 'right-[2%] top-1/2 -translate-y-1/2',
 } as const;
 
 const seatPositions9Max = {
-  BTN: 'bottom-4 right-8',
-  SB: 'bottom-4 left-8',
-  BB: 'left-4 bottom-1/3',
-  UTG: 'left-4 top-1/3',
-  'UTG+1': 'top-4 left-12',
-  'UTG+2': 'top-4 left-1/3',
-  MP: 'top-4 right-1/3',
-  HJ: 'top-4 right-12',
-  CO: 'right-4 top-1/3',
+  BTN: 'bottom-[6%] right-[14%]',
+  SB: 'bottom-[6%] left-[14%]',
+  BB: 'left-[2%] bottom-[28%]',
+  UTG: 'left-[2%] top-[28%]',
+  'UTG+1': 'top-[6%] left-[14%]',
+  'UTG+2': 'top-[6%] left-[32%]',
+  MP: 'top-[6%] right-[32%]',
+  HJ: 'top-[6%] right-[14%]',
+  CO: 'right-[2%] top-[28%]',
 } as const;
 
 export function TableVisualizer({
@@ -52,7 +52,7 @@ export function TableVisualizer({
   const positions = maxSeats === 6 ? seatPositions6Max : seatPositions9Max;
 
   return (
-    <div className={cn('relative w-full max-w-[500px] mx-auto', className)}>
+    <div className={cn('relative w-full max-w-full sm:max-w-[480px] lg:max-w-[560px] mx-auto', className)}>
       {/* Poker table */}
       <div
         className="relative w-full aspect-[3/2] rounded-[50%/40%] bg-gradient-to-br from-op-felt to-op-felt-dark border-4 border-op-felt-dark shadow-lg"

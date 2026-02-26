@@ -1,5 +1,3 @@
-'use client';
-
 import { cn } from '@/lib/utils';
 import { InlineCards } from './CardRenderer';
 import { AuthorBadge } from '../user/AuthorBadge';

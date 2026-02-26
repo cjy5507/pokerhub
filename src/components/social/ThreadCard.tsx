@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Heart, MessageCircle, Share2, Trash2, Send, User } from 'lucide-react';
 import { ThreadData, ThreadReplyData, toggleThreadLike, createThreadReply, getThreadReplies } from '@/app/(social)/actions';
 import { formatRelativeTime } from '@/lib/utils/time';
@@ -11,7 +11,7 @@ interface ThreadCardProps {
   onDelete?: () => void;
 }
 
-export function ThreadCard({ thread, currentUserId, onDelete }: ThreadCardProps) {
+function ThreadCardBase({ thread, currentUserId, onDelete }: ThreadCardProps) {
   const [isLiked, setIsLiked] = useState(thread.isLiked);
   const [likesCount, setLikesCount] = useState(thread.likesCount);
   const [showReplies, setShowReplies] = useState(false);
@@ -227,3 +227,5 @@ export function ThreadCard({ thread, currentUserId, onDelete }: ThreadCardProps)
     </div>
   );
 }
+
+export const ThreadCard = React.memo(ThreadCardBase);

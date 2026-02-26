@@ -1,7 +1,7 @@
 'use client';
 
 import { useChat } from './ChatProvider';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { X, Send, Users, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatRelativeTime } from '@/lib/utils/time';
@@ -15,14 +15,19 @@ export function MobileChatDrawer() {
     messages,
     isSending,
     isMobileDrawerOpen,
+    hasMoreMessages,
+    isLoadingMore,
     setActiveRoom,
     sendMessage,
     closeMobileDrawer,
+    loadMoreMessages,
   } = useChat();
 
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const topSentinelRef = useRef<HTMLDivElement>(null);
 
   const activeRoom = rooms.find(r => r.id === activeRoomId);
 
@@ -37,6 +42,22 @@ export function MobileChatDrawer() {
       document.body.style.overflow = '';
     };
   }, [isMobileDrawerOpen]);
+
+  // IntersectionObserver: load older messages when top sentinel enters viewport
+  const handleLoadMore = useCallback(() => {
+    if (hasMoreMessages && !isLoadingMore) loadMoreMessages();
+  }, [hasMoreMessages, isLoadingMore, loadMoreMessages]);
+
+  useEffect(() => {
+    const sentinel = topSentinelRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      (entries) => { if (entries[0].isIntersecting) handleLoadMore(); },
+      { threshold: 0.1 }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [handleLoadMore]);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -105,7 +126,12 @@ export function MobileChatDrawer() {
         </div>
 
         {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+          {/* Top sentinel for infinite scroll */}
+          <div ref={topSentinelRef} className="h-1" />
+          {isLoadingMore && (
+            <div className="text-center py-2 text-xs text-op-text-muted">이전 메시지 불러오는 중...</div>
+          )}
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-op-text-muted">
               <MessageSquare className="w-12 h-12 mb-2 opacity-30" />

@@ -39,7 +39,9 @@ export default async function AdminDashboardPage() {
       {/* Recent users */}
       <div className="rounded-xl bg-op-surface border border-op-border p-4">
         <h3 className="text-lg font-semibold mb-4">최근 가입 유저</h3>
-        <div className="overflow-x-auto">
+
+        {/* Desktop table */}
+        <div className="hidden lg:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-op-border text-left text-op-text-muted">
@@ -79,6 +81,41 @@ export default async function AdminDashboardPage() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile card list */}
+        <div className="lg:hidden space-y-2">
+          {data.recentUsers.map((user: { id: string; nickname: string; email: string; role: string; level: number; points: number; createdAt: Date; status: string }) => (
+            <div key={user.id} className="rounded-lg border border-op-border p-3 bg-op-elevated">
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-medium text-op-text text-sm">{user.nickname}</span>
+                <span className={`inline-block rounded px-2 py-0.5 text-xs font-medium ${
+                  user.role === 'admin' ? 'bg-red-500/20 text-red-400' :
+                  user.role === 'moderator' ? 'bg-blue-500/20 text-blue-400' :
+                  'bg-op-border text-op-text-muted'
+                }`}>
+                  {user.role}
+                </span>
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-xs">
+                <div>
+                  <p className="text-op-text-muted">레벨</p>
+                  <p className="text-op-text font-medium mt-0.5">Lv.{user.level}</p>
+                </div>
+                <div>
+                  <p className="text-op-text-muted">포인트</p>
+                  <p className="text-op-gold font-medium mt-0.5">{user.points.toLocaleString()}</p>
+                </div>
+                <div>
+                  <p className="text-op-text-muted">가입일</p>
+                  <p className="text-op-text mt-0.5">{new Date(user.createdAt).toLocaleDateString('ko-KR')}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+          {data.recentUsers.length === 0 && (
+            <div className="py-8 text-center text-op-text-muted text-sm">유저가 없습니다</div>
+          )}
         </div>
       </div>
     </div>

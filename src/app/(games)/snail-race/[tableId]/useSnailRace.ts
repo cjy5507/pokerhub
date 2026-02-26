@@ -89,7 +89,7 @@ export function useSnailRace(tableId: string, userId: string | null, initialBala
 
   const applyState = useCallback((data: any) => {
     if (!data || !data.table) return;
-    const { table, round, serverTime, myBets: betsMap, balance: serverBalance, odds: serverOdds } = data;
+    const { table, round, serverTime, myBets: betsMap, balance: serverBalance, odds: serverOdds, participants: serverParticipants } = data;
 
     if (gameStateRef.current !== 'result' && table.status === 'result') playSound(winSoundRef.current);
     if (gameStateRef.current !== 'racing' && table.status === 'racing') playSound(raceSoundRef.current);
@@ -114,11 +114,14 @@ export function useSnailRace(tableId: string, userId: string | null, initialBala
       setRaceResult(null);
     }
 
-    // Update participants from round
-    if (round && Array.isArray(round.participants)) {
+    // Update participants from server response (top-level) or round
+    const newParticipants = Array.isArray(serverParticipants) && serverParticipants.length > 0
+      ? serverParticipants
+      : (round && Array.isArray(round.participants) ? round.participants : null);
+    if (newParticipants) {
       setParticipants(prev => {
-        if (prev.length === round.participants.length && prev.every((id: number, i: number) => id === round.participants[i])) return prev;
-        return round.participants;
+        if (prev.length === newParticipants.length && prev.every((id: number, i: number) => id === newParticipants[i])) return prev;
+        return newParticipants;
       });
     }
 

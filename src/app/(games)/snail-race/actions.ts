@@ -156,6 +156,14 @@ export async function syncSnailRaceState(tableId: string) {
 
                 if (!txT.currentRoundId || txEndsAt === 0) {
                     const newRoundId = newId();
+                    const participants = selectParticipants();
+                    await tx.insert(snailRaceRounds).values({
+                        id: newRoundId,
+                        tableId,
+                        raceSeed: null,
+                        finishOrder: null,
+                        participants,
+                    }).onConflictDoNothing();
                     await tx.update(snailRaceTables).set({
                         currentRoundId: newRoundId,
                         status: 'betting',
@@ -181,6 +189,14 @@ export async function syncSnailRaceState(tableId: string) {
                     if (staleBets.length > 0) {
                         await tx.update(snailRaceBets).set({ isResolved: true }).where(and(eq(snailRaceBets.tableId, tableId), eq(snailRaceBets.isResolved, false)));
                     }
+                    const freshParticipants = selectParticipants();
+                    await tx.insert(snailRaceRounds).values({
+                        id: freshRoundId,
+                        tableId,
+                        raceSeed: null,
+                        finishOrder: null,
+                        participants: freshParticipants,
+                    }).onConflictDoNothing();
                     await tx.update(snailRaceTables).set({
                         status: 'betting',
                         currentRoundId: freshRoundId,
@@ -207,16 +223,21 @@ export async function syncSnailRaceState(tableId: string) {
                     dbUpdates++;
 
                     if (currentStatus === 'betting') {
-                        // betting -> racing: select participants, generate race result, insert round
-                        const participants = selectParticipants();
+                        // betting -> racing: read participants from existing round, generate race result
+                        const existingRound = await tx.select({ participants: snailRaceRounds.participants }).from(snailRaceRounds).where(eq(snailRaceRounds.id, currentRoundId)).limit(1);
+                        const participants = (existingRound[0]?.participants as number[]) || selectParticipants();
                         const { raceSeed, finishOrder } = generateRaceResult(participants);
-                        await tx.insert(snailRaceRounds).values({
-                            id: currentRoundId,
-                            tableId,
-                            raceSeed,
-                            finishOrder,
-                            participants,
-                        });
+                        if (existingRound.length > 0) {
+                            await tx.update(snailRaceRounds).set({ raceSeed, finishOrder }).where(eq(snailRaceRounds.id, currentRoundId));
+                        } else {
+                            await tx.insert(snailRaceRounds).values({
+                                id: currentRoundId,
+                                tableId,
+                                raceSeed,
+                                finishOrder,
+                                participants,
+                            });
+                        }
                         currentStatus = 'racing';
                         txEndsAt += PHASE_RACING_MS;
 
@@ -284,6 +305,15 @@ export async function syncSnailRaceState(tableId: string) {
                         }
 
                         currentRoundId = newId();
+                        // Pre-create next round with participants so they're available during betting
+                        const nextParticipants = selectParticipants();
+                        await tx.insert(snailRaceRounds).values({
+                            id: currentRoundId,
+                            tableId,
+                            raceSeed: null,
+                            finishOrder: null,
+                            participants: nextParticipants,
+                        }).onConflictDoNothing();
                         currentStatus = 'betting';
                         txEndsAt += PHASE_BETTING_MS;
                     }
@@ -297,7 +327,7 @@ export async function syncSnailRaceState(tableId: string) {
                     status: currentStatus as 'betting' | 'racing' | 'result',
                     currentRoundId,
                     ...(newResults.length > 0 ? {
-                        history: JSON.stringify(combined),
+                        history: combined,
                     } : {}),
                     phaseEndsAt: new Date(txEndsAt),
                     updatedAt: new Date(),
@@ -323,7 +353,7 @@ export async function syncSnailRaceState(tableId: string) {
         if (!t) return null;
 
         let roundData = null;
-        if (t.status !== 'betting' && t.currentRoundId) {
+        if (t.currentRoundId) {
             const rounds = await db.select().from(snailRaceRounds).where(eq(snailRaceRounds.id, t.currentRoundId)).limit(1);
             roundData = rounds[0] || null;
         }

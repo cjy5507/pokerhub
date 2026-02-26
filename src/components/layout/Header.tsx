@@ -60,6 +60,7 @@ const navGroups: NavGroup[] = [
       { label: '복권', href: '/lottery' },
       { label: '룰렛', href: '/roulette' },
       { label: '바카라', href: '/baccarat/vip-room' },
+      { label: '달팽이 레이스', href: '/snail-race/main' },
       { label: '포인트샵', href: '/shop' },
     ],
   },

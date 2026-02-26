@@ -30,6 +30,8 @@ export const chatMessageTypeEnum = pgEnum('chat_message_type', ['text', 'image',
 export const bannerPositionEnum = pgEnum('banner_position', ['main_top', 'main_side', 'board_top', 'floating']);
 export const baccaratStatusEnum = pgEnum('baccarat_status', ['betting', 'dealing', 'result', 'paused']);
 export const baccaratBetZoneEnum = pgEnum('baccarat_bet_zone', ['player', 'banker', 'tie', 'player_pair', 'banker_pair']);
+export const snailRaceStatusEnum = pgEnum('snail_race_status', ['betting', 'racing', 'result']);
+export const snailRaceBetTypeEnum = pgEnum('snail_race_bet_type', ['win', 'place', 'exacta_box', 'exacta', 'trifecta']);
 
 // ==================== USER DOMAIN ====================
 
@@ -739,4 +741,42 @@ export const baccaratBets = pgTable('baccarat_bets', {
   unresolvedIdx: index('baccarat_bets_unresolved_idx').on(table.tableId, table.isResolved),
   roundUnresolvedIdx: index('baccarat_bets_round_unresolved_idx').on(table.roundId, table.isResolved),
   roundUserResolvedIdx: index('baccarat_bets_round_user_resolved_idx').on(table.roundId, table.userId, table.isResolved),
+}));
+
+// ==================== SNAIL RACE DOMAIN ====================
+
+export const snailRaceTables = pgTable('snail_race_tables', {
+  id: varchar('id', { length: 50 }).primaryKey(),
+  status: snailRaceStatusEnum('status').notNull().default('betting'),
+  phaseEndsAt: timestamp('phase_ends_at', { withTimezone: true }),
+  history: jsonb('history').default('[]'),
+  currentRoundId: varchar('current_round_id', { length: 50 }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const snailRaceRounds = pgTable('snail_race_rounds', {
+  id: varchar('id', { length: 50 }).primaryKey(),
+  tableId: varchar('table_id', { length: 50 }).notNull().references(() => snailRaceTables.id, { onDelete: 'cascade' }),
+  raceSeed: varchar('race_seed', { length: 64 }),
+  finishOrder: jsonb('finish_order'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const snailRaceBets = pgTable('snail_race_bets', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  tableId: varchar('table_id', { length: 50 }).notNull().references(() => snailRaceTables.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'restrict' }),
+  betType: snailRaceBetTypeEnum('bet_type').notNull(),
+  snails: jsonb('snails').notNull(),
+  amount: integer('amount').notNull(),
+  roundId: varchar('round_id', { length: 50 }).notNull(),
+  isResolved: boolean('is_resolved').notNull().default(false),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  tableIdIdx: index('snail_race_bets_table_id_idx').on(table.tableId),
+  userIdIdx: index('snail_race_bets_user_id_idx').on(table.userId),
+  unresolvedIdx: index('snail_race_bets_unresolved_idx').on(table.tableId, table.isResolved),
+  roundUnresolvedIdx: index('snail_race_bets_round_unresolved_idx').on(table.roundId, table.isResolved),
+  roundUserResolvedIdx: index('snail_race_bets_round_user_resolved_idx').on(table.roundId, table.userId, table.isResolved),
 }));

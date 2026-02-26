@@ -28,7 +28,7 @@ function NoticeBanner({ notices }: { notices: PostData[] }) {
   return (
     <Link
       href={`/board/notice/${latest.id}`}
-      className="flex items-center gap-3 bg-op-surface border border-op-border rounded-lg px-4 py-2.5 hover:bg-op-elevated transition-colors"
+      className="flex items-center gap-2 sm:gap-3 bg-op-surface border border-op-border rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 hover:bg-op-elevated transition-colors"
     >
       <span className="shrink-0 inline-flex items-center gap-1 rounded bg-op-gold-dim px-2 py-0.5 text-xs font-bold text-op-gold">
         <Megaphone className="w-3 h-3" />
@@ -62,7 +62,7 @@ function NewsHero({ items }: { items: NewsItem[] }) {
           href={featured.link}
           target="_blank"
           rel="noopener noreferrer"
-          className="lg:col-span-2 bg-op-surface border border-op-border rounded-lg p-4 hover:bg-op-elevated transition-colors group"
+          className="lg:col-span-2 bg-op-surface border border-op-border rounded-lg p-3 sm:p-4 hover:bg-op-elevated transition-colors group"
         >
           <div className="flex items-center gap-2 mb-2">
             <SourceBadge source={featured.source} />
@@ -86,7 +86,7 @@ function NewsHero({ items }: { items: NewsItem[] }) {
               href={item.link}
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-op-surface border border-op-border rounded-lg px-3 py-2.5 hover:bg-op-elevated transition-colors group flex-1"
+              className="bg-op-surface border border-op-border rounded-lg px-2.5 sm:px-3 py-2 sm:py-2.5 hover:bg-op-elevated transition-colors group flex-1"
             >
               <div className="flex items-center gap-2 mb-1">
                 <SourceBadge source={item.source} />
@@ -135,8 +135,8 @@ function BoardPreview({
   return (
     <div className="bg-op-surface border border-op-border rounded-lg overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-op-border">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between px-2.5 sm:px-3 py-2 border-b border-op-border">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           {icon}
           <h2 className="text-sm font-bold text-op-text">{title}</h2>
           {posts.length > 0 && (
@@ -165,7 +165,7 @@ function BoardPreview({
           <Link
             key={post.id}
             href={`/board/${post.boardSlug}/${post.id}`}
-            className="flex items-center gap-2 px-3 py-1.5 hover:bg-op-elevated transition-colors"
+            className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 hover:bg-op-elevated transition-colors"
           >
             {/* Title + comment count */}
             <span className="flex-1 text-sm text-op-text truncate">

@@ -69,7 +69,7 @@ export default async function BoardPage({ params, searchParams }: BoardPageProps
   });
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6 pb-20 lg:pb-0">
+    <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-20 lg:pb-0">
       {/* Board Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-op-text mb-2">{board.nameKo}</h1>

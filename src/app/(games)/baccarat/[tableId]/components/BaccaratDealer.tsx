@@ -183,20 +183,20 @@ const BaccaratDealerComponent: React.FC<BaccaratDealerProps> = ({
                 </div>
 
                 {/* Central Circle (Score or Timer) */}
-                <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-[#111418] border-4 border-[#2a3038] flex items-center justify-center shadow-[0_0_20px_rgba(0,0,0,0.8)] relative z-30 shrink-0">
+                <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white dark:bg-[#111418] border-4 border-slate-200 dark:border-[#2a3038] flex items-center justify-center shadow-[0_4px_10px_rgba(0,0,0,0.1)] dark:shadow-[0_0_20px_rgba(0,0,0,0.8)] relative z-30 shrink-0">
                     {gameState === 'betting' ? (
                         <div className="flex flex-col items-center relative z-10">
-                            <span className="text-xl md:text-2xl font-black text-yellow-500 leading-none">{timeRemaining}</span>
+                            <span className="text-xl md:text-2xl font-black text-yellow-600 dark:text-yellow-500 leading-none">{timeRemaining}</span>
                         </div>
                     ) : (
-                        <span className="text-sm font-black text-white/50 italic leading-none">VS</span>
+                        <span className="text-sm font-black text-slate-400 dark:text-white/50 italic leading-none">VS</span>
                     )}
 
                     {/* Circular Progress Ring for Betting */}
                     {gameState === 'betting' && (
                         <svg className="absolute inset-0 w-full h-full -rotate-90">
-                            <circle cx="50%" cy="50%" r="46%" fill="none" stroke="rgba(234,179,8,0.15)" strokeWidth="8%" />
-                            <circle cx="50%" cy="50%" r="46%" fill="none" stroke="#eab308" strokeWidth="8%" strokeDasharray="290%" strokeDashoffset={`${290 - (290 * (timeRemaining / 15))}%`} className="transition-all duration-1000 ease-linear" />
+                            <circle cx="50%" cy="50%" r="46%" fill="none" stroke="currentColor" className="text-yellow-500/20 dark:text-yellow-500/15" strokeWidth="8%" />
+                            <circle cx="50%" cy="50%" r="46%" fill="none" stroke="currentColor" className="text-yellow-500 transition-all duration-1000 ease-linear" strokeWidth="8%" strokeDasharray="290%" strokeDashoffset={`${290 - (290 * (timeRemaining / 15))}%`} />
                         </svg>
                     )}
                 </div>
@@ -223,7 +223,7 @@ const BaccaratDealerComponent: React.FC<BaccaratDealerProps> = ({
             <div className="flex justify-center items-start gap-1 md:gap-4 relative z-10 w-full px-2 max-w-4xl mx-auto mb-4 md:mb-8">
 
                 {/* Player Cards */}
-                <div className="flex justify-end gap-1 md:gap-2 relative min-h-[120px] w-[160px] md:w-[240px] shrink-0">
+                <div className="flex justify-end gap-1 md:gap-2 relative min-h-[85px] sm:min-h-[120px] w-[130px] sm:w-[160px] md:w-[240px] shrink-0">
                     <AnimatePresence>
                         {playerCards.map((card, i) => {
                             const dealIndex = i === 0 ? 0 : i === 1 ? 2 : 4;
@@ -249,9 +249,9 @@ const BaccaratDealerComponent: React.FC<BaccaratDealerProps> = ({
                                         scale: { duration: 0.6, ease: "easeInOut", delay: dealIndex * 0.4 }
                                     }}
                                     className={cn(
-                                        "relative w-14 h-20 md:w-20 md:h-28 will-change-transform shadow-[0_4px_10px_rgba(0,0,0,0.5)]",
+                                        "relative w-12 h-[4.5rem] sm:w-14 sm:h-20 md:w-20 md:h-28 will-change-transform shadow-[0_4px_10px_rgba(0,0,0,0.2)] dark:shadow-[0_4px_10px_rgba(0,0,0,0.5)]",
                                         "[transform-style:preserve-3d]",
-                                        i === 2 ? "absolute -right-8 md:-right-12 top-2 lg:top-4 z-10" : "z-0"
+                                        i === 2 ? "absolute -right-6 sm:-right-8 md:-right-12 top-1 sm:top-2 lg:top-4 z-10" : "z-0"
                                     )}
                                 >
                                     <CardFront card={card} />
@@ -270,17 +270,17 @@ const BaccaratDealerComponent: React.FC<BaccaratDealerProps> = ({
 
                 {/* Scores VS Block */}
                 <div className="flex items-center justify-center px-1 md:px-4 shrink-0 mt-2 md:mt-4">
-                    <div className="flex items-center gap-2 md:gap-4 bg-[#111418] px-3 md:px-5 py-2 md:py-3 rounded-2xl border border-white/5 shadow-[0_4px_15px_rgba(0,0,0,0.6)]">
+                    <div className="flex items-center gap-2 md:gap-4 bg-white dark:bg-[#111418] px-3 md:px-5 py-2 md:py-3 rounded-2xl border border-slate-200 dark:border-white/5 shadow-md dark:shadow-[0_4px_15px_rgba(0,0,0,0.6)]">
                         <div className={cn(
                             "text-2xl md:text-4xl font-black w-10 h-10 md:w-14 md:h-14 flex justify-center items-center rounded-xl shadow-inner border border-blue-500/20 transition-colors",
-                            playerScore !== null ? "bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)]" : "bg-[#1e2329] text-white/20"
+                            playerScore !== null ? "bg-blue-600 text-white shadow-[0_4px_10px_rgba(37,99,235,0.3)] dark:shadow-[0_0_15px_rgba(37,99,235,0.4)]" : "bg-slate-100 dark:bg-[#1e2329] text-slate-400 dark:text-white/20 border-slate-200 dark:border-blue-500/20"
                         )}>
                             {(isDealing) && playerScore !== null ? playerScore : (playerCards.length > 0 ? (playerScore !== null ? playerScore : "?") : "-")}
                         </div>
-                        <span className="text-white/20 text-[10px] md:text-xs font-black italic mt-1 uppercase tracking-widest hidden sm:block">Score</span>
+                        <span className="text-slate-400 dark:text-white/20 text-[10px] md:text-xs font-black italic mt-1 uppercase tracking-widest hidden sm:block">Score</span>
                         <div className={cn(
                             "text-2xl md:text-4xl font-black w-10 h-10 md:w-14 md:h-14 flex justify-center items-center rounded-xl shadow-inner border border-red-500/20 transition-colors",
-                            bankerScore !== null ? "bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]" : "bg-[#1e2329] text-white/20"
+                            bankerScore !== null ? "bg-red-600 text-white shadow-[0_4px_10px_rgba(220,38,38,0.3)] dark:shadow-[0_0_15px_rgba(220,38,38,0.4)]" : "bg-slate-100 dark:bg-[#1e2329] text-slate-400 dark:text-white/20 border-slate-200 dark:border-red-500/20"
                         )}>
                             {(isDealing) && bankerScore !== null ? bankerScore : (bankerCards.length > 0 ? (bankerScore !== null ? bankerScore : "?") : "-")}
                         </div>
@@ -288,7 +288,7 @@ const BaccaratDealerComponent: React.FC<BaccaratDealerProps> = ({
                 </div>
 
                 {/* Banker Cards */}
-                <div className="flex justify-start gap-1 md:gap-2 relative min-h-[120px] w-[160px] md:w-[240px] shrink-0">
+                <div className="flex justify-start gap-1 md:gap-2 relative min-h-[85px] sm:min-h-[120px] w-[130px] sm:w-[160px] md:w-[240px] shrink-0">
                     <AnimatePresence>
                         {bankerCards.map((card, i) => {
                             const dealIndex = i === 0 ? 1 : i === 1 ? 3 : 5;
@@ -314,9 +314,9 @@ const BaccaratDealerComponent: React.FC<BaccaratDealerProps> = ({
                                         scale: { duration: 0.6, ease: "easeInOut", delay: dealIndex * 0.4 }
                                     }}
                                     className={cn(
-                                        "relative w-14 h-20 md:w-20 md:h-28 will-change-transform shadow-[0_4px_10px_rgba(0,0,0,0.5)]",
+                                        "relative w-12 h-[4.5rem] sm:w-14 sm:h-20 md:w-20 md:h-28 will-change-transform shadow-[0_4px_10px_rgba(0,0,0,0.2)] dark:shadow-[0_4px_10px_rgba(0,0,0,0.5)]",
                                         "[transform-style:preserve-3d]",
-                                        i === 2 ? "absolute -left-8 md:-left-12 top-2 lg:top-4 z-10" : "z-0"
+                                        i === 2 ? "absolute -left-6 sm:-left-8 md:-left-12 top-1 sm:top-2 lg:top-4 z-10" : "z-0"
                                     )}
                                 >
                                     <CardFront card={card} />
@@ -343,7 +343,7 @@ export const BaccaratDealer = React.memo(BaccaratDealerComponent);
 
 const CardFront = ({ card }: { card: { suit: string; value: string } }) => (
     <div className={cn(
-        "absolute inset-0 rounded-lg [backface-visibility:hidden] bg-white flex flex-col items-center justify-center shadow-[0_10px_30px_rgba(0,0,0,0.5)] border border-slate-200",
+        "absolute inset-0 rounded-lg [backface-visibility:hidden] bg-white flex flex-col items-center justify-center shadow-[0_4px_10px_rgba(0,0,0,0.2)] dark:shadow-[0_10px_30px_rgba(0,0,0,0.5)] border border-slate-200",
         getSuitColor(card.suit)
     )}>
         <span className="absolute top-1 left-1.5 text-xs md:text-sm font-black tracking-tighter">{card.value}</span>
@@ -353,7 +353,7 @@ const CardFront = ({ card }: { card: { suit: string; value: string } }) => (
 );
 
 const CardBack = () => (
-    <div className="absolute inset-0 rounded-lg [backface-visibility:hidden] [transform:rotateY(180deg)] bg-gradient-to-br from-blue-900 to-black border-[3px] border-white/20 flex items-center justify-center shadow-2xl">
+    <div className="absolute inset-0 rounded-lg [backface-visibility:hidden] [transform:rotateY(180deg)] bg-gradient-to-br from-blue-900 to-black border-[3px] border-white/20 flex items-center justify-center shadow-md dark:shadow-2xl">
         <div className="w-[85%] h-[85%] border-2 border-dashed border-blue-400/30 rounded-md flex items-center justify-center bg-blue-900/40">
             <span className="text-white/50 text-xs font-black tracking-widest opacity-80">VIP</span>
         </div>
@@ -361,7 +361,7 @@ const CardBack = () => (
 );
 
 const EmptyCardSlot = () => (
-    <div className="w-14 h-20 md:w-20 md:h-28 border-[1.5px] border-dashed border-white/20 rounded-lg flex items-center justify-center bg-black/40 shadow-inner">
-        <span className="text-white/20 text-[10px] md:text-xs uppercase font-bold tracking-widest">Card</span>
+    <div className="w-12 h-[4.5rem] sm:w-14 sm:h-20 md:w-20 md:h-28 border-[1.5px] border-dashed border-slate-300 dark:border-white/20 rounded-lg flex items-center justify-center bg-slate-100/50 dark:bg-black/40 shadow-inner">
+        <span className="text-slate-400 dark:text-white/20 text-[9px] sm:text-[10px] md:text-xs uppercase font-bold tracking-widest">Card</span>
     </div>
 );

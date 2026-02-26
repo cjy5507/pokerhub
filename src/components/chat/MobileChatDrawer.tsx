@@ -22,7 +22,7 @@ export function MobileChatDrawer() {
 
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const activeRoom = rooms.find(r => r.id === activeRoomId);
 
@@ -61,7 +61,7 @@ export function MobileChatDrawer() {
     inputRef.current?.focus();
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -179,19 +179,19 @@ export function MobileChatDrawer() {
         >
           {session ? (
             <div className="flex items-end gap-2">
-              <textarea
+              <input
                 ref={inputRef}
+                type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="메시지를 입력하세요..."
                 className={cn(
                   'flex-1 bg-op-elevated text-op-text placeholder:text-op-text-muted',
-                  'rounded-xl px-4 py-3 resize-none overflow-hidden',
+                  'rounded-xl px-4 py-3',
                   'border border-op-border focus:outline-none focus:border-op-gold focus:ring-1 focus:ring-op-gold',
                   'h-[44px] text-sm leading-tight'
                 )}
-                rows={1}
                 maxLength={500}
                 disabled={isSending}
               />

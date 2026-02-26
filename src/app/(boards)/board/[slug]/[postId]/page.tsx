@@ -54,7 +54,7 @@ export default async function PostPage({ params }: PostPageProps) {
   const timeAgo = formatDistanceToNow(post.createdAt, { addSuffix: true, locale: ko });
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6 pb-20 lg:pb-0">
+    <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-20 lg:pb-0">
       {/* Board breadcrumb */}
       <div className="mb-4">
         <Link
@@ -68,8 +68,8 @@ export default async function PostPage({ params }: PostPageProps) {
       {/* Post container */}
       <div className="bg-op-surface rounded-lg overflow-hidden">
         {/* Post header */}
-        <div className="p-4 sm:p-6 border-b border-op-border">
-          <h1 className="text-xl sm:text-2xl font-bold text-op-text mb-4">{post.title}</h1>
+        <div className="p-3 sm:p-6 border-b border-op-border">
+          <h1 className="text-lg sm:text-2xl font-bold text-op-text mb-2 sm:mb-4">{post.title}</h1>
 
           <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm">
             <AuthorBadge
@@ -93,7 +93,7 @@ export default async function PostPage({ params }: PostPageProps) {
         </div>
 
         {/* Post content */}
-        <div className="p-4 sm:p-6 border-b border-op-border">
+        <div className="p-3 sm:p-6 border-b border-op-border">
           {post.contentHtml ? (
             <div
               className="prose dark:prose-invert max-w-none"
@@ -133,9 +133,9 @@ export default async function PostPage({ params }: PostPageProps) {
               <Link
                 key={relatedPost.id}
                 href={`/board/${slug}/${relatedPost.id}`}
-                className="block p-4 hover:bg-op-elevated transition-colors"
+                className="block p-3 sm:p-4 hover:bg-op-elevated transition-colors"
               >
-                <h3 className="text-op-text font-medium mb-2 line-clamp-1">
+                <h3 className="text-sm sm:text-base text-op-text font-medium mb-1.5 sm:mb-2 line-clamp-1">
                   {relatedPost.title}
                 </h3>
                 <div className="flex items-center gap-3 text-xs text-op-text-secondary">

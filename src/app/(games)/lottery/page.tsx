@@ -135,30 +135,30 @@ export default function LotteryPage() {
               <Ticket size={32} className="text-op-gold" />
             </div>
             <div>
-              <h1 className="text-4xl font-black tracking-tighter bg-gradient-to-r from-slate-900 via-slate-700 to-slate-500 dark:from-white dark:via-gray-200 dark:to-gray-400 text-transparent bg-clip-text drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+              <h1 className="text-3xl sm:text-4xl font-black tracking-tighter bg-gradient-to-r from-slate-900 via-slate-700 to-slate-500 dark:from-white dark:via-gray-200 dark:to-gray-400 text-transparent bg-clip-text drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
                 프리미엄 복권
               </h1>
-              <p className="text-sm font-medium text-slate-500 dark:text-white/50 tracking-wide mt-1">오늘의 행운을 긁어보세요</p>
+              <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-white/50 tracking-wide mt-1">오늘의 행운을 긁어보세요</p>
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             {/* Points Display */}
-            <div className="flex-1 p-5 bg-white/80 dark:bg-black/40 border border-black/10 dark:border-white/10 rounded-2xl flex items-center justify-between relative overflow-hidden group transition-colors">
+            <div className="flex-1 p-4 sm:p-5 bg-white/80 dark:bg-black/40 border border-black/10 dark:border-white/10 rounded-2xl flex items-center justify-between relative overflow-hidden group transition-colors">
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-[shimmer_2s_infinite]" />
               <div className="flex items-center gap-2 relative z-10">
-                <Crown className="text-op-gold" size={24} />
-                <span className="text-sm font-medium text-slate-500 dark:text-white/50">보유 포인트</span>
+                <Crown className="text-op-gold w-5 h-5 sm:w-6 sm:h-6" />
+                <span className="text-xs sm:text-sm font-medium text-slate-500 dark:text-white/50">보유 포인트</span>
               </div>
-              <span className="text-3xl font-black text-op-gold drop-shadow-[0_0_15px_rgba(201,162,39,0.5)] relative z-10">
+              <span className="text-2xl sm:text-3xl font-black text-op-gold drop-shadow-[0_0_15px_rgba(201,162,39,0.5)] relative z-10">
                 {isLoadingPoints ? '...' : `${userPoints.toLocaleString()}P`}
               </span>
             </div>
 
             {/* Daily Limit */}
-            <div className="sm:w-64 p-5 bg-white/80 dark:bg-black/40 border border-black/10 dark:border-white/10 rounded-2xl flex flex-col justify-center transition-colors">
+            <div className="sm:w-64 p-4 sm:p-5 bg-white/80 dark:bg-black/40 border border-black/10 dark:border-white/10 rounded-2xl flex flex-col justify-center transition-colors">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-slate-500 dark:text-white/50">오늘의 구매 한도</span>
+                <span className="text-xs sm:text-sm font-medium text-slate-500 dark:text-white/50">오늘의 구매 한도</span>
                 <span className={cn(
                   "font-black text-lg",
                   todayCount >= DAILY_LIMIT ? "text-red-400" : "text-op-gold"
@@ -185,10 +185,10 @@ export default function LotteryPage() {
 
           {/* Card Flip Area - Takes up 3 cols on desktop */}
           <div className="lg:col-span-3 space-y-6">
-            <div className="bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-black/10 dark:border-white/10 rounded-[32px] p-6 sm:p-10 shadow-2xl relative overflow-hidden min-h-[500px] flex flex-col transition-colors">
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="text-2xl font-black flex items-center gap-3 text-slate-900 dark:text-white">
-                  <Gift className="text-op-gold w-7 h-7" />
+            <div className="bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-black/10 dark:border-white/10 rounded-[24px] sm:rounded-[32px] p-4 sm:p-10 shadow-2xl relative overflow-hidden min-h-[400px] sm:min-h-[500px] flex flex-col transition-colors">
+              <div className="flex items-center justify-between mb-6 sm:mb-8">
+                <h2 className="text-xl sm:text-2xl font-black flex items-center gap-2 sm:gap-3 text-slate-900 dark:text-white">
+                  <Gift className="text-op-gold w-6 h-6 sm:w-7 sm:h-7" />
                   스페셜 티켓
                 </h2>
 
@@ -206,16 +206,16 @@ export default function LotteryPage() {
                 {!currentTicket ? (
                   <div className="w-full flex flex-col items-center">
                     {/* VIP Ticket Placeholder */}
-                    <div className="w-full max-w-[340px] aspect-[3/4] mx-auto rounded-2xl bg-gradient-to-br from-black/5 to-black/10 dark:from-white/5 dark:to-white/10 border border-black/10 dark:border-white/10 flex items-center justify-center mb-8 relative group overflow-hidden shadow-[0_20px_40px_rgba(0,0,0,0.4)] transition-transform duration-500 hover:scale-[1.02]">
+                    <div className="w-full max-w-[260px] sm:max-w-[340px] aspect-[3/4] mx-auto rounded-2xl bg-gradient-to-br from-black/5 to-black/10 dark:from-white/5 dark:to-white/10 border border-black/10 dark:border-white/10 flex items-center justify-center mb-6 sm:mb-8 relative group overflow-hidden shadow-[0_20px_40px_rgba(0,0,0,0.4)] transition-transform duration-500 hover:scale-[1.02]">
                       <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20 mix-blend-overlay"></div>
                       <div className="absolute top-0 left-0 w-full h-[30%] bg-gradient-to-b from-white/10 to-transparent"></div>
 
-                      <div className="text-center relative z-10 p-8 flex flex-col items-center">
-                        <div className="w-20 h-20 rounded-full border-2 border-dashed border-black/20 dark:border-white/20 flex items-center justify-center mb-6 group-hover:border-op-gold/50 transition-colors">
-                          <Ticket size={40} className="text-black/30 dark:text-white/30 group-hover:text-op-gold transition-colors" />
+                      <div className="text-center relative z-10 p-6 sm:p-8 flex flex-col items-center">
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-dashed border-black/20 dark:border-white/20 flex items-center justify-center mb-4 sm:mb-6 group-hover:border-op-gold/50 transition-colors">
+                          <Ticket className="w-8 h-8 sm:w-10 sm:h-10 text-black/30 dark:text-white/30 group-hover:text-op-gold transition-colors" />
                         </div>
-                        <h3 className="text-xl font-bold text-slate-700 dark:text-white/70 mb-2">프리미엄 복권</h3>
-                        <p className="text-sm text-slate-500 dark:text-white/40 font-medium">티켓을 구매하고 행운을 확인하세요</p>
+                        <h3 className="text-lg sm:text-xl font-bold text-slate-700 dark:text-white/70 mb-1.5 sm:mb-2">프리미엄 복권</h3>
+                        <p className="text-xs sm:text-sm text-slate-500 dark:text-white/40 font-medium">티켓을 구매하고 행운을 확인하세요</p>
                       </div>
                     </div>
 
@@ -230,7 +230,7 @@ export default function LotteryPage() {
                       onClick={handleBuyTicket}
                       disabled={isPurchasing || userPoints < TICKET_COST || todayCount >= DAILY_LIMIT}
                       className={cn(
-                        "w-full max-w-[340px] py-5 rounded-2xl font-black text-xl transition-all duration-300 relative overflow-hidden shadow-2xl group",
+                        "w-full max-w-[260px] sm:max-w-[340px] py-4 sm:py-5 rounded-2xl font-black text-lg sm:text-xl transition-all duration-300 relative overflow-hidden shadow-2xl group",
                         isPurchasing || userPoints < TICKET_COST || todayCount >= DAILY_LIMIT
                           ? "bg-gray-200 dark:bg-gray-800 text-gray-400 dark:text-gray-500 cursor-not-allowed border border-gray-300 dark:border-gray-700"
                           : "bg-gradient-to-r from-[#d4af37] via-[#fff4cc] to-[#c9a227] text-black border border-op-gold/50 cursor-pointer shadow-[0_0_40px_rgba(201,162,39,0.4)]"
@@ -253,7 +253,7 @@ export default function LotteryPage() {
                     <div className="card-container relative w-full flex justify-center" style={{ perspective: '1200px' }}>
                       <div
                         className={cn(
-                          "card-flip w-full max-w-[340px] aspect-[3/4] relative cursor-pointer group",
+                          "card-flip w-full max-w-[260px] sm:max-w-[340px] aspect-[3/4] relative cursor-pointer group",
                           isRevealed && "flipped"
                         )}
                         onClick={handleFlip}
@@ -356,11 +356,11 @@ export default function LotteryPage() {
             </div>
           </div>
 
-          <div className="lg:col-span-2 space-y-6 lg:space-y-8">
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6 lg:space-y-8">
             {/* Prize Tiers */}
-            <div className="bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-black/10 dark:border-white/10 rounded-[32px] p-6 shadow-xl transition-colors">
-              <h2 className="text-xl font-bold mb-6 flex items-center gap-3 text-slate-900 dark:text-white">
-                <TrendingUp className="text-op-gold w-6 h-6" />
+            <div className="bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-black/10 dark:border-white/10 rounded-[24px] sm:rounded-[32px] p-5 sm:p-6 shadow-xl transition-colors">
+              <h2 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6 flex items-center gap-2 sm:gap-3 text-slate-900 dark:text-white">
+                <TrendingUp className="text-op-gold w-5 h-5 sm:w-6 sm:h-6" />
                 당첨금 및 확률
               </h2>
               <div className="space-y-4">
@@ -405,9 +405,9 @@ export default function LotteryPage() {
 
             {/* My History */}
             {history.length > 0 && (
-              <div className="bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-black/10 dark:border-white/10 rounded-[32px] p-6 shadow-xl max-h-[350px] flex flex-col transition-colors">
-                <h2 className="text-xl font-bold mb-4 flex items-center gap-3 text-slate-900 dark:text-white shrink-0">
-                  <History className="text-op-gold w-6 h-6" />
+              <div className="bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-black/10 dark:border-white/10 rounded-[24px] sm:rounded-[32px] p-5 sm:p-6 shadow-xl max-h-[350px] flex flex-col transition-colors">
+                <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 flex items-center gap-2 sm:gap-3 text-slate-900 dark:text-white shrink-0">
+                  <History className="text-op-gold w-5 h-5 sm:w-6 sm:h-6" />
                   최근 결과
                 </h2>
                 <div className="space-y-2 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">

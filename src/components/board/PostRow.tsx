@@ -43,7 +43,7 @@ export function PostRow({
       href={`/board/${boardSlug}/${postId}`}
       className={cn(
         // Mobile: card layout (default)
-        'block bg-op-surface rounded-lg p-4 hover:bg-op-elevated transition-colors',
+        'block bg-op-surface rounded-lg p-3 md:p-4 hover:bg-op-elevated transition-colors',
         // Desktop: table row layout
         'lg:bg-transparent lg:rounded-none lg:p-0 lg:px-4 lg:py-2 lg:border-b lg:border-op-border',
         className
@@ -103,7 +103,7 @@ export function PostRow({
             <Pin className="w-4 h-4 text-op-gold flex-shrink-0 mt-0.5" />
           )}
           <h3 className={cn(
-            'font-semibold text-base line-clamp-2',
+            'font-semibold text-sm sm:text-base line-clamp-2 leading-snug',
             isVisited ? 'text-op-text-muted' : 'text-op-text'
           )}>
             {title}
@@ -116,7 +116,7 @@ export function PostRow({
         </div>
 
         {/* Author and date */}
-        <div className="flex items-center gap-2 text-sm mb-2">
+        <div className="flex items-center gap-2 text-xs sm:text-sm mb-1.5 sm:mb-2">
           <AuthorBadge
             userId={author.userId}
             nickname={author.nickname}
@@ -129,17 +129,17 @@ export function PostRow({
         </div>
 
         {/* Stats */}
-        <div className="flex items-center gap-4 text-sm text-op-text-muted">
+        <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm text-op-text-muted">
           <div className="flex items-center gap-1">
-            <Eye className="w-4 h-4" />
+            <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span>{formatNumber(views)}</span>
           </div>
           <div className="flex items-center gap-1">
-            <Heart className="w-4 h-4" />
+            <Heart className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span>{formatNumber(likes)}</span>
           </div>
           <div className="flex items-center gap-1">
-            <MessageSquare className="w-4 h-4" />
+            <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span>{formatNumber(commentCount)}</span>
           </div>
         </div>

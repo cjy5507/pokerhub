@@ -129,8 +129,8 @@ export function PokerLobbyClient({ tables, myTableId }: PokerLobbyClientProps) {
   const filteredTables = activeFilter.sb === null
     ? tables
     : tables.filter(
-        (t) => t.smallBlind === activeFilter.sb && t.bigBlind === activeFilter.bb
-      );
+      (t) => t.smallBlind === activeFilter.sb && t.bigBlind === activeFilter.bb
+    );
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-op-text p-4 md:p-8 pb-24 relative overflow-hidden">
@@ -139,14 +139,14 @@ export function PokerLobbyClient({ tables, myTableId }: PokerLobbyClientProps) {
       <div className="absolute bottom-[20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-emerald-600/10 blur-[120px] pointer-events-none" />
 
       {/* Header */}
-      <div className="max-w-7xl mx-auto mb-8 relative z-10">
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="max-w-7xl mx-auto mb-6 md:mb-8 relative z-10">
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl md:rounded-3xl p-4 md:p-6 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6">
           <div className="flex items-center gap-5">
-            <div className="p-4 bg-gradient-to-br from-op-gold/40 to-op-gold-hover/10 rounded-2xl shadow-[0_0_20px_rgba(201,162,39,0.3)] border border-op-gold/30">
-              <Flame className="w-8 h-8 md:w-10 md:h-10 text-op-gold drop-shadow-md" />
+            <div className="p-3 md:p-4 bg-gradient-to-br from-op-gold/40 to-op-gold-hover/10 rounded-2xl shadow-[0_0_20px_rgba(201,162,39,0.3)] border border-op-gold/30">
+              <Flame className="w-6 h-6 md:w-10 md:h-10 text-op-gold drop-shadow-md" />
             </div>
             <div>
-              <h1 className="text-3xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-gray-400 tracking-tight drop-shadow-sm mb-1">
+              <h1 className="text-2xl sm:text-3xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-gray-400 tracking-tight drop-shadow-sm mb-1">
                 텍사스 홀덤 라운지
               </h1>
               <p className="text-white/50 text-sm md:text-base font-medium flex items-center gap-2">
@@ -155,10 +155,10 @@ export function PokerLobbyClient({ tables, myTableId }: PokerLobbyClientProps) {
               </p>
             </div>
           </div>
-          
+
           <button
             onClick={() => setIsModalOpen(true)}
-            className="group relative overflow-hidden bg-gradient-to-r from-op-gold to-op-gold-hover text-black font-black px-6 py-4 rounded-2xl flex items-center justify-center gap-2 transition-transform hover:scale-105 shadow-[0_0_20px_rgba(201,162,39,0.3)]"
+            className="group relative overflow-hidden bg-gradient-to-r from-op-gold to-op-gold-hover text-black font-black px-4 md:px-6 py-3 md:py-4 rounded-xl md:rounded-2xl flex items-center justify-center gap-2 transition-transform hover:scale-105 shadow-[0_0_20px_rgba(201,162,39,0.3)]"
           >
             <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out" />
             <Plus className="w-5 h-5 relative z-10" />
@@ -176,17 +176,16 @@ export function PokerLobbyClient({ tables, myTableId }: PokerLobbyClientProps) {
               <button
                 key={filter.label}
                 onClick={() => setActiveFilter(filter)}
-                className={`whitespace-nowrap px-4 py-2 rounded-xl text-sm font-bold transition-all duration-200 ${
-                  activeFilter.label === filter.label
+                className={`whitespace-nowrap px-4 py-2 rounded-xl text-sm font-bold transition-all duration-200 ${activeFilter.label === filter.label
                     ? 'bg-gradient-to-b from-white/20 to-white/5 text-op-gold shadow-[0_0_15px_rgba(201,162,39,0.2)] border border-op-gold/30 scale-105'
                     : 'bg-transparent text-white/50 hover:bg-white/5 hover:text-white'
-                }`}
+                  }`}
               >
                 {filter.label}
               </button>
             ))}
           </div>
-          
+
           <button
             onClick={() => router.refresh()}
             className="ml-auto px-4 py-3 rounded-2xl text-sm font-medium text-white/60 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors flex items-center gap-2 active:scale-95 shadow-lg backdrop-blur-md"
@@ -225,7 +224,7 @@ export function PokerLobbyClient({ tables, myTableId }: PokerLobbyClientProps) {
                 <div
                   key={table.id}
                   className={cn(
-                    "group relative bg-[#111111] backdrop-blur-xl border rounded-[24px] p-6 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 overflow-hidden",
+                    "group relative bg-[#111111] backdrop-blur-xl border rounded-[20px] md:rounded-[24px] p-4 md:p-6 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 overflow-hidden",
                     isMyTable
                       ? "border-op-gold/50 shadow-[0_0_30px_rgba(201,162,39,0.15)]"
                       : "border-white/10 hover:border-white/20"
@@ -233,7 +232,7 @@ export function PokerLobbyClient({ tables, myTableId }: PokerLobbyClientProps) {
                 >
                   {/* Premium internal glow top right */}
                   <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 blur-3xl rounded-full" />
-                  
+
                   {isMyTable && (
                     <div className="absolute -top-[1px] -left-[1px] -right-[1px] h-1 bg-gradient-to-r from-op-gold/0 via-op-gold to-op-gold/0" />
                   )}
@@ -241,17 +240,17 @@ export function PokerLobbyClient({ tables, myTableId }: PokerLobbyClientProps) {
                   <div className="flex items-start justify-between mb-5 relative z-10">
                     <div className="pr-4">
                       {isMyTable && (
-                        <div className="flex items-center gap-1.5 mb-2">
+                        <div className="flex items-center gap-1.5 mb-1 md:mb-2">
                           <Zap className="w-3.5 h-3.5 text-op-gold fill-op-gold animate-pulse" />
-                          <span className="text-xs font-bold text-op-gold tracking-wider uppercase">내 테이블</span>
+                          <span className="text-[10px] md:text-xs font-bold text-op-gold tracking-wider uppercase">내 테이블</span>
                         </div>
                       )}
                       <h3 className={cn(
-                        "text-2xl font-black tracking-tight truncate",
+                        "text-xl md:text-2xl font-black tracking-tight truncate",
                         isMyTable ? "text-white" : "text-gray-200"
                       )}>{table.name}</h3>
                     </div>
-                    
+
                     <span className={cn(
                       "shrink-0 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider ring-1",
                       badge.bg, badge.text, badge.ring
@@ -260,16 +259,16 @@ export function PokerLobbyClient({ tables, myTableId }: PokerLobbyClientProps) {
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 mb-6 relative z-10">
-                    <div className="bg-black/40 rounded-xl p-3 border border-white/5">
-                      <div className="text-[10px] text-white/40 uppercase tracking-widest font-bold mb-1">Blinds</div>
-                      <div className="font-mono text-lg font-black text-white/90">
+                  <div className="grid grid-cols-2 gap-3 md:gap-4 mb-4 md:mb-6 relative z-10">
+                    <div className="bg-black/40 rounded-xl p-2.5 md:p-3 border border-white/5">
+                      <div className="text-[9px] md:text-[10px] text-white/40 uppercase tracking-widest font-bold mb-1">Blinds</div>
+                      <div className="font-mono text-base md:text-lg font-black text-white/90">
                         {table.smallBlind}<span className="text-white/30">/</span>{table.bigBlind}
                       </div>
                     </div>
-                    <div className="bg-black/40 rounded-xl p-3 border border-white/5">
-                      <div className="text-[10px] text-white/40 uppercase tracking-widest font-bold mb-1">Min Buy-in</div>
-                      <div className="font-mono text-lg font-black text-op-gold drop-shadow-sm">
+                    <div className="bg-black/40 rounded-xl p-2.5 md:p-3 border border-white/5">
+                      <div className="text-[9px] md:text-[10px] text-white/40 uppercase tracking-widest font-bold mb-1">Min Buy-in</div>
+                      <div className="font-mono text-base md:text-lg font-black text-op-gold drop-shadow-sm">
                         {table.minBuyIn > 1000 ? `${table.minBuyIn / 1000}k` : table.minBuyIn}
                       </div>
                     </div>
@@ -283,7 +282,7 @@ export function PokerLobbyClient({ tables, myTableId }: PokerLobbyClientProps) {
                           {table.activePlayers} <span className="text-white/30">/</span> {table.maxSeats}
                         </span>
                       </div>
-                      
+
                       {/* Visual Seat Indicators */}
                       <div className="flex gap-1.5 align-middle">
                         {Array.from({ length: table.maxSeats }).map((_, i) => (
@@ -291,7 +290,7 @@ export function PokerLobbyClient({ tables, myTableId }: PokerLobbyClientProps) {
                             key={i}
                             className={cn(
                               "w-8 h-1.5 rounded-full transition-all duration-300",
-                              i < table.activePlayers 
+                              i < table.activePlayers
                                 ? isMyTable ? "bg-op-gold shadow-[0_0_8px_rgba(201,162,39,0.5)]" : "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.3)]"
                                 : "bg-white/10"
                             )}
@@ -307,8 +306,8 @@ export function PokerLobbyClient({ tables, myTableId }: PokerLobbyClientProps) {
                         isMyTable
                           ? "bg-gradient-to-br from-gray-700 to-gray-800 text-white hover:from-gray-600 hover:to-gray-700 border border-gray-600/50 shadow-lg"
                           : isFull && !isMyTable
-                          ? "bg-red-500/10 text-red-400 border border-red-500/20"
-                          : "bg-white/10 hover:bg-white/20 text-white border border-white/10 shadow-lg backdrop-blur-sm"
+                            ? "bg-red-500/10 text-red-400 border border-red-500/20"
+                            : "bg-white/10 hover:bg-white/20 text-white border border-white/10 shadow-lg backdrop-blur-sm"
                       )}
                     >
                       {isMyTable ? '테이블로' : isFull ? '관전' : '입장하기'}
@@ -323,21 +322,21 @@ export function PokerLobbyClient({ tables, myTableId }: PokerLobbyClientProps) {
 
       {/* Modern Modal Overlay */}
       {isModalOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
           onClick={() => setIsModalOpen(false)}
         >
           {/* Backdrop */}
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200" />
-          
+
           {/* Modal Content */}
-          <div 
+          <div
             className="relative w-full max-w-lg bg-[#0f0f0f] border border-white/10 rounded-[32px] overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.8)] animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Top accent line */}
             <div className="h-1.5 w-full bg-gradient-to-r from-op-gold via-yellow-200 to-op-gold" />
-            
+
             <div className="p-6 sm:p-8">
               <div className="flex items-center justify-between mb-8">
                 <h2 className="text-2xl font-black text-white tracking-tight flex items-center gap-3">
@@ -346,7 +345,7 @@ export function PokerLobbyClient({ tables, myTableId }: PokerLobbyClientProps) {
                   </div>
                   새 테이블 생성
                 </h2>
-                <button 
+                <button
                   onClick={() => setIsModalOpen(false)}
                   className="p-2 bg-white/5 hover:bg-white/10 rounded-full text-white/50 hover:text-white transition-colors"
                 >
@@ -376,18 +375,16 @@ export function PokerLobbyClient({ tables, myTableId }: PokerLobbyClientProps) {
                       <button
                         type="button"
                         onClick={() => setUseCustomBlinds(false)}
-                        className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase transition-all ${
-                          !useCustomBlinds ? 'bg-white/15 text-white shadow-sm' : 'text-white/40 hover:text-white/60'
-                        }`}
+                        className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase transition-all ${!useCustomBlinds ? 'bg-white/15 text-white shadow-sm' : 'text-white/40 hover:text-white/60'
+                          }`}
                       >
                         Presets
                       </button>
                       <button
                         type="button"
                         onClick={() => setUseCustomBlinds(true)}
-                        className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase transition-all ${
-                          useCustomBlinds ? 'bg-white/15 text-white shadow-sm' : 'text-white/40 hover:text-white/60'
-                        }`}
+                        className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase transition-all ${useCustomBlinds ? 'bg-white/15 text-white shadow-sm' : 'text-white/40 hover:text-white/60'
+                          }`}
                       >
                         Custom
                       </button>

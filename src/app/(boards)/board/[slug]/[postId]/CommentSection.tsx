@@ -86,14 +86,14 @@ export function CommentSection({ postId, comments, currentUserId }: CommentSecti
   return (
     <div className="bg-op-surface rounded-lg overflow-hidden">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-op-border">
-        <h2 className="text-lg font-bold text-op-text">
+      <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-op-border">
+        <h2 className="text-base sm:text-lg font-bold text-op-text">
           댓글 {comments.reduce((acc, c) => acc + 1 + (c.replies?.length || 0), 0)}개
         </h2>
       </div>
 
       {/* Comment form */}
-      <div className="p-6 border-b border-op-border">
+      <div className="p-4 sm:p-6 border-b border-op-border">
         {currentUserId ? (
           <form onSubmit={handleSubmitComment}>
             <textarea
@@ -223,7 +223,7 @@ function CommentItem({
   });
 
   return (
-    <div className={cn('px-6 py-4', isReply && 'pl-8')}>
+    <div className={cn('px-4 sm:px-6 py-3 sm:py-4', isReply && 'pl-8 sm:pl-10')}>
       {/* Author info */}
       <div className="flex items-center gap-3 mb-2">
         <AuthorBadge
@@ -236,7 +236,7 @@ function CommentItem({
       </div>
 
       {/* Content */}
-      <div className="text-op-text mb-3 whitespace-pre-wrap">
+      <div className="text-sm sm:text-base text-op-text mb-3 whitespace-pre-wrap">
         {comment.content}
       </div>
 

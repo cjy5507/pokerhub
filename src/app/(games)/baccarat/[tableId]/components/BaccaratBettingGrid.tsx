@@ -24,11 +24,11 @@ const BaccaratBettingGridComponent: React.FC<BaccaratBettingGridProps> = ({
     clearBets
 }) => {
     return (
-        <div className="flex-shrink-0 flex flex-col relative z-20 bg-black/90 border-t border-white/10 lg:pt-4 transition-colors">
+        <div className="flex-shrink-0 flex flex-col relative z-20 bg-slate-100/90 dark:bg-black/90 border-t border-slate-200 dark:border-white/10 lg:pt-4 transition-colors">
 
             {/* Betting Grid */}
-            <div className="w-full max-w-4xl mx-auto px-2 lg:px-6 py-2 lg:pb-6 relative flex-1 min-h-[180px] md:min-h-[220px] flex flex-col justify-end">
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none transition-colors" />
+            <div className="w-full max-w-4xl mx-auto px-2 lg:px-6 py-2 lg:pb-6 relative flex-1 min-h-[140px] sm:min-h-[180px] md:min-h-[220px] flex flex-col justify-end">
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-200/80 dark:from-black/80 to-transparent pointer-events-none transition-colors" />
 
                 <div className="flex flex-col gap-1 md:gap-2 h-full relative z-10 w-full">
                     {/* MAIN ROW (TOP) */}
@@ -75,7 +75,7 @@ const BaccaratBettingGridComponent: React.FC<BaccaratBettingGridProps> = ({
             </div>
 
             {/* Action Bar (Chips) */}
-            <div className="bg-[#0a0a0a] p-2 md:p-4 border-t border-white/10 shadow-[0_-20px_40px_rgba(0,0,0,0.9)] pb-[calc(0.5rem+env(safe-area-inset-bottom))] transition-colors z-30">
+            <div className="bg-white dark:bg-[#0a0a0a] p-2 md:p-4 border-t border-slate-200 dark:border-white/10 shadow-[0_-20px_40px_rgba(0,0,0,0.05)] dark:shadow-[0_-20px_40px_rgba(0,0,0,0.9)] pb-[calc(0.5rem+env(safe-area-inset-bottom))] transition-colors z-30">
                 <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
                     {/* Chip Selection */}
                     <div className="flex gap-2 md:gap-4 overflow-x-auto scrollbar-hide flex-1 justify-center px-2 py-1 items-end min-h-[70px]">
@@ -89,8 +89,8 @@ const BaccaratBettingGridComponent: React.FC<BaccaratBettingGridProps> = ({
                                     className={cn(
                                         "relative w-12 h-12 md:w-16 md:h-16 rounded-full border-[3px] flex items-center justify-center transition-all flex-shrink-0 group",
                                         isSelected
-                                            ? "border-yellow-400 shadow-[0_10px_20px_rgba(0,0,0,0.8),0_0_15px_rgba(250,204,21,0.5)] z-10"
-                                            : "border-[#333] hover:border-[#666] grayscale-[30%] hover:grayscale-0 active:scale-95 shadow-lg"
+                                            ? "border-yellow-400 shadow-[0_10px_20px_rgba(0,0,0,0.2)] dark:shadow-[0_10px_20px_rgba(0,0,0,0.8),0_0_15px_rgba(250,204,21,0.5)] z-10"
+                                            : "border-slate-300 dark:border-[#333] hover:border-slate-400 dark:hover:border-[#666] grayscale-[30%] hover:grayscale-0 active:scale-95 shadow-md dark:shadow-lg"
                                     )}
                                     style={{
                                         background: isSelected
@@ -117,17 +117,17 @@ const BaccaratBettingGridComponent: React.FC<BaccaratBettingGridProps> = ({
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex md:flex-col gap-2 shrink-0">
+                    <div className="flex md:flex-col gap-1 sm:gap-2 shrink-0">
                         <button
                             disabled={gameState !== 'betting'}
-                            className="px-4 md:px-6 py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 active:bg-white/20 text-white/90 text-[10px] md:text-xs font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed uppercase tracking-wider shadow-sm flex-1"
+                            className="px-2 sm:px-4 md:px-6 py-3 min-w-[50px] whitespace-nowrap rounded-xl border border-slate-300 dark:border-white/10 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 active:bg-slate-300 dark:active:bg-white/20 text-slate-700 dark:text-white/90 text-[10px] md:text-xs font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed uppercase tracking-wider shadow-sm flex-1"
                         >
                             재베팅
                         </button>
                         <button
                             onClick={clearBets}
                             disabled={gameState !== 'betting' || Object.keys(myBets).length === 0}
-                            className="px-4 md:px-6 py-3 rounded-xl border border-red-500/30 bg-red-950/60 hover:bg-red-900/80 active:bg-red-800/80 text-red-200 text-[10px] md:text-xs font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed uppercase tracking-wider shadow-sm flex-1"
+                            className="px-2 sm:px-4 md:px-6 py-3 min-w-[50px] whitespace-nowrap rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-950/60 hover:bg-red-100 dark:hover:bg-red-900/80 active:bg-red-200 dark:active:bg-red-800/80 text-red-600 dark:text-red-200 text-[10px] md:text-xs font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed uppercase tracking-wider shadow-sm flex-1"
                         >
                             취소
                         </button>
@@ -157,9 +157,9 @@ const BetButton = ({ zone, label, ratio, color, gameState, betAmount, placeBet, 
     const isBetting = gameState === 'betting';
 
     const colors = {
-        blue: "bg-gradient-to-br from-[#1e3a8a]/80 to-[#172554]/90 border-[#3b82f6]/40 hover:border-[#3b82f6]/80 text-[#bfdbfe] shadow-[inset_0_0_20px_rgba(59,130,246,0.1)]",
-        red: "bg-gradient-to-br from-[#7f1d1d]/80 to-[#450a0a]/90 border-[#ef4444]/40 hover:border-[#ef4444]/80 text-[#fecaca] shadow-[inset_0_0_20px_rgba(239,68,68,0.1)]",
-        green: "bg-gradient-to-br from-[#14532d]/80 to-[#052e16]/90 border-[#22c55e]/40 hover:border-[#22c55e]/80 text-[#bbf7d0] shadow-[inset_0_0_20px_rgba(34,197,94,0.1)]"
+        blue: "bg-white/90 dark:bg-gradient-to-br dark:from-[#1e3a8a]/80 dark:to-[#172554]/90 border-blue-200 dark:border-[#3b82f6]/40 hover:border-blue-400 dark:hover:border-[#3b82f6]/80 text-blue-700 dark:text-[#bfdbfe] shadow-sm dark:shadow-[inset_0_0_20px_rgba(59,130,246,0.1)]",
+        red: "bg-white/90 dark:bg-gradient-to-br dark:from-[#7f1d1d]/80 dark:to-[#450a0a]/90 border-red-200 dark:border-[#ef4444]/40 hover:border-red-400 dark:hover:border-[#ef4444]/80 text-red-700 dark:text-[#fecaca] shadow-sm dark:shadow-[inset_0_0_20px_rgba(239,68,68,0.1)]",
+        green: "bg-white/90 dark:bg-gradient-to-br dark:from-[#14532d]/80 dark:to-[#052e16]/90 border-emerald-200 dark:border-[#22c55e]/40 hover:border-emerald-400 dark:hover:border-[#22c55e]/80 text-emerald-700 dark:text-[#bbf7d0] shadow-sm dark:shadow-[inset_0_0_20px_rgba(34,197,94,0.1)]"
     };
 
     const c = colors[color as keyof typeof colors];
@@ -172,14 +172,15 @@ const BetButton = ({ zone, label, ratio, color, gameState, betAmount, placeBet, 
             className={cn(
                 "rounded-xl border-[1.5px] transition-all duration-300 relative flex flex-col items-center justify-center overflow-hidden group backdrop-blur-sm",
                 c,
-                isBetting ? "cursor-pointer active:scale-[0.98] hover:shadow-[0_0_15px_rgba(255,255,255,0.1)]" : "cursor-not-allowed opacity-60 grayscale-[30%]"
+                isBetting ? "cursor-pointer active:scale-[0.98] hover:shadow-[0_0_15px_rgba(0,0,0,0.1)] dark:hover:shadow-[0_0_15px_rgba(255,255,255,0.1)]" : "cursor-not-allowed opacity-60 grayscale-[30%]"
             )}
         >
             <span className={cn(
-                isMain ? "text-xl md:text-3xl font-black text-white drop-shadow-md" : "text-sm md:text-base font-bold",
+                isMain ? "text-xl md:text-3xl font-black drop-shadow-sm dark:drop-shadow-md" : "text-sm md:text-base font-bold",
                 "tracking-widest transition-colors z-10",
+                isMain ? "text-current dark:text-white" : ""
             )}>{label}</span>
-            <span className="text-[10px] md:text-xs opacity-70 font-mono mt-0.5 z-10 text-white/70">{ratio}</span>
+            <span className="text-[10px] md:text-xs opacity-70 font-mono mt-0.5 z-10 text-slate-500 dark:text-white/70">{ratio}</span>
 
             {/* Placed Bet Chip */}
             {betAmount > 0 && (
@@ -200,7 +201,7 @@ const BetButton = ({ zone, label, ratio, color, gameState, betAmount, placeBet, 
             )}
 
             {/* Glowing active state */}
-            {isBetting && <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors z-0" />}
+            {isBetting && <div className="absolute inset-0 bg-black/0 dark:bg-white/0 group-hover:bg-black/5 dark:group-hover:bg-white/10 transition-colors z-0" />}
         </button>
     );
 };

@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { getCurrentDealer, getDealerPhrase } from '@/lib/games/dealers';
 
 export const SuitIcon = ({ suit, className = "w-6 h-6" }: { suit: string; className?: string }) => {
     switch (suit) {
@@ -41,127 +42,50 @@ const BaccaratDealerComponent: React.FC<BaccaratDealerProps> = ({
     const isDealing = gameState === 'dealing' || gameState === 'result';
     const isAnimating = gameState === 'dealing' && revealedCards < (playerCards.length + bankerCards.length);
 
-    // The dealer head motion
-    const dealerMotion: any = gameState === 'dealing'
-        ? { y: [0, -5, 0], rotate: [0, -2, 2, 0], transition: { duration: 0.8, ease: "easeInOut" } }
-        : { y: [0, -2, 0], transition: { duration: 3, repeat: Infinity, ease: "easeInOut" } };
+    const dealer = useMemo(() => getCurrentDealer(), []);
+    const [phrase, setPhrase] = useState('');
+
+    useEffect(() => {
+        const state = gameState === 'result'
+            ? (playerScore !== null && bankerScore !== null
+                ? (playerScore > bankerScore ? 'playerWin'
+                    : bankerScore > playerScore ? 'bankerWin' : 'tie')
+                : 'betting')
+            : gameState === 'dealing' ? 'dealing' : 'betting';
+        setPhrase(getDealerPhrase(dealer, state));
+    }, [gameState, dealer, playerScore, bankerScore]);
 
     return (
         <div className="flex-1 relative flex flex-col justify-center items-center py-6 min-h-[250px] lg:min-h-0">
-            {/* Dealer Character: 3D Animated Terry */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center">
-                <motion.div animate={dealerMotion} className="relative flex flex-col items-center drop-shadow-2xl">
-
-                    {/* Hair / Head top */}
-                    <div className="relative z-10 w-16 h-8 md:w-20 md:h-10 rounded-t-[3.5rem] shadow-[inset_0_-4px_8px_rgba(0,0,0,0.4)] -mb-3 overflow-hidden flex justify-center bg-[#27272a] border-2 border-b-0 border-[#18181b]">
-                        {/* Hair Highlight */}
-                        <div className="absolute -top-3 w-[120%] h-[120%] bg-[radial-gradient(ellipse_at_top,#52525b_0%,transparent_60%)] opacity-80" />
-                        {/* Little hair tuft */}
-                        <div className="absolute top-0 right-4 w-5 h-3 bg-white/10 rounded-full blur-[1px] rotate-[-20deg]" />
+            {/* Dealer Character */}
+            <div className="flex flex-col items-center gap-1 mb-2">
+                <div className="relative">
+                    {/* Speech bubble */}
+                    {phrase && (
+                        <div className="absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full bg-white dark:bg-slate-700 text-slate-900 dark:text-white px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap shadow-lg z-10">
+                            {phrase}
+                            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-2.5 h-2.5 bg-white dark:bg-slate-700 rotate-45" />
+                        </div>
+                    )}
+                    {/* Character */}
+                    <div
+                        className="w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center text-3xl md:text-4xl shadow-lg border-2"
+                        style={{
+                            backgroundColor: `${dealer.color}20`,
+                            borderColor: dealer.color,
+                            boxShadow: `0 4px 20px ${dealer.color}30`,
+                        }}
+                    >
+                        {dealer.emoji}
                     </div>
-
-                    {/* Face (Friendly Pixar Style) */}
-                    <div className="w-16 h-18 md:w-20 md:h-22 rounded-[3.5rem] rounded-b-[4rem] bg-gradient-to-b from-[#fde047] via-[#fcd34d] to-[#f59e0b] dark:from-[#fef08a] dark:via-[#fcd34d] dark:to-[#d97706] mx-auto relative border border-[#b45309]/30 shadow-[inset_0_-6px_10px_rgba(217,119,6,0.3),0_8px_16px_rgba(0,0,0,0.3)] z-0 overflow-hidden">
-
-                        {/* Base Face Highlight soften */}
-                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[90%] h-[60%] bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.6)_0%,transparent_70%)] rounded-t-[3rem]" />
-
-                        {/* Large Friendly Eyes (Pixar Style) */}
-                        <div className="absolute top-[32%] left-[18%] w-4 h-5 md:w-5 md:h-6 bg-white rounded-full flex justify-center items-center shadow-[0_2px_4px_rgba(0,0,0,0.2)] border-t-2 border-[#b45309]/40 overflow-hidden">
-                            {/* Iris/Pupil */}
-                            <div className="relative w-3 h-3.5 md:w-4 md:h-4.5 bg-[#1e293b] rounded-full translate-x-[1px]">
-                                {/* Catchlight (Eye sparkle) */}
-                                <div className="absolute top-[15%] right-[20%] w-1.5 h-1.5 md:w-2 md:h-2 bg-white rounded-full shadow-[0_0_2px_rgba(255,255,255,0.9)]" />
-                                <div className="absolute bottom-[20%] left-[20%] w-0.5 h-0.5 md:w-1 md:h-1 bg-white/60 rounded-full" />
-                            </div>
-                        </div>
-                        <div className="absolute top-[32%] right-[18%] w-4 h-5 md:w-5 md:h-6 bg-white rounded-full flex justify-center items-center shadow-[0_2px_4px_rgba(0,0,0,0.2)] border-t-2 border-[#b45309]/40 overflow-hidden">
-                            {/* Iris/Pupil */}
-                            <div className="relative w-3 h-3.5 md:w-4 md:h-4.5 bg-[#1e293b] rounded-full -translate-x-[1px]">
-                                {/* Catchlight (Eye sparkle) */}
-                                <div className="absolute top-[15%] right-[20%] w-1.5 h-1.5 md:w-2 md:h-2 bg-white rounded-full shadow-[0_0_2px_rgba(255,255,255,0.9)]" />
-                                <div className="absolute bottom-[20%] left-[20%] w-0.5 h-0.5 md:w-1 md:h-1 bg-white/60 rounded-full" />
-                            </div>
-                        </div>
-
-                        {/* Soft Cheeks */}
-                        <div className="absolute top-[52%] left-[8%] w-4 h-3 bg-rose-400/40 rounded-full blur-[3px]" />
-                        <div className="absolute top-[52%] right-[8%] w-4 h-3 bg-rose-400/40 rounded-full blur-[3px]" />
-
-                        {/* THE BIG HUGE FRIENDLY NOSE */}
-                        <div className="absolute top-[42%] left-1/2 -translate-x-1/2 w-6 h-7 md:w-8 md:h-9 bg-gradient-to-b from-[#fef08a] via-[#fcd34d] to-[#f59e0b] rounded-[2rem] shadow-[0_4px_6px_rgba(180,83,9,0.2),inset_-2px_-3px_5px_rgba(217,119,6,0.3)] border-b border-[#d97706]/40 z-10 flex flex-col items-center justify-end pb-1 md:pb-1.5 relative">
-                            {/* Soft Nose Highlight */}
-                            <div className="absolute top-1 w-3 md:w-4 h-3 md:h-4 bg-white/60 rounded-full blur-[2px]" />
-                            {/* Nostrils (softer, smaller) */}
-                            <div className="flex gap-2.5 relative z-20">
-                                <div className="w-1.5 h-0.5 md:w-2 md:h-1 bg-[#b45309]/60 rounded-full" />
-                                <div className="w-1.5 h-0.5 md:w-2 md:h-1 bg-[#b45309]/60 rounded-full" />
-                            </div>
-                        </div>
-
-                        {/* Friendly Smile */}
-                        <div className="absolute top-[78%] md:top-[80%] left-1/2 -translate-x-1/2 w-6 h-2 md:w-8 md:h-2.5 bg-transparent border-b-[3px] border-[#9a3412] rounded-[100%] opacity-80" />
-                        {/* Dimples */}
-                        <div className="absolute top-[76%] md:top-[78%] left-[25%] w-1 h-1.5 border-r border-b border-[#9a3412]/50 rounded-br-full" />
-                        <div className="absolute top-[76%] md:top-[78%] right-[25%] w-1 h-1.5 border-l border-b border-[#9a3412]/50 rounded-bl-full" />
-
-                        {/* Chin Shadow */}
-                        <div className="absolute bottom-0 w-full h-4 bg-gradient-to-t from-[#b45309]/30 to-transparent" />
-                    </div>
-
-                    {/* Neck & Bowtie */}
-                    <div className="w-5 h-4 md:w-6 md:h-5 bg-gradient-to-b from-[#92400e] to-[#78350f] relative -mt-2 z-10 shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]">
-                        {/* 3D Bowtie */}
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-4 md:w-10 md:h-5 bg-gradient-to-br from-[#dc2626] to-[#7f1d1d] rounded-sm flex items-center justify-center shadow-[0_2px_4px_rgba(0,0,0,0.5)] border border-[#991b1b]">
-                            {/* Bowtie Knot */}
-                            <div className="w-2.5 h-3 md:w-3 md:h-4 bg-gradient-to-b from-[#ef4444] to-[#991b1b] rounded-md shadow-[0_0_2px_rgba(0,0,0,0.5)] z-10 border border-[#b91c1c]" />
-                            {/* Bowtie Creases */}
-                            <div className="absolute left-1 border-t-2 border-b-2 border-transparent border-r-4 border-r-[#7f1d1d]/50 h-2 w-0" />
-                            <div className="absolute right-1 border-t-2 border-b-2 border-transparent border-l-4 border-l-[#7f1d1d]/50 h-2 w-0" />
-                        </div>
-                    </div>
-
-                    {/* Body (Vest & Shirt) */}
-                    <div className="w-20 h-14 md:w-24 md:h-16 bg-gradient-to-br from-[#1e293b] via-[#0f172a] to-[#020617] rounded-[2rem] rounded-b-[3rem] relative overflow-hidden border-2 border-[#334155]/30 -mt-1 shadow-[inset_0_-10px_20px_rgba(0,0,0,0.8),0_15px_25px_rgba(0,0,0,0.6)] z-0">
-                        {/* Vest Texture/Highlight */}
-                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,#334155_0%,transparent_60%)] opacity-30" />
-
-                        {/* White Shirt Triangle */}
-                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-12 md:w-10 md:h-14 bg-gradient-to-b from-[#f8fafc] to-[#cbd5e1] flex justify-center shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)]" style={{ clipPath: 'polygon(0 0, 100% 0, 50% 100%)' }}>
-                            {/* Inner shirt shadow from vest */}
-                            <div className="absolute top-0 left-0 w-full h-full shadow-[inset_0_0_5px_rgba(0,0,0,0.8)]" />
-
-                            {/* Buttons */}
-                            <div className="mt-4 flex flex-col gap-2 relative z-10">
-                                <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-[#0f172a] rounded-full shadow-[inset_0_1px_1px_rgba(255,255,255,0.4)]" />
-                                <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-[#0f172a] rounded-full shadow-[inset_0_1px_1px_rgba(255,255,255,0.4)]" />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Dealer Arms (Hidden in idle, move when dealing) */}
-                    <motion.div
-                        animate={gameState === 'dealing' ? { y: [0, 15, 0], x: [-5, -15, -5], scaleY: [1, 1.2, 1], rotate: [0, 25, 0] } : {}}
-                        transition={{ duration: 0.6, repeat: Infinity, ease: "easeInOut" }}
-                        className="absolute top-[4.5rem] md:top-[5.5rem] -left-2 w-4.5 h-12 md:w-5 md:h-14 bg-gradient-to-b from-[#1e293b] to-[#0f172a] rounded-full border border-[#334155]/50 shadow-[0_5px_10px_rgba(0,0,0,0.5)] origin-top -z-10"
-                    />
-                    <motion.div
-                        animate={gameState === 'dealing' ? { y: [0, 15, 0], x: [5, 15, 5], scaleY: [1, 1.2, 1], rotate: [0, -25, 0] } : {}}
-                        transition={{ duration: 0.6, repeat: Infinity, delay: 0.3, ease: "easeInOut" }}
-                        className="absolute top-[4.5rem] md:top-[5.5rem] -right-2 w-4.5 h-12 md:w-5 md:h-14 bg-gradient-to-b from-[#1e293b] to-[#0f172a] rounded-full border border-[#334155]/50 shadow-[0_5px_10px_rgba(0,0,0,0.5)] origin-top -z-10"
-                    />
-                </motion.div>
-
-                {/* Name Tag Plate */}
-                <div className="flex flex-col items-center mt-3 z-30">
-                    <div className="relative group">
-                        <div className="absolute -inset-0.5 bg-gradient-to-r from-yellow-600 to-yellow-400 rounded-md blur opacity-30 group-hover:opacity-100 transition duration-1000 group-hover:duration-200" />
-                        <div className="px-3 py-1 bg-gradient-to-b from-slate-800 to-black rounded-md border border-yellow-500/50 relative shadow-lg flex items-center gap-1">
-                            <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_5px_#22c55e]" />
-                            <span className="text-xs md:text-sm font-black bg-gradient-to-r from-yellow-200 to-yellow-500 text-transparent bg-clip-text tracking-widest drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">TERRY</span>
-                        </div>
-                    </div>
+                    {/* Hat */}
+                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-lg md:text-xl">
+                        {dealer.hat}
+                    </span>
                 </div>
+                <span className="text-[10px] font-bold" style={{ color: dealer.color }}>
+                    {dealer.name}
+                </span>
             </div>
 
             {/* HEADER: PLAYER vs Timer vs BANKER */}

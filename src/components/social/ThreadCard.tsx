@@ -216,7 +216,7 @@ function ThreadCardBase({ thread, currentUserId, onDelete }: ThreadCardProps) {
               <button
                 onClick={handleReplySubmit}
                 disabled={!replyContent.trim() || isSubmitting}
-                className="px-4 py-2 bg-op-gold hover:bg-op-gold-hover text-black rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-op-gold hover:bg-op-gold-hover text-op-text-inverse rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Send className="w-4 h-4" />
               </button>

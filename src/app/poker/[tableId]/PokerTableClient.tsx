@@ -31,10 +31,7 @@ export function PokerTableClient({ tableId, initialState, userId, nickname }: Po
   } = usePokerTable(tableId, initialState, userId, nickname);
 
   return (
-    <div className="h-[100dvh] w-[100dvw] bg-[#050505] flex flex-col overflow-hidden select-none relative">
-      {/* Ambient glows */}
-      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-emerald-900/20 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-op-gold/10 blur-[120px] pointer-events-none" />
+    <div className="h-[100dvh] w-[100dvw] bg-op-background flex flex-col overflow-hidden select-none relative">
 
       <PokerTableHeader
         gameState={gameState}

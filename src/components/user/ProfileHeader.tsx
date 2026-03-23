@@ -76,7 +76,7 @@ export function ProfileHeader({
   return (
     <div className="relative">
       {/* Banner — hidden on mobile, visible on sm+ */}
-      <div className="hidden sm:block h-48 lg:h-64 bg-surface-elevated relative overflow-hidden">
+      <div className="hidden sm:block h-48 lg:h-64 bg-op-elevated relative overflow-hidden">
         {user.bannerUrl ? (
           <Image
             src={user.bannerUrl}
@@ -86,7 +86,7 @@ export function ProfileHeader({
             className="object-cover"
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-r from-surface to-surface-elevated" />
+          <div className="w-full h-full bg-gradient-to-r from-op-surface to-op-elevated" />
         )}
       </div>
 
@@ -99,7 +99,7 @@ export function ProfileHeader({
             {/* Avatar */}
             <div className="relative flex-shrink-0">
               <div
-                className="w-14 h-14 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-full border-[3px] sm:border-4 border-background overflow-hidden bg-surface"
+                className="w-14 h-14 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-full border-[3px] sm:border-4 border-op-bg overflow-hidden bg-op-surface"
                 style={{ borderColor: levelTier.color }}
               >
                 {user.avatarUrl ? (
@@ -113,7 +113,7 @@ export function ProfileHeader({
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <UserCircle className="w-8 h-8 sm:w-24 sm:h-24 text-muted-foreground" />
+                    <UserCircle className="w-8 h-8 sm:w-24 sm:h-24 text-op-text-muted" />
                   </div>
                 )}
               </div>
@@ -137,17 +137,17 @@ export function ProfileHeader({
                   Lv.{user.level}
                 </span>
                 {user.customTitle && (
-                  <span className="hidden sm:inline px-2 py-0.5 bg-gold text-white text-xs rounded-md whitespace-nowrap">
+                  <span className="hidden sm:inline px-2 py-0.5 bg-op-gold text-op-text-inverse text-xs rounded-md whitespace-nowrap">
                     {user.customTitle}
                   </span>
                 )}
               </div>
               {user.customTitle && (
-                <span className="sm:hidden inline-block px-1.5 py-px bg-gold text-white text-[10px] rounded mt-0.5">
+                <span className="sm:hidden inline-block px-1.5 py-px bg-op-gold text-op-text-inverse text-[10px] rounded mt-0.5">
                   {user.customTitle}
                 </span>
               )}
-              <p className="text-[11px] sm:text-sm text-muted-foreground mt-0.5 truncate">
+              <p className="text-[11px] sm:text-sm text-op-text-muted mt-0.5 truncate">
                 가입일 {user.joinedAtLabel}
               </p>
             </div>
@@ -157,7 +157,7 @@ export function ProfileHeader({
               {isOwnProfile ? (
                 <button
                   onClick={() => router.push('/settings')}
-                  className="px-3 py-1.5 sm:px-4 sm:py-2.5 bg-surface border border-border rounded-md hover:bg-surface-elevated flex items-center gap-1.5 text-[12px] sm:text-sm sm:min-h-[44px]"
+                  className="px-3 py-1.5 sm:px-4 sm:py-2.5 bg-op-surface border border-op-border rounded-md hover:bg-op-elevated flex items-center gap-1.5 text-[12px] sm:text-sm sm:min-h-[44px]"
                 >
                   <Settings className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   <span>수정</span>
@@ -169,8 +169,8 @@ export function ProfileHeader({
                     disabled={isLoading || isBlocked}
                     className={`px-3 py-1.5 sm:px-4 sm:py-2.5 rounded-md flex items-center gap-1 text-[12px] sm:text-sm sm:min-h-[44px] ${
                       isFollowing
-                        ? 'bg-surface border border-border hover:bg-surface-elevated'
-                        : 'bg-primary text-primary-foreground hover:opacity-90'
+                        ? 'bg-op-surface border border-op-border hover:bg-op-elevated'
+                        : 'bg-op-gold text-black hover:bg-op-gold-hover'
                     } disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     {isFollowing ? <UserMinus className="w-3.5 h-3.5" /> : <UserPlus className="w-3.5 h-3.5" />}
@@ -179,7 +179,7 @@ export function ProfileHeader({
                   <button
                     onClick={handleBlock}
                     disabled={isLoading}
-                    className="p-1.5 sm:px-3 sm:py-2.5 bg-surface border border-border rounded-md hover:bg-destructive hover:text-white text-[12px] sm:text-sm sm:min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="p-1.5 sm:px-3 sm:py-2.5 bg-op-surface border border-op-border rounded-md hover:bg-op-error hover:text-white text-[12px] sm:text-sm sm:min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Ban className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     <span className="hidden sm:inline ml-1">{isBlocked ? '차단해제' : '차단'}</span>
@@ -191,16 +191,16 @@ export function ProfileHeader({
 
           {/* Bio — if exists */}
           {user.bio && (
-            <p className="mt-1.5 sm:mt-2 text-[12px] sm:text-sm text-muted-foreground line-clamp-1 sm:line-clamp-2 max-w-2xl">{user.bio}</p>
+            <p className="mt-1.5 sm:mt-2 text-[12px] sm:text-sm text-op-text-muted line-clamp-1 sm:line-clamp-2 max-w-2xl">{user.bio}</p>
           )}
 
           {/* Level Progress — thin bar */}
           <div className="mt-2 sm:mt-3">
-            <div className="flex items-center justify-between text-[11px] sm:text-sm text-muted-foreground mb-0.5">
+            <div className="flex items-center justify-between text-[11px] sm:text-sm text-op-text-muted mb-0.5">
               <span className="font-medium">Lv.{levelInfo.currentLevel}</span>
               <span>다음 레벨까지 {levelInfo.xpNeeded} XP</span>
             </div>
-            <div className="h-1 sm:h-1.5 bg-surface rounded-full overflow-hidden">
+            <div className="h-1 sm:h-1.5 bg-op-surface rounded-full overflow-hidden">
               <div
                 className="h-full transition-all duration-300"
                 style={{

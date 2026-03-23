@@ -9,25 +9,25 @@ import { CardBack, DealerButton } from './PokerHelpers';
 // ─── Inline style constants ───────────────────────────────────────
 
 const EMPTY_SEAT_STYLE = {
-  border: '2px dashed rgba(255,255,255,0.1)',
-  background: 'rgba(0,0,0,0.2)',
+  border: '2px dashed var(--op-border)',
+  background: 'var(--op-surface)',
 } as const;
 
 const EMPTY_SEAT_HOVER_STYLE = {
-  background: 'radial-gradient(circle at center, rgba(201,162,39,0.15) 0%, transparent 70%)',
+  background: 'var(--op-elevated)',
 } as const;
 
 const ACTION_BADGE_STYLE = {
-  background: 'rgba(0,0,0,0.85)',
-  border: '1px solid rgba(255,255,255,0.15)',
+  background: 'var(--op-elevated)',
+  border: '1px solid var(--op-border)',
 } as const;
 
 const HERO_SEAT_STYLE = {
-  background: 'linear-gradient(180deg, rgba(16,36,22,0.8) 0%, rgba(6,20,10,0.9) 100%)',
+  background: 'var(--op-elevated)',
 } as const;
 
 const OPPONENT_SEAT_STYLE = {
-  background: 'linear-gradient(180deg, rgba(30,30,30,0.8) 0%, rgba(10,10,10,0.9) 100%)',
+  background: 'var(--op-elevated)',
 } as const;
 
 // ─── SeatDisplay ─────────────────────────────────────────────────
@@ -67,7 +67,7 @@ function SeatDisplay({
           style={EMPTY_SEAT_STYLE}
         >
           <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={EMPTY_SEAT_HOVER_STYLE} />
-          <span className="text-lg text-white/20 group-hover:text-op-gold transition-colors duration-300 relative z-10 font-bold tracking-widest">
+          <span className="text-lg text-op-text-muted group-hover:text-op-gold transition-colors duration-300 relative z-10 font-bold tracking-widest">
             {seatIndex + 1}
           </span>
         </div>
@@ -83,7 +83,7 @@ function SeatDisplay({
         {isDealer && <div className="absolute -top-1 -right-1 z-30"><DealerButton /></div>}
         {lastAction && !seat.isFolded && (
           <div className="absolute -top-6 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded whitespace-nowrap z-20 animate-action-badge" style={ACTION_BADGE_STYLE}>
-            <span className="text-[9px] md:text-[10px] font-bold text-white">{lastAction}</span>
+            <span className="text-[9px] md:text-[10px] font-bold text-op-text-secondary">{lastAction}</span>
           </div>
         )}
         {hasCards && (
@@ -107,7 +107,7 @@ function SeatDisplay({
         <div
           className={cn(
             'rounded-xl px-2 py-1 text-center min-w-[72px] md:min-w-[84px] relative transition-all duration-300 shadow-xl backdrop-blur-md',
-            isCurrent && !seat.isFolded ? 'border-2 border-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.4)]' : 'border border-emerald-500/40 hover:border-emerald-400/60'
+            isCurrent && !seat.isFolded ? 'border-2 border-op-gold shadow-md' : 'border border-op-border hover:border-op-gold'
           )}
           style={HERO_SEAT_STYLE}
         >
@@ -122,12 +122,12 @@ function SeatDisplay({
               />
             </div>
           )}
-          <div className="text-[10px] text-white/80 font-medium truncate max-w-[72px]" title={seat.nickname}>{seat.nickname}</div>
-          <div className="text-[12px] text-white font-bold tabular-nums">{seat.chipStack.toLocaleString()}</div>
+          <div className="text-[10px] text-op-text-secondary font-medium truncate max-w-[72px]" title={seat.nickname}>{seat.nickname}</div>
+          <div className="text-[12px] text-op-text font-bold tabular-nums">{seat.chipStack.toLocaleString()}</div>
         </div>
         {seat.isFolded && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-[9px] font-bold text-white/40 uppercase">FOLD</span>
+          <div className="absolute inset-0 flex items-center justify-center bg-op-background/60 rounded-xl">
+            <span className="text-[9px] font-bold text-op-text-muted uppercase">FOLD</span>
           </div>
         )}
       </div>
@@ -140,14 +140,14 @@ function SeatDisplay({
       {isDealer && <div className="absolute -top-1 -right-1 z-30"><DealerButton /></div>}
       {lastAction && !seat.isFolded && (
         <div className="absolute -top-6 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded whitespace-nowrap z-20 animate-action-badge" style={ACTION_BADGE_STYLE}>
-          <span className="text-[9px] md:text-[10px] font-bold text-white">{lastAction}</span>
+          <span className="text-[9px] md:text-[10px] font-bold text-op-text-secondary">{lastAction}</span>
         </div>
       )}
       <div
         className={cn(
           'rounded-xl px-2 py-1.5 md:px-2.5 md:py-2 text-center min-w-[72px] md:min-w-[84px] relative transition-all duration-300 shadow-xl backdrop-blur-md',
-          isCurrent && !seat.isFolded ? 'border-2 border-white/60 shadow-[0_0_15px_rgba(255,255,255,0.2)]' : 'border border-white/10 hover:border-white/20',
-          seat.isAllIn && !seat.isFolded && 'border-2 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.4)]',
+          isCurrent && !seat.isFolded ? 'border-2 border-op-gold shadow-md' : 'border border-op-border hover:border-op-gold',
+          seat.isAllIn && !seat.isFolded && 'border-2 border-op-error shadow-sm',
         )}
         style={OPPONENT_SEAT_STYLE}
       >
@@ -162,18 +162,18 @@ function SeatDisplay({
             />
           </div>
         )}
-        <div className="text-[10px] md:text-[11px] text-white/70 font-medium truncate max-w-[72px] md:max-w-[76px] leading-tight" title={seat.nickname}>
+        <div className="text-[10px] md:text-[11px] text-op-text-secondary font-medium truncate max-w-[72px] md:max-w-[76px] leading-tight" title={seat.nickname}>
           {seat.nickname}
         </div>
-        <div className="text-[12px] md:text-[13px] font-bold text-white tabular-nums leading-tight">
+        <div className="text-[12px] md:text-[13px] font-bold text-op-text tabular-nums leading-tight">
           {seat.chipStack.toLocaleString()}
         </div>
         {seat.isAllIn && !seat.isFolded && (
           <div className="text-[8px] font-bold text-op-error uppercase tracking-wider">ALL IN</div>
         )}
         {seat.isFolded && (
-          <div className="absolute inset-0 rounded-lg bg-black/60 flex items-center justify-center">
-            <span className="text-[9px] font-bold text-white/40 uppercase tracking-wide">FOLD</span>
+          <div className="absolute inset-0 rounded-lg bg-op-background/60 flex items-center justify-center">
+            <span className="text-[9px] font-bold text-op-text-muted uppercase tracking-wide">FOLD</span>
           </div>
         )}
       </div>

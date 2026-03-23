@@ -131,31 +131,31 @@ function BoardPreview({
   icon?: React.ReactNode;
 }) {
   return (
-    <div className="bg-op-surface border border-op-border rounded-lg overflow-hidden">
+    <div className="bg-op-surface border border-op-border rounded-xl overflow-hidden shadow-sm">
       {/* Header */}
-      <div className="flex items-center justify-between px-2.5 sm:px-3 py-2 border-b border-op-border">
-        <div className="flex items-center gap-1.5 sm:gap-2">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-op-border bg-op-deep/30">
+        <div className="flex items-center gap-2">
           {icon}
-          <h2 className="text-sm font-bold text-op-text">{title}</h2>
+          <h2 className="text-base font-bold text-op-text">{title}</h2>
           {posts.length > 0 && (
-            <span className="text-[10px] font-medium text-op-gold bg-op-gold-dim rounded-full px-1.5 py-0.5">
+            <span className="text-[10px] font-bold text-op-gold bg-op-gold-dim rounded-full px-2 py-0.5">
               {posts.length}
             </span>
           )}
         </div>
         <Link
           href={href}
-          className="flex items-center gap-0.5 text-xs text-op-text-muted hover:text-op-gold transition-colors"
+          className="flex items-center gap-0.5 text-xs font-medium text-op-text-muted hover:text-op-gold transition-colors"
         >
           더 보기
-          <ChevronRight className="w-3 h-3" />
+          <ChevronRight className="w-3.5 h-3.5" />
         </Link>
       </div>
 
       {/* Post rows */}
       <div className="divide-y divide-op-border-subtle">
         {posts.length === 0 && (
-          <div className="px-3 py-6 text-center text-sm text-op-text-muted">
+          <div className="px-4 py-8 text-center text-sm text-op-text-muted">
             아직 게시글이 없습니다
           </div>
         )}
@@ -163,25 +163,25 @@ function BoardPreview({
           <Link
             key={post.id}
             href={`/board/${post.boardSlug}/${post.id}`}
-            className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 hover:bg-op-elevated transition-colors"
+            className="flex items-center gap-2 sm:gap-3 px-4 py-3 hover:bg-op-elevated transition-colors group"
           >
             {/* Title + comment count */}
-            <span className="flex-1 text-sm text-op-text truncate">
+            <span className="flex-1 text-[15px] text-op-text group-hover:text-op-gold transition-colors truncate">
               {post.title}
               {post.commentCount > 0 && (
-                <span className="ml-1 text-xs text-op-gold font-medium">
+                <span className="ml-1.5 text-xs text-op-gold font-semibold">
                   [{post.commentCount}]
                 </span>
               )}
             </span>
 
             {/* Author */}
-            <span className="hidden sm:inline-block shrink-0 text-xs text-op-text-muted w-16 text-right truncate">
+            <span className="hidden sm:inline-block shrink-0 text-[13px] text-op-text-secondary w-20 text-right truncate">
               {post.author}
             </span>
 
             {/* Date */}
-            <span className="shrink-0 text-xs text-op-text-dim w-14 text-right">
+            <span className="shrink-0 text-[13px] text-op-text-dim w-16 text-right">
               {formatRelativeTime(post.createdAt)}
             </span>
           </Link>

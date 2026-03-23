@@ -72,7 +72,7 @@ export default function HandsPage() {
               className={cn(
                 'flex items-center gap-2 px-4 py-2 rounded-lg transition-all',
                 showFilters
-                  ? 'bg-op-gold text-black'
+                  ? 'bg-op-gold text-op-text-inverse'
                   : 'bg-op-elevated text-op-text-secondary hover:bg-op-elevated'
               )}
             >
@@ -98,7 +98,7 @@ export default function HandsPage() {
                     className={cn(
                       'px-3 py-2 rounded text-xs font-medium transition-all',
                       selectedPosition === ''
-                        ? 'bg-op-gold text-black'
+                        ? 'bg-op-gold text-op-text-inverse'
                         : 'bg-op-surface text-op-text-secondary hover:bg-op-elevated'
                     )}
                   >
@@ -111,7 +111,7 @@ export default function HandsPage() {
                       className={cn(
                         'px-3 py-2 rounded text-xs font-medium transition-all',
                         selectedPosition === pos
-                          ? 'bg-op-gold text-black'
+                          ? 'bg-op-gold text-op-text-inverse'
                           : 'bg-op-surface text-op-text-secondary hover:bg-op-elevated'
                       )}
                     >
@@ -132,7 +132,7 @@ export default function HandsPage() {
                     className={cn(
                       'px-3 py-2 rounded text-xs font-medium transition-all',
                       selectedGameType === ''
-                        ? 'bg-op-gold text-black'
+                        ? 'bg-op-gold text-op-text-inverse'
                         : 'bg-op-surface text-op-text-secondary hover:bg-op-elevated'
                     )}
                   >
@@ -143,7 +143,7 @@ export default function HandsPage() {
                     className={cn(
                       'px-3 py-2 rounded text-xs font-medium transition-all',
                       selectedGameType === 'cash'
-                        ? 'bg-op-gold text-black'
+                        ? 'bg-op-gold text-op-text-inverse'
                         : 'bg-op-surface text-op-text-secondary hover:bg-op-elevated'
                     )}
                   >
@@ -154,7 +154,7 @@ export default function HandsPage() {
                     className={cn(
                       'px-3 py-2 rounded text-xs font-medium transition-all',
                       selectedGameType === 'tournament'
-                        ? 'bg-op-gold text-black'
+                        ? 'bg-op-gold text-op-text-inverse'
                         : 'bg-op-surface text-op-text-secondary hover:bg-op-elevated'
                     )}
                   >
@@ -174,7 +174,7 @@ export default function HandsPage() {
                     className={cn(
                       'px-3 py-2 rounded text-xs font-medium transition-all',
                       selectedResult === ''
-                        ? 'bg-op-gold text-black'
+                        ? 'bg-op-gold text-op-text-inverse'
                         : 'bg-op-surface text-op-text-secondary hover:bg-op-elevated'
                     )}
                   >
@@ -185,7 +185,7 @@ export default function HandsPage() {
                     className={cn(
                       'px-3 py-2 rounded text-xs font-medium transition-all',
                       selectedResult === 'won'
-                        ? 'bg-op-gold text-black'
+                        ? 'bg-op-gold text-op-text-inverse'
                         : 'bg-op-surface text-op-text-secondary hover:bg-op-elevated'
                     )}
                   >
@@ -196,7 +196,7 @@ export default function HandsPage() {
                     className={cn(
                       'px-3 py-2 rounded text-xs font-medium transition-all',
                       selectedResult === 'lost'
-                        ? 'bg-op-gold text-black'
+                        ? 'bg-op-gold text-op-text-inverse'
                         : 'bg-op-surface text-op-text-secondary hover:bg-op-elevated'
                     )}
                   >
@@ -207,7 +207,7 @@ export default function HandsPage() {
                     className={cn(
                       'px-3 py-2 rounded text-xs font-medium transition-all',
                       selectedResult === 'split'
-                        ? 'bg-op-gold text-black'
+                        ? 'bg-op-gold text-op-text-inverse'
                         : 'bg-op-surface text-op-text-secondary hover:bg-op-elevated'
                     )}
                   >
@@ -227,7 +227,7 @@ export default function HandsPage() {
                     className={cn(
                       'px-3 py-1.5 rounded-full text-xs font-medium transition-all',
                       selectedTag === ''
-                        ? 'bg-op-gold text-black'
+                        ? 'bg-op-gold text-op-text-inverse'
                         : 'bg-op-surface text-op-text-secondary hover:bg-op-elevated border border-op-border'
                     )}
                   >
@@ -240,7 +240,7 @@ export default function HandsPage() {
                       className={cn(
                         'px-3 py-1.5 rounded-full text-xs font-medium transition-all',
                         selectedTag === tag
-                          ? 'bg-op-gold text-black'
+                          ? 'bg-op-gold text-op-text-inverse'
                           : 'bg-op-surface text-op-text-secondary hover:bg-op-elevated border border-op-border'
                       )}
                     >
@@ -280,7 +280,7 @@ export default function HandsPage() {
             {!hasActiveFilters && (
               <Link
                 href="/hands/share"
-                className="px-6 py-3 bg-op-gold text-black rounded-lg font-medium hover:bg-op-gold-hover transition-colors"
+                className="px-6 py-3 bg-op-gold text-op-text-inverse rounded-lg font-medium hover:bg-op-gold-hover transition-colors"
               >
                 첫 번째 핸드 공유하기
               </Link>

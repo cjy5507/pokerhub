@@ -11,26 +11,26 @@ import { COMMUNITY_CARD_SLOTS } from '../constants';
 // ─── Style constants ──────────────────────────────────────────────
 
 const FELT_STYLE = {
-  background: 'radial-gradient(ellipse at 50% 50%, #152418 0%, #0a110b 75%, #050a07 100%)',
-  border: '4px solid rgba(201,162,39,0.35)',
-  boxShadow: '0 10px 40px rgba(0,0,0,0.8), inset 0 0 80px rgba(0,0,0,0.9), 0 0 30px rgba(201,162,39,0.15)',
+  background: 'var(--op-surface)',
+  border: '4px solid var(--op-border)',
+  boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
 } as const;
 
-const INNER_RING_STYLE = { boxShadow: 'inset 0 0 20px rgba(0,0,0,0.5)' } as const;
+const INNER_RING_STYLE = { boxShadow: 'inset 0 0 20px rgba(0,0,0,0.1)' } as const;
 
 const POT_ACTIVE_STYLE = {
-  background: 'rgba(34,80,50,0.85)',
-  border: '1px solid rgba(74,140,92,0.4)',
+  background: 'var(--op-elevated)',
+  border: '1px solid var(--op-border)',
 } as const;
 
-const POT_EMPTY_STYLE = { background: 'rgba(34,80,50,0.5)' } as const;
+const POT_EMPTY_STYLE = { background: 'var(--op-surface)' } as const;
 
 const EMPTY_CARD_SLOT_STYLE = {
-  background: 'rgba(0,0,0,0.12)',
-  border: '1px solid rgba(255,255,255,0.04)',
+  background: 'rgba(0,0,0,0.05)',
+  border: '1px dashed var(--op-border)',
 } as const;
 
-const SIDE_POT_STYLE = { background: 'rgba(0,0,0,0.4)' } as const;
+const SIDE_POT_STYLE = { background: 'var(--op-surface)', border: '1px solid var(--op-border)' } as const;
 
 // ─── PokerTableFelt ───────────────────────────────────────────────
 
@@ -73,13 +73,13 @@ export function PokerTableFelt({
           <div className="absolute top-[26%] md:top-[22%] left-1/2 -translate-x-1/2 z-10">
             {gameState.pot > 0 ? (
               <div className={cn('px-3 py-0.5 rounded-full', potBounce && 'animate-pot-bounce')} style={POT_ACTIVE_STYLE}>
-                <span className="text-[11px] md:text-[13px] font-bold text-white tabular-nums">
+                <span className="text-[11px] md:text-[13px] font-bold text-op-text tabular-nums">
                   {gameState.pot.toLocaleString()}
                 </span>
               </div>
             ) : (
               <div className="px-3 py-0.5 rounded-full" style={POT_EMPTY_STYLE}>
-                <span className="text-[11px] md:text-[13px] font-bold text-white/30 tabular-nums">0</span>
+                <span className="text-[11px] md:text-[13px] font-bold text-op-text-muted tabular-nums">0</span>
               </div>
             )}
           </div>
@@ -113,7 +113,7 @@ export function PokerTableFelt({
             {gameState.sidePots.length > 0 && (
               <div className="flex gap-1 flex-wrap justify-center">
                 {gameState.sidePots.map((sp, i) => (
-                  <div key={i} className="px-2 py-0.5 rounded-full text-[8px] text-white/50" style={SIDE_POT_STYLE}>
+                  <div key={i} className="px-2 py-0.5 rounded-full text-[8px] text-op-text-secondary" style={SIDE_POT_STYLE}>
                     사이드 {sp.amount.toLocaleString()}
                   </div>
                 ))}
@@ -129,8 +129,8 @@ export function PokerTableFelt({
                   <div key={k} className="w-1.5 h-1.5 bg-white/40 rounded-full animate-pulse" style={{ animationDelay: `${delay}s` }} />
                 ))}
               </div>
-              <p className="text-[11px] font-medium text-white/60">다른 플레이어를 기다리는 중...</p>
-              <div className="text-[10px] text-white/30 text-center leading-relaxed">
+              <p className="text-[11px] font-medium text-op-text-secondary">다른 플레이어를 기다리는 중...</p>
+              <div className="text-[10px] text-op-text-muted text-center leading-relaxed">
                 <p>NLH ~ {gameState.smallBlind}/{gameState.bigBlind}</p>
               </div>
             </div>

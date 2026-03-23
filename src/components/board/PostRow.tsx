@@ -44,9 +44,9 @@ function PostRowBase({
       href={`/board/${boardSlug}/${postId}`}
       className={cn(
         // Mobile: card layout (default)
-        'block bg-op-surface rounded-lg p-3 md:p-4 hover:bg-op-elevated transition-colors',
+        'block bg-op-surface rounded-lg p-4 hover:bg-op-elevated transition-colors group',
         // Desktop: table row layout
-        'lg:bg-transparent lg:rounded-none lg:p-0 lg:px-4 lg:py-2 lg:border-b lg:border-op-border',
+        'lg:bg-transparent lg:rounded-none lg:p-0 lg:px-4 lg:py-3 lg:border-b lg:border-op-border',
         className
       )}
     >
@@ -60,12 +60,12 @@ function PostRowBase({
         {/* Title + comment count */}
         <div className="min-w-0">
           <h3 className={cn(
-            'text-[13px] font-medium truncate',
+            'text-[15px] font-medium truncate group-hover:text-op-gold transition-colors',
             isVisited ? 'text-op-text-muted' : 'text-op-text'
           )}>
             {title}
             {commentCount > 0 && (
-              <span className="text-op-gold text-xs ml-1 font-medium">[{commentCount}]</span>
+              <span className="text-op-gold text-[13px] ml-1.5 font-semibold">[{commentCount}]</span>
             )}
           </h3>
         </div>

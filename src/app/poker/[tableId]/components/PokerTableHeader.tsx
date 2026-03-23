@@ -7,7 +7,7 @@ import type { GameState, SeatState } from '@/lib/poker/types';
 
 const HEADER_STYLE = {
   background: 'var(--op-elevated)',
-  borderBottom: '1px solid rgba(255,255,255,0.08)',
+  borderBottom: '1px solid var(--op-border)',
 } as const;
 
 interface PokerTableHeaderProps {
@@ -31,19 +31,18 @@ export function PokerTableHeader({
       <div className="flex items-center gap-2 min-w-0">
         <Link
           href="/poker"
-          className="flex items-center justify-center w-7 h-7 rounded active:scale-[0.92] transition-transform"
-          style={{ color: 'rgba(255,255,255,0.5)' }}
+          className="flex items-center justify-center w-7 h-7 rounded active:scale-[0.92] transition-transform text-op-text-secondary hover:text-op-text"
         >
           <ArrowLeft className="w-4 h-4" />
         </Link>
         <div className="flex items-center gap-2 min-w-0">
-          <h1 className="text-[11px] font-semibold text-white/80 truncate max-w-[100px] leading-none">
+          <h1 className="text-[11px] font-semibold text-op-text truncate max-w-[100px] leading-none">
             {gameState.tableName}
           </h1>
-          <span className="text-[10px] text-white/40 leading-none">
+          <span className="text-[10px] text-op-text-muted leading-none">
             NLH {gameState.smallBlind}/{gameState.bigBlind}
           </span>
-          <span className="text-[9px] text-white/25 leading-none flex items-center gap-0.5">
+          <span className="text-[9px] text-op-text-secondary leading-none flex items-center gap-0.5">
             <Users className="w-3 h-3" />
             {seats.filter((s) => s !== null).length}/{maxSeats}
           </span>
@@ -52,13 +51,13 @@ export function PokerTableHeader({
       <div className="flex items-center gap-0.5">
         <button
           onClick={onShowHistory}
-          className="w-7 h-7 flex items-center justify-center rounded active:scale-[0.92] transition-transform text-white/35 hover:text-white/60"
+          className="w-7 h-7 flex items-center justify-center rounded active:scale-[0.92] transition-transform text-op-text-secondary hover:text-op-text"
         >
           <MessageSquare className="w-3.5 h-3.5" />
         </button>
         <button
           onClick={onToggleMute}
-          className="w-7 h-7 flex items-center justify-center rounded active:scale-[0.92] transition-transform text-white/35 hover:text-white/60"
+          className="w-7 h-7 flex items-center justify-center rounded active:scale-[0.92] transition-transform text-op-text-secondary hover:text-op-text"
         >
           {isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
         </button>

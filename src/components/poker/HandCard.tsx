@@ -45,12 +45,13 @@ export function HandCard({
     <Link
       href={`/hands/${handId}`}
       className={cn(
-        'block bg-op-surface rounded p-4 lg:p-5 hover:bg-op-elevated transition-colors',
-        'border-l-2',
-        result === 'won' ? 'border-op-gold' : 'border-transparent',
+        'block bg-op-surface rounded-xl border border-op-border p-4 lg:p-5 hover:bg-op-elevated transition-all shadow-sm group relative overflow-hidden',
         className
       )}
     >
+      {result === 'won' && (
+        <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-op-gold" />
+      )}
       {/* Cards */}
       <div className="flex items-center gap-3 mb-3">
         {/* Hero cards */}

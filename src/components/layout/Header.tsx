@@ -25,42 +25,40 @@ export interface NavGroup {
 // ---------------------------------------------------------------------------
 
 const navGroups: NavGroup[] = [
-  { label: '뉴스', href: '/news' },
   {
-    label: '게시판',
+    label: '커뮤니티',
     href: '/board/free',
     items: [
       { label: '자유게시판', href: '/board/free' },
       { label: '전략게시판', href: '/board/strategy' },
       { label: '전략 허브', href: '/strategy' },
+      { label: '뉴스', href: '/news' },
     ],
   },
   {
-    label: '포커',
+    label: '핸드 분석',
     href: '/hands',
-    items: [
-      { label: '핸드공유', href: '/hands' },
-      { label: '포인트포커', href: '/poker' },
-    ],
+  },
+  {
+    label: '라이브 포커',
+    href: '/poker',
   },
   {
     label: '소셜',
     href: '/threads',
     items: [
       { label: '쓰레드', href: '/threads' },
-      { label: '채팅', href: '/chat' },
-      { label: '마켓', href: '/market' },
+      { label: '오픈 채팅', href: '/chat' },
       { label: '랭킹', href: '/rankings' },
     ],
   },
   {
-    label: '게임',
+    label: '미니게임',
     href: '/lottery',
     items: [
       { label: '복권', href: '/lottery' },
       { label: '룰렛', href: '/roulette' },
       { label: '바카라', href: '/baccarat/vip-room' },
-      { label: '달팽이 레이스', href: '/snail-race/main' },
       { label: '포인트샵', href: '/shop' },
     ],
   },

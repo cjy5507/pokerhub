@@ -8,15 +8,15 @@ import type { GameState, SeatState, PlayerAction } from '@/lib/poker/types';
 // ─── Style constants ──────────────────────────────────────────────
 
 const HERO_PANEL_STYLE = {
-  background: 'rgba(10, 10, 10, 0.85)',
-  borderTop: '1px solid rgba(255,255,255,0.1)',
-  boxShadow: '0 -10px 40px rgba(0,0,0,0.5)',
+  background: 'var(--op-background)',
+  borderTop: '1px solid var(--op-border)',
+  boxShadow: '0 -10px 40px rgba(0,0,0,0.1)',
   paddingBottom: 'env(safe-area-inset-bottom)',
 } as const;
 
 const RAISE_PANEL_STYLE = {
-  background: 'var(--op-elevated)',
-  border: '1px solid rgba(255,255,255,0.08)',
+  background: 'var(--op-surface)',
+  border: '1px solid var(--op-border)',
 } as const;
 
 // ─── PokerHeroPanel ───────────────────────────────────────────────
@@ -75,12 +75,12 @@ export function PokerHeroPanel({
         <div className="px-3 py-2.5 flex items-center gap-3">
           <button
             onClick={onShowHistory}
-            className="px-3 py-1.5 rounded-lg text-[10px] font-semibold text-white/40 bg-white/5 hover:bg-white/8 transition-colors active:scale-[0.95]"
+            className="px-3 py-1.5 rounded-lg text-[10px] font-semibold text-op-text-muted bg-op-surface hover:bg-op-elevated transition-colors active:scale-[0.95]"
           >
             CHAT LOG
           </button>
           <div className="flex-1 text-center">
-            <p className="text-[11px] text-white/30">{userId ? '빈 좌석을 터치하여 참가' : '관전 중'}</p>
+            <p className="text-[11px] text-op-text-muted">{userId ? '빈 좌석을 터치하여 참가' : '관전 중'}</p>
           </div>
           {!userId && (
             <Link
@@ -111,20 +111,20 @@ export function PokerHeroPanel({
             ) : heroSeat.isFolded ? (
               <span className="text-op-error/60 font-semibold uppercase tracking-wide">FOLD</span>
             ) : isPlaying && !heroSeat.isFolded ? (
-              <span className="text-white/30 truncate">
+              <span className="text-op-text-muted truncate">
                 {gameState.currentSeat !== null
                   ? `${seats[gameState.currentSeat]?.nickname ?? '...'}님 차례`
                   : '대기 중'}
               </span>
             ) : (
-              <span className="text-white/25">
+              <span className="text-op-text-secondary">
                 {gameState.status === 'waiting' ? 'WAITING' : '다음 핸드 준비 중'}
               </span>
             )}
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-[11px] text-white/50 font-medium truncate max-w-[80px]">{heroSeat.nickname}</span>
-            <span className="text-[14px] md:text-[16px] font-bold text-white tabular-nums leading-none">
+            <span className="text-[11px] text-op-text-muted font-medium truncate max-w-[80px]">{heroSeat.nickname}</span>
+            <span className="text-[14px] md:text-[16px] font-bold text-op-text tabular-nums leading-none">
               {heroSeat.chipStack.toLocaleString()}
             </span>
           </div>
@@ -135,7 +135,7 @@ export function PokerHeroPanel({
             disabled={isLeaving}
             className={cn(
               'flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold transition-all active:scale-[0.92] flex-shrink-0',
-              'bg-white/5 text-white/40 hover:text-white/60 hover:bg-white/8',
+              'bg-op-surface text-op-text-muted hover:text-op-text hover:bg-op-elevated',
               isLeaving && 'opacity-40 cursor-not-allowed'
             )}
           >
@@ -158,12 +158,12 @@ export function PokerHeroPanel({
                     onClick={() => !p.disabled && setRaiseAmount(p.value)}
                     disabled={p.disabled}
                     className={cn(
-                      'flex-shrink-0 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all active:scale-[0.92]',
+                      'flex-shrink-0 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all active:scale-[0.92] border',
                       p.disabled
-                        ? 'bg-white/4 text-white/20 cursor-not-allowed'
+                        ? 'bg-op-surface text-op-text-muted cursor-not-allowed border-transparent'
                         : raiseAmount === p.value
-                          ? 'bg-white text-black'
-                          : 'bg-white/8 text-white/50 hover:bg-white/12'
+                          ? 'bg-op-gold-hover text-op-text-inverse border-op-gold'
+                          : 'bg-op-surface text-op-text-secondary border-op-border hover:bg-op-elevated'
                     )}
                   >
                     {p.label}
@@ -253,7 +253,7 @@ export function PokerHeroPanel({
                 onClick={() => onAction('fold')}
                 disabled={actionPending}
                 className={cn(
-                  'flex-1 min-h-[48px] rounded-xl font-bold text-[13px] tracking-wide transition-all active:scale-[0.96] bg-white/5 border border-white/10 hover:bg-white/10 text-white/70 hover:text-white relative overflow-hidden group',
+                  'flex-1 min-h-[48px] rounded-xl font-bold text-[13px] tracking-wide transition-all active:scale-[0.96] bg-op-surface border border-op-border hover:bg-op-elevated text-op-text-secondary hover:text-op-text relative overflow-hidden group',
                   actionPending && 'opacity-50 cursor-not-allowed'
                 )}
               >
@@ -264,8 +264,8 @@ export function PokerHeroPanel({
               onClick={() => canCheck ? onAction('check') : onAction('call', callAmount)}
               disabled={actionPending}
               className={cn(
-                'flex-1 min-h-[48px] rounded-xl font-bold tracking-wide transition-all active:scale-[0.96] shadow-lg relative overflow-hidden group',
-                canCheck ? 'bg-white/10 border border-white/20 text-white hover:bg-white/20' : 'bg-gradient-to-b from-blue-500 to-blue-700 border-blue-400 text-white shadow-[0_0_15px_rgba(59,130,246,0.3)]',
+                'flex-1 min-h-[48px] rounded-xl font-bold tracking-wide transition-all active:scale-[0.96] shadow-lg relative overflow-hidden group border',
+                canCheck ? 'bg-op-surface border-op-border text-op-text hover:bg-op-elevated' : 'bg-blue-600 border-blue-500 text-white hover:bg-blue-700',
                 actionPending && 'opacity-50 cursor-not-allowed'
               )}
             >
@@ -291,10 +291,10 @@ export function PokerHeroPanel({
                 }}
                 disabled={actionPending}
                 className={cn(
-                  'flex-1 min-h-[48px] rounded-xl font-bold tracking-wide transition-all active:scale-[0.96] shadow-lg relative overflow-hidden group',
+                  'flex-1 min-h-[48px] rounded-xl font-bold tracking-wide transition-all active:scale-[0.96] shadow-lg relative overflow-hidden group border',
                   showRaiseSlider && raiseAmount >= maxRaiseTotal
-                    ? 'bg-gradient-to-b from-red-500 to-red-600 border border-red-400 text-white animate-all-in-pulse shadow-[0_0_20px_rgba(239,68,68,0.5)]'
-                    : 'bg-gradient-to-b from-op-gold to-yellow-600 border border-yellow-400 text-black shadow-[0_0_20px_rgba(201,162,39,0.3)]',
+                    ? 'bg-red-600 border-red-500 text-white animate-all-in-pulse hover:bg-red-700'
+                    : 'bg-op-gold border-op-gold hover:bg-op-gold-hover text-op-text-inverse',
                   actionPending && 'opacity-50 cursor-not-allowed'
                 )}
               >
@@ -327,16 +327,16 @@ export function PokerHeroPanel({
         <div className="px-3 py-2">
           <div className="flex gap-2">
             {([
-              { key: 'fold' as const, label: '폴드', activeClass: 'bg-white/10 text-white/70 border border-white/20' },
-              { key: 'check_fold' as const, label: '체크/폴드', activeClass: 'bg-blue-500/20 text-blue-400 border border-blue-500/30 shadow-[0_0_10px_rgba(59,130,246,0.2)]' },
-              { key: 'call' as const, label: '콜', activeClass: 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shadow-[0_0_10px_rgba(52,211,153,0.2)]' },
+              { key: 'fold' as const, label: '폴드', activeClass: 'bg-op-surface text-op-text-secondary border border-op-border' },
+              { key: 'check_fold' as const, label: '체크/폴드', activeClass: 'bg-blue-600/20 text-blue-500 border border-blue-500/30' },
+              { key: 'call' as const, label: '콜', activeClass: 'bg-op-success/20 text-op-success border border-op-success/30' },
             ]).map(({ key, label, activeClass }) => (
               <button
                 key={key}
                 onClick={() => setPreAction(preAction === key ? null : key)}
                 className={cn(
                   'flex-1 py-2.5 rounded-xl text-[11px] tracking-wide font-bold transition-all active:scale-[0.93]',
-                  preAction === key ? activeClass : 'bg-transparent border border-white/10 text-white/40 hover:text-white/60 hover:bg-white/5'
+                  preAction === key ? activeClass : 'bg-transparent border border-op-border text-op-text-muted hover:text-op-text-secondary hover:bg-op-surface'
                 )}
               >
                 {label}

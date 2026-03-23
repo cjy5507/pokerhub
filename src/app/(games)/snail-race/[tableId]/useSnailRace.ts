@@ -13,7 +13,7 @@ type RaceHistoryEntry = { first: number; second: number; third: number };
 type RaceResult = { seed: string; finishOrder: number[] } | null;
 
 const STATE_SYNC_THROTTLE_MS = 350;
-const FALLBACK_SYNC_INTERVAL_MS = 2500;
+const FALLBACK_SYNC_INTERVAL_MS = 1000;
 
 function shallowEqualObject(a: Record<string, number>, b: Record<string, number>) {
   const aKeys = Object.keys(a);
@@ -181,7 +181,17 @@ export function useSnailRace(tableId: string, userId: string | null, initialBala
         syncQueuedRef.current = false;
         lastSyncAtRef.current = Date.now();
         try {
-          const data = await syncSnailRaceState(tableId);
+          let data = await syncSnailRaceState(tableId);
+          if (!data) {
+            const response = await fetch(`/api/snail-race/sync?tableId=${encodeURIComponent(tableId)}`, {
+              method: 'GET',
+              cache: 'no-store',
+            });
+            if (response.ok) {
+              const payload = await response.json();
+              data = payload?.state ?? null;
+            }
+          }
           if (data && !data.error) applyState(data);
         } catch { /* no-op */ }
       } while (syncQueuedRef.current);

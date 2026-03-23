@@ -12,7 +12,7 @@ const PHASE_DEALING_MS = 5000;
 const CARD_REVEAL_INTERVAL_MS = 800;
 const CARD_DEAL_SOUND_INTERVAL_MS = 200;
 const STATE_SYNC_THROTTLE_MS = 350;
-const FALLBACK_SYNC_INTERVAL_MS = 2500;
+const FALLBACK_SYNC_INTERVAL_MS = 1000;
 
 function shallowEqualObject(a: Record<string, number>, b: Record<string, number>) {
   const aKeys = Object.keys(a);
@@ -155,7 +155,17 @@ export function useBaccaratGame(tableId: string, userId: string | null, initialB
         syncQueuedRef.current = false;
         lastSyncAtRef.current = Date.now();
         try {
-          const data = await syncBaccaratState(tableId);
+          let data = await syncBaccaratState(tableId);
+          if (!data) {
+            const response = await fetch(`/api/baccarat/sync?tableId=${encodeURIComponent(tableId)}`, {
+              method: 'GET',
+              cache: 'no-store',
+            });
+            if (response.ok) {
+              const payload = await response.json();
+              data = payload?.state ?? null;
+            }
+          }
           if (data && !data.error) applyState(data);
         } catch { /* no-op */ }
       } while (syncQueuedRef.current);

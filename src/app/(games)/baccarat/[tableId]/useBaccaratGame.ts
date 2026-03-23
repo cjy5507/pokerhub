@@ -13,6 +13,7 @@ const CARD_REVEAL_INTERVAL_MS = 800;
 const CARD_DEAL_SOUND_INTERVAL_MS = 200;
 const STATE_SYNC_THROTTLE_MS = 350;
 const FALLBACK_SYNC_INTERVAL_MS = 1000;
+const SYNC_STALE_RESET_MS = 6000;
 
 function shallowEqualObject(a: Record<string, number>, b: Record<string, number>) {
   const aKeys = Object.keys(a);
@@ -59,6 +60,7 @@ export function useBaccaratGame(tableId: string, userId: string | null, initialB
   const syncInFlightRef = useRef<Promise<void> | null>(null);
   const syncQueuedRef = useRef(false);
   const lastSyncAtRef = useRef(0);
+  const syncStartedAtRef = useRef(0);
 
   const chipSoundRef = useRef<HTMLAudioElement | null>(null);
   const dealSoundRef = useRef<HTMLAudioElement | null>(null);
@@ -148,23 +150,31 @@ export function useBaccaratGame(tableId: string, userId: string | null, initialB
   const requestStateSync = useCallback(async (force = false) => {
     const now = Date.now();
     if (!force && now - lastSyncAtRef.current < STATE_SYNC_THROTTLE_MS) return;
-    if (syncInFlightRef.current) { syncQueuedRef.current = true; return syncInFlightRef.current; }
+    if (syncInFlightRef.current) {
+      const inFlightAge = now - syncStartedAtRef.current;
+      if (inFlightAge < SYNC_STALE_RESET_MS) {
+        syncQueuedRef.current = true;
+        return syncInFlightRef.current;
+      }
+      // Reset stale in-flight guard so the UI can recover from a stuck sync call.
+      syncInFlightRef.current = null;
+    }
 
     const runSync = async () => {
       do {
         syncQueuedRef.current = false;
         lastSyncAtRef.current = Date.now();
         try {
-          let data = await syncBaccaratState(tableId);
-          if (!data) {
-            const response = await fetch(`/api/baccarat/sync?tableId=${encodeURIComponent(tableId)}`, {
-              method: 'GET',
-              cache: 'no-store',
-            });
-            if (response.ok) {
-              const payload = await response.json();
-              data = payload?.state ?? null;
-            }
+          let data: any = null;
+          const response = await fetch(`/api/baccarat/sync?tableId=${encodeURIComponent(tableId)}`, {
+            method: 'GET',
+            cache: 'no-store',
+          });
+          if (response.ok) {
+            const payload = await response.json();
+            data = payload?.state ?? null;
+          } else {
+            data = await syncBaccaratState(tableId);
           }
           if (data && !data.error) applyState(data);
         } catch { /* no-op */ }
@@ -172,6 +182,7 @@ export function useBaccaratGame(tableId: string, userId: string | null, initialB
     };
 
     const task = runSync().finally(() => { syncInFlightRef.current = null; });
+    syncStartedAtRef.current = Date.now();
     syncInFlightRef.current = task;
     return task;
   }, [tableId, applyState]);

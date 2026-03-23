@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { createOptionalClient } from '@/lib/supabase/client';
 import { useCountdown } from '@/hooks/useCountdown';
 import { syncSnailRaceState, placeSnailRaceBet, clearSnailRaceBets } from '../actions';
-import type { RaceEvent } from '../actions';
+import type { RaceEvent } from '../types';
 
 type SnailRaceState = 'betting' | 'racing' | 'result';
 

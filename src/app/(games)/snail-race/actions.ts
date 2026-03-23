@@ -9,13 +9,7 @@ import { getSession } from '@/lib/auth/session';
 import { eq, and, sql } from 'drizzle-orm';
 import { broadcastSnailRaceState } from '@/lib/snail-race/broadcast';
 import { randomUUID } from 'crypto';
-
-export interface RaceEvent {
-  type: 'obstacle' | 'mushroom' | 'boost' | 'rain';
-  targetSnailId?: number;
-  timestamp: number; // ms offset from race start
-  duration?: number;
-}
+import type { RaceEvent } from './types';
 
 const PHASE_BETTING_MS = 30000;
 const PHASE_RACING_MS = 15000;
@@ -26,7 +20,7 @@ const BET_RETRY_DELAYS = [100, 200, 400] as const;
 const ROOM_IDLE_EXPIRY_MS = 60 * 60 * 1000;
 const MAX_CATCHUP_ITERATIONS = 10;
 
-export const SNAILS = [
+const SNAILS = [
     { id: 0, name: '지나', color: '#ef4444' },
     { id: 1, name: '해연', color: '#3b82f6' },
     { id: 2, name: '영', color: '#22c55e' },

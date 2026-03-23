@@ -26,13 +26,16 @@ export interface NavGroup {
 
 const navGroups: NavGroup[] = [
   {
+    label: '뉴스',
+    href: '/news',
+  },
+  {
     label: '커뮤니티',
     href: '/board/free',
     items: [
       { label: '자유게시판', href: '/board/free' },
       { label: '전략게시판', href: '/board/strategy' },
       { label: '전략 허브', href: '/strategy' },
-      { label: '뉴스', href: '/news' },
     ],
   },
   {

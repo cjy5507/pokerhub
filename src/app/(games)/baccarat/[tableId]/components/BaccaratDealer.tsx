@@ -46,25 +46,29 @@ const DEALER_STAGE_CSS = `
 }
 @media (max-width: 480px) {
   .dealer-top-header {
-    margin-top: 2.4rem;
+    margin-top: 1rem;
     margin-bottom: 0.6rem;
   }
-  .dealer-card-stage {
-    transform: scale(0.9);
-    transform-origin: top center;
-  }
   .dealer-card-column {
-    width: 108px;
-    min-height: 76px;
+    width: 102px;
+    min-height: 72px;
   }
 }
 @media (max-width: 380px) {
-  .dealer-card-stage {
-    transform: scale(0.82);
+  .dealer-top-header {
+    margin-top: 0.6rem;
   }
   .dealer-center-score {
     padding-left: 0.6rem;
     padding-right: 0.6rem;
+  }
+  .dealer-card-column {
+    width: 92px;
+  }
+}
+@media (max-height: 760px) {
+  .dealer-top-header {
+    margin-top: 0.8rem;
   }
 }
 `;
@@ -93,7 +97,7 @@ const BaccaratDealerComponent: React.FC<BaccaratDealerProps> = ({
     }, [gameState, dealer, playerScore, bankerScore]);
 
     return (
-        <div className="flex-1 relative flex flex-col justify-center items-center py-6 min-h-[250px] lg:min-h-0 overflow-hidden">
+        <div className="flex-1 relative flex flex-col justify-center items-center py-4 md:py-6 min-h-[250px] lg:min-h-0 overflow-x-hidden">
             <style dangerouslySetInnerHTML={{ __html: DEALER_STAGE_CSS }} />
             <div className="absolute inset-0 pointer-events-none">
                 <div
@@ -146,7 +150,7 @@ const BaccaratDealerComponent: React.FC<BaccaratDealerProps> = ({
             </div>
 
             {/* HEADER: PLAYER vs Timer vs BANKER */}
-            <div className="dealer-top-header flex items-center justify-center w-full max-w-3xl mx-auto mt-20 md:mt-16 mb-2 md:mb-4 z-20">
+            <div className="dealer-top-header flex items-center justify-center w-full max-w-3xl mx-auto mt-10 md:mt-16 mb-2 md:mb-4 z-20">
                 <div className="flex-1 text-right pr-6 md:pr-10 relative">
                     <span className="text-2xl md:text-4xl font-black text-blue-500 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] tracking-tight">PLAYER</span>
                     {/* Player WIN Badge */}
@@ -207,7 +211,7 @@ const BaccaratDealerComponent: React.FC<BaccaratDealerProps> = ({
             </div>
 
             {/* Cards Display / Action Area */}
-            <div className="dealer-card-stage flex justify-center items-start gap-1 md:gap-4 relative z-10 w-full px-2 max-w-4xl mx-auto mb-4 md:mb-8">
+            <div className="dealer-card-stage flex justify-center items-start gap-1 md:gap-4 relative z-10 w-full px-2 max-w-4xl mx-auto mb-3 md:mb-8">
                 <div className="absolute inset-x-[6%] top-5 h-28 pointer-events-none rounded-[999px] bg-emerald-950/50 border border-emerald-400/20 shadow-[inset_0_0_40px_rgba(5,46,22,0.9),0_0_20px_rgba(16,185,129,0.15)]" />
 
                 {/* Player Cards */}

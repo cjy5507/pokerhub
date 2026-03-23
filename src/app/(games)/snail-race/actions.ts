@@ -10,6 +10,13 @@ import { eq, and, sql } from 'drizzle-orm';
 import { broadcastSnailRaceState } from '@/lib/snail-race/broadcast';
 import { randomUUID } from 'crypto';
 
+export interface RaceEvent {
+  type: 'obstacle' | 'mushroom' | 'boost' | 'rain';
+  targetSnailId?: number;
+  timestamp: number; // ms offset from race start
+  duration?: number;
+}
+
 const PHASE_BETTING_MS = 30000;
 const PHASE_RACING_MS = 15000;
 const PHASE_RESULT_MS = 10000;
@@ -49,10 +56,77 @@ function selectParticipants(): number[] {
     return fisherYates(all).slice(0, 3);
 }
 
-function generateRaceResult(participants: number[]): { raceSeed: string; finishOrder: number[]; participants: number[] } {
+function generateRaceEvents(participants: number[], raceSeed: string): RaceEvent[] {
+    let hash = 0;
+    for (let i = 0; i < raceSeed.length; i++) {
+        hash = ((hash << 5) - hash + raceSeed.charCodeAt(i)) | 0;
+    }
+    const seededRandom = () => {
+        hash = (hash * 1103515245 + 12345) & 0x7fffffff;
+        return hash / 0x7fffffff;
+    };
+
+    const events: RaceEvent[] = [];
+    const raceDurationMs = 8000;
+
+    if (seededRandom() < 0.20) {
+        const target = participants[Math.floor(seededRandom() * participants.length)];
+        events.push({ type: 'obstacle', targetSnailId: target, timestamp: Math.floor(seededRandom() * raceDurationMs * 0.6) + raceDurationMs * 0.1 });
+    }
+    if (seededRandom() < 0.15) {
+        events.push({ type: 'mushroom', targetSnailId: participants[0], timestamp: Math.floor(seededRandom() * raceDurationMs * 0.5) + raceDurationMs * 0.2, duration: 2000 });
+    }
+    if (seededRandom() < 0.25) {
+        events.push({ type: 'boost', targetSnailId: participants[participants.length - 1], timestamp: Math.floor(seededRandom() * raceDurationMs * 0.5) + raceDurationMs * 0.3, duration: 1500 });
+    }
+    if (seededRandom() < 0.10) {
+        events.push({ type: 'rain', timestamp: Math.floor(seededRandom() * raceDurationMs * 0.4) + raceDurationMs * 0.3, duration: 1000 });
+    }
+
+    return events.sort((a, b) => a.timestamp - b.timestamp);
+}
+
+function generateRaceResult(participants: number[]): { raceSeed: string; finishOrder: number[]; participants: number[]; events: RaceEvent[] } {
     const raceSeed = newId();
-    const finishOrder = fisherYates(participants);
-    return { raceSeed, finishOrder, participants };
+    const events = generateRaceEvents(participants, raceSeed);
+
+    // Base speeds: random value per participant
+    const speeds: Record<number, number> = {};
+    for (const id of participants) {
+        speeds[id] = Math.random();
+    }
+
+    // Apply event-based speed modifiers
+    for (const event of events) {
+        switch (event.type) {
+            case 'obstacle':
+                if (event.targetSnailId !== undefined && speeds[event.targetSnailId] !== undefined) {
+                    speeds[event.targetSnailId] *= 0.7; // slow down
+                }
+                break;
+            case 'mushroom':
+                if (event.targetSnailId !== undefined && speeds[event.targetSnailId] !== undefined) {
+                    speeds[event.targetSnailId] *= 1.4; // speed up
+                }
+                break;
+            case 'boost':
+                if (event.targetSnailId !== undefined && speeds[event.targetSnailId] !== undefined) {
+                    speeds[event.targetSnailId] *= 1.3; // moderate speed up
+                }
+                break;
+            case 'rain':
+                // Rain slows everyone slightly
+                for (const id of participants) {
+                    speeds[id] *= 0.9;
+                }
+                break;
+        }
+    }
+
+    // Sort by speed descending to determine finish order
+    const finishOrder = [...participants].sort((a, b) => speeds[b] - speeds[a]);
+
+    return { raceSeed, finishOrder, participants, events };
 }
 
 export async function getSnailOdds(tableId: string): Promise<Record<number, number>> {
@@ -226,7 +300,7 @@ export async function syncSnailRaceState(tableId: string) {
                         // betting -> racing: read participants from existing round, generate race result
                         const existingRound = await tx.select({ participants: snailRaceRounds.participants }).from(snailRaceRounds).where(eq(snailRaceRounds.id, currentRoundId)).limit(1);
                         const participants = (existingRound[0]?.participants as number[]) || selectParticipants();
-                        const { raceSeed, finishOrder } = generateRaceResult(participants);
+                        const { raceSeed, finishOrder, events: raceEvents } = generateRaceResult(participants);
                         if (existingRound.length > 0) {
                             await tx.update(snailRaceRounds).set({ raceSeed, finishOrder }).where(eq(snailRaceRounds.id, currentRoundId));
                         } else {
@@ -369,6 +443,12 @@ export async function syncSnailRaceState(tableId: string) {
 
         const odds = await getSnailOdds(tableId);
 
+        // Regenerate race events deterministically from seed + participants
+        let raceEvents: RaceEvent[] = [];
+        if (roundData?.raceSeed && currentParticipants.length > 0) {
+            raceEvents = generateRaceEvents(currentParticipants, roundData.raceSeed);
+        }
+
         if (session?.userId && t.currentRoundId) {
             myBets = await db.select().from(snailRaceBets).where(and(
                 eq(snailRaceBets.tableId, tableId),
@@ -384,6 +464,7 @@ export async function syncSnailRaceState(tableId: string) {
             serverTime: Date.now(),
             participants: currentParticipants,
             odds,
+            events: raceEvents,
         };
 
         if (stateChanged) {

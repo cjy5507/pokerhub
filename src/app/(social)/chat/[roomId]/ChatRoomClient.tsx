@@ -183,7 +183,7 @@ export default function ChatRoomClient({ room, initialMessages }: ChatRoomClient
   };
 
   return (
-    <div className="flex flex-col h-screen bg-op-bg">
+    <div className="fixed inset-0 z-50 flex flex-col bg-op-bg">
       {/* Header */}
       <div className="bg-op-surface border-b border-op-border px-4 py-3 flex items-center gap-3">
         <button

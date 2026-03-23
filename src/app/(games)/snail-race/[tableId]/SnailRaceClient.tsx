@@ -14,8 +14,8 @@ interface SnailRaceClientProps {
   initialBalance?: number;
 }
 
-const LOADING_STYLE = 'w-full flex-1 min-h-[calc(100dvh-80px)] md:min-h-0 md:h-[calc(100vh-120px)] bg-slate-50 dark:bg-[#1a1c20] rounded-xl flex items-center justify-center border border-slate-200 dark:border-white/10 shadow-2xl transition-colors';
-const TABLE_STYLE = 'w-full flex-1 min-h-[calc(100dvh-80px)] md:min-h-0 md:h-[calc(100vh-120px)] bg-slate-50 dark:bg-[#1a1c20] rounded-xl flex flex-col overflow-hidden select-none relative font-sans text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 shadow-2xl transition-colors';
+const LOADING_STYLE = 'fixed inset-0 z-50 bg-slate-50 dark:bg-[#1a1c20] flex items-center justify-center';
+const TABLE_STYLE = 'fixed inset-0 z-50 bg-slate-50 dark:bg-[#1a1c20] flex flex-col overflow-hidden select-none relative font-sans text-slate-900 dark:text-white';
 const BG_GRID_STYLE = { backgroundSize: '40px 40px' } as const;
 
 

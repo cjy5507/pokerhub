@@ -42,6 +42,14 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
   const pathname = usePathname();
   const { isMobileDrawerOpen, openMobileDrawer } = useChat();
 
+  const isFullscreenPage =
+    pathname.startsWith('/snail-race/') ||
+    pathname.startsWith('/baccarat/') ||
+    pathname.startsWith('/roulette/') ||
+    (pathname.startsWith('/chat/') && pathname !== '/chat');
+
+  if (isFullscreenPage) return null;
+
   return (
     <nav
       className={cn(

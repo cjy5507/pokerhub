@@ -306,7 +306,17 @@ export async function syncBaccaratState(tableId: string) {
                     status: currentStatus as "betting" | "dealing" | "result",
                     currentRoundId: currentRoundId,
                     ...(newResults.length > 0 ? {
-                        history: sql`(COALESCE(${baccaratTables.history}, '[]'::jsonb) || ${JSON.stringify(newResults)}::jsonb)[(-36):]`,
+                        history: sql`(
+                            SELECT COALESCE(jsonb_agg(e.elem ORDER BY e.ord), '[]'::jsonb)
+                            FROM (
+                                SELECT elem, ord
+                                FROM jsonb_array_elements(
+                                    COALESCE(${baccaratTables.history}, '[]'::jsonb) || ${JSON.stringify(newResults)}::jsonb
+                                ) WITH ORDINALITY AS a(elem, ord)
+                                ORDER BY ord DESC
+                                LIMIT 36
+                            ) AS e
+                        )`,
                     } : {}),
                     phaseEndsAt: new Date(txEndsAt),
                 }).where(eq(baccaratTables.id, tableId));

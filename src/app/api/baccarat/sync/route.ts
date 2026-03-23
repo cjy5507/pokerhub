@@ -9,6 +9,12 @@ export async function GET(request: NextRequest) {
 
     try {
         const state = await syncBaccaratState(tableId);
+        if (state && typeof state === 'object' && 'error' in state) {
+            const message = typeof (state as { error?: unknown }).error === 'string'
+                ? (state as { error: string }).error
+                : 'sync failed';
+            return NextResponse.json({ error: message }, { status: 500 });
+        }
         return NextResponse.json({ success: true, state, tableId });
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : 'sync failed';

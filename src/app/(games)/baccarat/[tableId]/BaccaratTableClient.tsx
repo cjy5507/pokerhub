@@ -54,6 +54,18 @@ const PHASE_GLOW: Record<string, string> = {
   result: 'rgba(52,211,153,0.4)',
 };
 
+function countResults(history: string[]) {
+  return history.reduce(
+    (acc, r) => {
+      if (r === 'P') acc.player += 1;
+      if (r === 'B') acc.banker += 1;
+      if (r === 'T') acc.tie += 1;
+      return acc;
+    },
+    { player: 0, banker: 0, tie: 0 },
+  );
+}
+
 export function BaccaratTableClient({
   tableId,
   userId,
@@ -81,6 +93,9 @@ export function BaccaratTableClient({
     clearBets,
   } = useBaccaratGame(tableId, userId, initialBalance);
 
+  const mobileRecent = history.slice(-20);
+  const mobileStats = countResults(history.slice(-60));
+
   if (!isMounted) {
     return (
       <div className={LOADING_STYLE}>
@@ -105,7 +120,7 @@ export function BaccaratTableClient({
       <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] opacity-25" />
 
       <motion.header
-        className="relative z-30 h-14 flex items-center justify-between px-4 border-b border-white/10 bg-[#0c1322]/90 backdrop-blur"
+        className="relative z-30 h-12 md:h-14 flex items-center justify-between px-3 md:px-4 border-b border-white/10 bg-[#0c1322]/90 backdrop-blur"
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
@@ -115,7 +130,7 @@ export function BaccaratTableClient({
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div className="leading-tight min-w-0">
-            <p className="text-[10px] uppercase tracking-[0.22em] text-white/55">Pato Studio</p>
+            <p className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] text-white/55">Pato Studio</p>
             <h1 className="text-sm md:text-base font-black text-white/95 truncate">스피드 바카라</h1>
           </div>
         </div>
@@ -146,13 +161,13 @@ export function BaccaratTableClient({
       </div>
 
       <motion.main
-        className="relative z-20 flex-1 min-h-0 flex flex-col xl:flex-row overflow-hidden px-3 py-2 gap-2"
+        className="relative z-20 flex-1 min-h-0 flex flex-col xl:flex-row overflow-hidden px-2 md:px-3 py-1.5 md:py-2 gap-2"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.05 }}
       >
         <motion.div
-          className="xl:flex-1 relative rounded-3xl border border-white/15 bg-black/45 backdrop-blur overflow-hidden min-h-0"
+          className="xl:flex-1 relative rounded-2xl md:rounded-3xl border border-white/15 bg-black/45 backdrop-blur overflow-hidden min-h-[46svh] md:min-h-0"
           initial={{ opacity: 0, x: -8 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.35, delay: 0.1 }}
@@ -169,22 +184,58 @@ export function BaccaratTableClient({
         </motion.div>
 
         <motion.aside
-          className="xl:w-[330px] 2xl:w-[400px] border border-white/15 bg-black/45 rounded-3xl overflow-hidden flex-shrink-0"
+          className="hidden xl:block xl:w-[330px] 2xl:w-[400px] border border-white/15 bg-black/45 rounded-2xl md:rounded-3xl overflow-hidden flex-shrink-0"
           initial={{ opacity: 0, x: 18 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.35, delay: 0.15 }}
         >
-          {isDesktop ? (
-            <div className="h-full">
-              <BaccaratRoadmap history={history} gameState={gameState} />
-            </div>
-          ) : (
-            <div className="h-48 border-b border-white/15">
-              <BaccaratRoadmap history={history} gameState={gameState} />
-            </div>
-          )}
+          <div className="h-full">
+            <BaccaratRoadmap history={history} gameState={gameState} />
+          </div>
         </motion.aside>
       </motion.main>
+
+      {!isDesktop && (
+        <div className="relative z-30 mx-2 mb-2 rounded-xl border border-white/15 bg-black/55 px-2 py-2">
+          <p className="text-[10px] text-white/55 font-black tracking-[0.14em] uppercase mb-1">최근 히스토리</p>
+          <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide pb-1">
+            {mobileRecent.length === 0 ? (
+              <span className="text-[10px] text-white/40">기록 없음</span>
+            ) : (
+              mobileRecent.map((r, i) => (
+                <span
+                  key={`${r}-${i}`}
+                  className="w-5 h-5 rounded-full border border-white/20 text-[10px] font-black flex items-center justify-center shrink-0"
+                  style={{
+                    background:
+                      r === 'P'
+                        ? 'rgba(59,130,246,0.32)'
+                        : r === 'B'
+                          ? 'rgba(244,63,94,0.32)'
+                          : 'rgba(34,197,94,0.32)',
+                  }}
+                >
+                  {r}
+                </span>
+              ))
+            )}
+          </div>
+          <div className="grid grid-cols-3 gap-1.5 mt-1.5">
+            <div className="rounded-lg border border-sky-300/35 bg-sky-900/35 px-1.5 py-1 text-center">
+              <p className="text-[9px] text-sky-100 font-black">P</p>
+              <p className="text-xs text-white font-black">{mobileStats.player}</p>
+            </div>
+            <div className="rounded-lg border border-rose-300/35 bg-rose-900/35 px-1.5 py-1 text-center">
+              <p className="text-[9px] text-rose-100 font-black">B</p>
+              <p className="text-xs text-white font-black">{mobileStats.banker}</p>
+            </div>
+            <div className="rounded-lg border border-emerald-300/35 bg-emerald-900/35 px-1.5 py-1 text-center">
+              <p className="text-[9px] text-emerald-100 font-black">T</p>
+              <p className="text-xs text-white font-black">{mobileStats.tie}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <motion.div
         className="relative z-30 border-t border-white/15 bg-black/60 backdrop-blur"

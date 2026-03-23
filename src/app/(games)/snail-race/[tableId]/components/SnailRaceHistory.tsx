@@ -32,7 +32,7 @@ interface SnailRaceHistoryProps {
 export const SnailRaceHistory = React.memo(function SnailRaceHistory({ history }: SnailRaceHistoryProps) {
   if (history.length === 0) {
     return (
-      <div className="flex items-center justify-center h-10 px-4 text-[10px] text-slate-400 dark:text-white/30 font-medium tracking-wider">
+      <div className="flex items-center justify-center h-10 px-4 text-[10px] text-white/35 font-black tracking-[0.2em] uppercase">
         결과 없음
       </div>
     );
@@ -41,9 +41,9 @@ export const SnailRaceHistory = React.memo(function SnailRaceHistory({ history }
   const displayHistory = history.slice(-36);
 
   return (
-    <div className="w-full bg-white/50 dark:bg-black/40 border-t border-slate-200/50 dark:border-white/5">
-      <div className="flex items-center gap-2 px-3 py-1.5 overflow-x-auto scrollbar-hide">
-        <span className="text-[9px] text-slate-400 dark:text-white/30 font-bold uppercase tracking-widest flex-shrink-0">
+    <div className="w-full border-t border-white/15 bg-black/45">
+      <div className="flex items-center gap-2 px-3 py-2 overflow-x-auto scrollbar-hide">
+        <span className="text-[9px] text-white/55 font-black uppercase tracking-[0.2em] flex-shrink-0">
           히스토리
         </span>
         <div className="flex gap-1 flex-shrink-0">
@@ -59,7 +59,7 @@ export const SnailRaceHistory = React.memo(function SnailRaceHistory({ history }
                 <div className={cn(
                   'absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 z-50',
                   'opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150',
-                  'bg-gray-900 dark:bg-black border border-white/10 rounded-lg px-2 py-1.5 shadow-xl',
+                  'bg-black/95 border border-white/20 rounded-lg px-2 py-1.5 shadow-xl',
                   'min-w-[80px] text-center'
                 )}>
                   <div className="flex flex-col gap-0.5">
@@ -70,14 +70,14 @@ export const SnailRaceHistory = React.memo(function SnailRaceHistory({ history }
                           className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                           style={{ backgroundColor: SNAIL_COLORS[snailId] ?? '#888' }}
                         />
-                        <span className="text-[9px] text-white/80 font-bold whitespace-nowrap">
+                        <span className="text-[9px] text-white/80 font-black whitespace-nowrap">
                           {SNAIL_NAMES[snailId] ?? `#${snailId}`}
                         </span>
                       </div>
                     ))}
                   </div>
                   {/* Arrow */}
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-gray-900 dark:border-t-black" />
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-black" />
                 </div>
               </div>
             );

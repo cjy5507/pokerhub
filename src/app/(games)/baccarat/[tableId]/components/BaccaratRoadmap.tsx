@@ -1,78 +1,87 @@
 import React, { useMemo } from "react";
-import { cn } from "@/lib/utils";
 import { History } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface BaccaratRoadmapProps {
-    history: string[];
-    gameState: 'waiting' | 'betting' | 'dealing' | 'result';
+  history: string[];
+  gameState: 'waiting' | 'betting' | 'dealing' | 'result';
 }
 
+const CELL_TEXT = {
+  P: 'P',
+  B: 'B',
+  T: 'T',
+};
+
+const ROADMAP_CSS = `
+@keyframes beadPulse {
+  0% { box-shadow: 0 0 0 0 rgba(148,163,184,0.22); }
+  100% { box-shadow: 0 0 0 9px rgba(148,163,184,0); }
+}
+`;
+
 const BaccaratRoadmapComponent: React.FC<BaccaratRoadmapProps> = ({ history, gameState }) => {
-    const visibleHistory = useMemo(() => history.slice(-108), [history]);
-    const stats = useMemo(() => {
-        return visibleHistory.reduce((acc, result) => {
-            if (result === 'P') acc.player += 1;
-            if (result === 'B') acc.banker += 1;
-            if (result === 'T') acc.tie += 1;
-            return acc;
-        }, { player: 0, banker: 0, tie: 0 });
-    }, [visibleHistory]);
+  const visibleHistory = useMemo(() => history.slice(-108), [history]);
+  const stats = useMemo(() => visibleHistory.reduce((acc, result) => {
+    if (result === 'P') acc.player += 1;
+    if (result === 'B') acc.banker += 1;
+    if (result === 'T') acc.tie += 1;
+    return acc;
+  }, { player: 0, banker: 0, tie: 0 }), [visibleHistory]);
 
-    return (
-        <div className="w-full h-full flex flex-col pt-2 xl:pt-4 px-2 xl:px-4 shrink-0 gap-2 xl:gap-4 lg:overflow-x-visible xl:overflow-y-auto scrollbar-hide z-20">
-            <div className="flex items-center gap-2 text-slate-500 dark:text-white/70 px-1 shrink-0">
-                <History className="w-4 h-4 xl:w-5 xl:h-5 text-yellow-600 dark:text-yellow-500" />
-                <span className="text-[10px] xl:text-sm font-bold uppercase tracking-widest text-slate-800 dark:text-white/90 drop-shadow-sm dark:drop-shadow-md">진매 / 육매 (Roadmap)</span>
-            </div>
+  return (
+    <div className="h-full flex flex-col p-2 md:p-3">
+      <style dangerouslySetInnerHTML={{ __html: ROADMAP_CSS }} />
+      <div className="flex items-center gap-2 text-white/90 pb-2">
+        <History className="w-4 h-4 text-blue-300" />
+        <span className="text-[10px] md:text-sm font-black tracking-[0.18em] uppercase">로드맵</span>
+      </div>
 
-            {/* Bead Plate Container */}
-            <div className="flex-1 bg-white dark:bg-gradient-to-br dark:from-[#0a0a0a] dark:to-[#050505] border border-slate-200 dark:border-white/10 rounded-xl p-1.5 xl:p-3 min-w-[300px] xl:min-w-0 flex flex-col gap-1 shadow-inner dark:shadow-[inset_0_2px_15px_rgba(0,0,0,0.8)] overflow-x-auto scrollbar-hide mb-2 xl:mb-0">
-                {/* Simulated Grid Lines */}
-                <div className="grid grid-rows-6 grid-flow-col gap-[2px] w-max h-full min-h-[140px] xl:min-h-0 relative">
-                    <AnimatePresence>
-                        {visibleHistory.map((res, i) => {
-                            const isLatest = gameState === 'result' && i === visibleHistory.length - 1;
-                            return (
-                                <motion.div
-                                    key={i}
-                                    initial={{ scale: 0 }}
-                                    animate={{ scale: 1 }}
-                                    className="w-[18px] h-[18px] xl:w-[22px] xl:h-[22px] rounded-[3px] bg-slate-100 dark:bg-white/5 flex items-center justify-center relative shadow-[inset_0_0_5px_rgba(0,0,0,0.1)] dark:shadow-[inset_0_0_5px_rgba(0,0,0,0.5)]"
-                                >
-                                    {res && (
-                                        <div className={cn(
-                                            "w-3.5 h-3.5 xl:w-[18px] xl:h-[18px] rounded-full flex items-center justify-center text-[8px] xl:text-[10px] font-black text-white shadow-md transition-all duration-300",
-                                            res === 'P' ? "bg-gradient-to-br from-blue-400 to-blue-700" : res === 'B' ? "bg-gradient-to-br from-red-400 to-red-700" : "bg-gradient-to-br from-green-400 to-green-700",
-                                            isLatest ? "animate-pulse ring-2 ring-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.8)]" : ""
-                                        )}>
-                                            {res}
-                                        </div>
-                                    )}
-                                </motion.div>
-                            );
-                        })}
-                    </AnimatePresence>
-                </div>
-            </div>
-
-            {/* Stats Summary */}
-            <div className="hidden xl:grid grid-cols-3 gap-3 mt-auto pb-4">
-                <div className="bg-blue-50/80 dark:bg-gradient-to-b dark:from-[#0a192f]/80 dark:to-[#020c1b]/90 border border-blue-200 dark:border-[#3b82f6]/30 rounded-lg p-3 flex flex-col items-center shadow-md dark:shadow-lg">
-                    <span className="text-blue-600 dark:text-[#93c5fd] text-xs font-bold uppercase tracking-widest mb-1">플레이어</span>
-                    <span className="text-blue-900 dark:text-white font-black text-2xl drop-shadow-sm dark:drop-shadow-md">{stats.player}</span>
-                </div>
-                <div className="bg-red-50/80 dark:bg-gradient-to-b dark:from-[#450a0a]/80 dark:to-[#270303]/90 border border-red-200 dark:border-[#ef4444]/30 rounded-lg p-3 flex flex-col items-center shadow-md dark:shadow-lg">
-                    <span className="text-red-600 dark:text-[#fca5a5] text-xs font-bold uppercase tracking-widest mb-1">뱅커</span>
-                    <span className="text-red-900 dark:text-white font-black text-2xl drop-shadow-sm dark:drop-shadow-md">{stats.banker}</span>
-                </div>
-                <div className="bg-green-50/80 dark:bg-gradient-to-b dark:from-[#052e16]/80 dark:to-[#02180b]/90 border border-green-200 dark:border-[#22c55e]/30 rounded-lg p-3 flex flex-col items-center shadow-md dark:shadow-lg">
-                    <span className="text-green-600 dark:text-[#86efac] text-xs font-bold uppercase tracking-widest mb-1">타이</span>
-                    <span className="text-green-900 dark:text-white font-black text-2xl drop-shadow-sm dark:drop-shadow-md">{stats.tie}</span>
-                </div>
-            </div>
+      <div className="flex-1 min-h-0 rounded-2xl border border-white/15 bg-black/45 p-2 md:p-3 overflow-hidden flex flex-col">
+        <div className="grid grid-cols-6 gap-1.5">
+          <AnimatePresence>
+            {visibleHistory.map((res, i) => {
+              const isLatest = gameState === 'result' && i === visibleHistory.length - 1;
+              return (
+                <motion.div
+                  key={`${res}-${i}`}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="relative aspect-square rounded-md border border-white/20 bg-white/5 flex items-center justify-center overflow-hidden"
+                  style={{ animation: isLatest ? 'beadPulse 0.8s ease-out 2' : undefined }}
+                >
+                  {res && (
+                    <span className="text-xs font-black text-white/95">
+                      {CELL_TEXT[res as keyof typeof CELL_TEXT] ?? ''}
+                    </span>
+                  )}
+                  <span
+                    className="absolute inset-0 opacity-10"
+                    style={{ backgroundColor: res === 'P' ? '#3b82f6' : res === 'B' ? '#ef4444' : '#22c55e' }}
+                  />
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
         </div>
-    );
+      </div>
+
+      <div className="mt-2 grid grid-cols-3 gap-2">
+        <div className="rounded-xl border border-blue-400/30 bg-blue-950/50 px-2 py-2 text-center">
+          <p className="text-[10px] text-blue-200 font-black tracking-[0.16em] uppercase">P</p>
+          <p className="text-xl font-black text-white/95">{stats.player}</p>
+        </div>
+        <div className="rounded-xl border border-red-400/30 bg-red-950/50 px-2 py-2 text-center">
+          <p className="text-[10px] text-red-200 font-black tracking-[0.16em] uppercase">B</p>
+          <p className="text-xl font-black text-white/95">{stats.banker}</p>
+        </div>
+        <div className="rounded-xl border border-emerald-400/30 bg-emerald-950/50 px-2 py-2 text-center">
+          <p className="text-[10px] text-emerald-200 font-black tracking-[0.16em] uppercase">T</p>
+          <p className="text-xl font-black text-white/95">{stats.tie}</p>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export const BaccaratRoadmap = React.memo(BaccaratRoadmapComponent);

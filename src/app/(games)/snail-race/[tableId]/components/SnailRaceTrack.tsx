@@ -239,6 +239,11 @@ const GLOBAL_CSS = `
   to   { transform: rotate(4deg); }
 }
 
+@keyframes laneGlow {
+  0% { opacity: 0.28; }
+  100% { opacity: 0.68; }
+}
+
 /* ── Slime trail grow ── */
 @keyframes slimeGrow {
   from { width: 0%; }
@@ -800,10 +805,10 @@ const SnailRaceTrackComponent: React.FC<SnailRaceTrackProps> = ({
       <div
         className="relative w-full rounded-2xl overflow-hidden"
         style={{
-          background: 'linear-gradient(180deg, #14532d 0%, #166534 15%, #16a34a 50%, #166534 85%, #14532d 100%)',
-          border: '3px solid #15803d',
+          background: 'linear-gradient(180deg, #0f172a 0%, #111827 25%, #1e293b 50%, #111827 75%, #0f172a 100%)',
+          border: '2px solid rgba(148,163,184,0.2)',
           boxShadow:
-            '0 8px 40px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -2px 0 rgba(0,0,0,0.3)',
+            '0 12px 40px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.05), inset 0 -2px 0 rgba(0,0,0,0.35)',
           animation: isRacing ? 'trackRumble 0.2s linear infinite' : undefined,
         }}
       >
@@ -811,7 +816,7 @@ const SnailRaceTrackComponent: React.FC<SnailRaceTrackProps> = ({
           className="absolute inset-0 pointer-events-none"
           style={{
             background:
-              'radial-gradient(circle at 50% -12%, rgba(253,224,71,0.2), transparent 50%), radial-gradient(circle at 50% 112%, rgba(251,191,36,0.12), transparent 42%)',
+              'radial-gradient(circle at 50% -12%, rgba(56,189,248,0.2), transparent 50%), radial-gradient(circle at 50% 112%, rgba(251,191,36,0.1), transparent 42%)',
           }}
         />
 
@@ -820,7 +825,8 @@ const SnailRaceTrackComponent: React.FC<SnailRaceTrackProps> = ({
           className="absolute inset-0 pointer-events-none opacity-[0.12]"
           style={{
             backgroundImage:
-              'repeating-linear-gradient(0deg, rgba(0,0,0,0.5) 0px, rgba(0,0,0,0.5) 1px, transparent 1px, transparent 6px)',
+              'repeating-linear-gradient(0deg, rgba(148,163,184,0.2) 0px, rgba(148,163,184,0.2) 1px, transparent 1px, transparent 8px)',
+            animation: isRacing ? 'laneGlow 1.1s ease-in-out infinite alternate' : undefined,
           }}
         />
 
@@ -828,8 +834,8 @@ const SnailRaceTrackComponent: React.FC<SnailRaceTrackProps> = ({
         <div
           className="relative z-10 flex items-center justify-between px-4 py-2.5"
           style={{
-            background: 'rgba(0,0,0,0.40)',
-            borderBottom: '1px solid rgba(255,255,255,0.07)',
+            background: 'rgba(2,6,23,0.72)',
+            borderBottom: '1px solid rgba(148,163,184,0.2)',
           }}
         >
           <div className="flex items-center gap-2">
@@ -841,20 +847,20 @@ const SnailRaceTrackComponent: React.FC<SnailRaceTrackProps> = ({
             className="px-3 py-0.5 rounded-full text-[10px] font-black tracking-wider uppercase border"
             style={{
               background: isBetting
-                ? 'rgba(234,179,8,0.18)'
+                ? 'rgba(34,197,94,0.16)'
                 : isRacing
-                ? 'rgba(74,222,128,0.18)'
-                : 'rgba(96,165,250,0.18)',
-              color: isBetting ? '#fbbf24' : isRacing ? '#4ade80' : '#93c5fd',
+                ? 'rgba(56,189,248,0.2)'
+                : 'rgba(96,165,250,0.2)',
+              color: isBetting ? '#4ade80' : isRacing ? '#38bdf8' : '#93c5fd',
               borderColor: isBetting
-                ? 'rgba(234,179,8,0.38)'
+                ? 'rgba(34,197,94,0.4)'
                 : isRacing
-                ? 'rgba(74,222,128,0.38)'
-                : 'rgba(96,165,250,0.38)',
+                ? 'rgba(56,189,248,0.4)'
+                : 'rgba(96,165,250,0.4)',
               animation: isRacing ? 'statusBadgePulse 1s ease-out infinite' : undefined,
             }}
           >
-            {isBetting ? '배팅 중' : isRacing ? '레이싱!' : '결과 확인'}
+            {isBetting ? '베팅' : isRacing ? '레이싱' : '결과'}
           </div>
         </div>
 
@@ -910,14 +916,14 @@ const SnailRaceTrackComponent: React.FC<SnailRaceTrackProps> = ({
                   style={{
                     height: 82,
                     marginBottom: laneIndex < activeSnails.length - 1 ? 4 : 0,
-                    borderRadius: 10,
+                    borderRadius: 12,
                     // Dirt path inside grass
                     background:
                       laneIndex % 2 === 0
-                        ? 'linear-gradient(180deg, rgba(133,77,14,0.20) 0%, rgba(120,53,15,0.32) 100%)'
-                        : 'linear-gradient(180deg, rgba(101,67,33,0.22) 0%, rgba(133,77,14,0.28) 100%)',
-                    border: `1px solid ${snail.color}28`,
-                    boxShadow: `inset 0 1px 0 rgba(255,255,255,0.04), 0 2px 5px rgba(0,0,0,0.35)`,
+                        ? 'linear-gradient(180deg, rgba(30,41,59,0.8) 0%, rgba(15,23,42,0.9) 100%)'
+                        : 'linear-gradient(180deg, rgba(15,23,42,0.85) 0%, rgba(30,41,59,0.82) 100%)',
+                    border: `1px solid rgba(148,163,184,0.25)`,
+                    boxShadow: `inset 0 1px 0 rgba(255,255,255,0.05), 0 2px 5px rgba(0,0,0,0.4)`,
                   }}
                 >
                   {/* Dirt floor gradient */}
@@ -925,7 +931,7 @@ const SnailRaceTrackComponent: React.FC<SnailRaceTrackProps> = ({
                     className="absolute inset-0 pointer-events-none"
                     style={{
                       background:
-                        'linear-gradient(180deg, rgba(200,150,80,0.06) 0%, rgba(101,67,33,0.18) 50%, rgba(200,150,80,0.06) 100%)',
+                        'linear-gradient(180deg, rgba(15,23,42,0.35) 0%, rgba(2,6,23,0.55) 50%, rgba(15,23,42,0.35) 100%)',
                     }}
                   />
 
@@ -950,8 +956,8 @@ const SnailRaceTrackComponent: React.FC<SnailRaceTrackProps> = ({
                     className="absolute left-0 top-0 bottom-0 flex flex-col items-center justify-center z-20 shrink-0"
                     style={{
                       width: 68,
-                      background: `linear-gradient(90deg, rgba(0,0,0,0.52) 0%, rgba(0,0,0,0.12) 100%)`,
-                      borderRight: `2px solid ${snail.color}45`,
+                      background: `linear-gradient(90deg, rgba(2,6,23,0.78) 0%, rgba(2,6,23,0.14) 100%)`,
+                      borderRight: `2px solid ${snail.color}55`,
                       gap: 3,
                     }}
                   >
@@ -987,7 +993,7 @@ const SnailRaceTrackComponent: React.FC<SnailRaceTrackProps> = ({
                     style={{
                       left: 68,
                       width: 4,
-                      background: `repeating-linear-gradient(180deg, #fff 0px, #fff 5px, #1a1a1a 5px, #1a1a1a 10px)`,
+                      background: `repeating-linear-gradient(180deg, #94a3b8 0px, #94a3b8 5px, #0f172a 5px, #0f172a 10px)`,
                       opacity: 0.35,
                       borderRadius: 1,
                     }}
@@ -1004,7 +1010,8 @@ const SnailRaceTrackComponent: React.FC<SnailRaceTrackProps> = ({
                         style={{
                           width: 220,
                           height: 180,
-                          background: 'radial-gradient(ellipse at center, rgba(251,191,36,0.3) 0%, rgba(250,204,21,0.1) 45%, transparent 75%)',
+                          background:
+                            'radial-gradient(ellipse at center, rgba(125,211,252,0.3) 0%, rgba(14,165,233,0.14) 45%, transparent 75%)',
                           transform: 'translate(-50%, -50%)',
                           animation: 'winnerSpotlight 0.9s ease-in-out infinite',
                         }}
@@ -1017,10 +1024,10 @@ const SnailRaceTrackComponent: React.FC<SnailRaceTrackProps> = ({
                       style={{
                         width: 10,
                         backgroundImage:
-                          'repeating-conic-gradient(#eab308 0% 25%, #0f0f0f 0% 50%)',
+                          'repeating-conic-gradient(#38bdf8 0% 25%, #020617 0% 50%)',
                         backgroundSize: '5px 5px',
                         opacity: 0.9,
-                        boxShadow: `2px 0 8px rgba(234,179,8,0.3), -2px 0 8px rgba(234,179,8,0.3)`,
+                        boxShadow: `2px 0 8px rgba(56,189,248,0.25), -2px 0 8px rgba(56,189,248,0.25)`,
                         animation: isRacing ? 'finishFlicker 1.4s ease-in-out infinite' : undefined,
                       }}
                     />

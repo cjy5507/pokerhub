@@ -69,14 +69,14 @@ export const SnailRaceResults = React.memo(function SnailRaceResults({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.35, ease: 'easeOut' }}
-          className="absolute inset-x-0 bottom-0 z-40 flex flex-col items-center pointer-events-none"
+          className="absolute inset-x-0 bottom-0 z-50 flex flex-col items-center pointer-events-none"
           style={{ top: 'auto' }}
         >
-          <div className="w-full max-w-lg mx-auto px-3 pb-3">
-            <div className="bg-gray-900/95 dark:bg-black/95 border border-white/10 rounded-2xl shadow-2xl overflow-hidden pointer-events-auto backdrop-blur-md">
+          <div className="w-full max-w-3xl mx-auto px-3 pb-3">
+            <div className="bg-black/90 border border-white/15 rounded-[1.8rem] shadow-[0_16px_40px_rgba(0,0,0,0.55)] overflow-hidden pointer-events-auto backdrop-blur-xl">
               {/* Header */}
-              <div className="px-4 py-3 bg-gradient-to-r from-yellow-600/20 to-yellow-500/10 border-b border-white/10">
-                <p className="text-center text-xs font-black text-yellow-400 uppercase tracking-widest">🏁 레이스 결과</p>
+              <div className="px-4 py-3 bg-gradient-to-r from-amber-500/20 via-emerald-500/15 to-blue-500/15 border-b border-white/10">
+                <p className="text-center text-xs font-black text-white/90 uppercase tracking-widest">🏁 레이스 결과</p>
               </div>
 
               {/* Podium */}
@@ -103,9 +103,9 @@ export const SnailRaceResults = React.memo(function SnailRaceResults({
                         🐌
                       </div>
                       <span className={cn(
-                        'font-black text-white',
-                        rank === 0 ? 'text-xs' : 'text-[10px] opacity-70'
-                      )}>
+                          'font-black text-white/90',
+                          rank === 0 ? 'text-xs' : 'text-[10px] opacity-70'
+                        )}>
                         {snail.name}
                       </span>
                     </motion.div>
@@ -115,7 +115,7 @@ export const SnailRaceResults = React.memo(function SnailRaceResults({
 
               {/* Bet outcomes */}
               {betOutcomes.length > 0 && (
-                <div className="px-4 pb-3 border-t border-white/5 pt-3 flex flex-col gap-1.5">
+                <div className="px-4 pb-3 border-t border-white/10 pt-3 flex flex-col gap-1.5">
                   {betOutcomes.map((outcome) => {
                     const snail = SNAILS.find(s => s.id === outcome.snailId);
                     const winnerSnailId = raceResult.finishOrder[0];
@@ -126,8 +126,8 @@ export const SnailRaceResults = React.memo(function SnailRaceResults({
                         className={cn(
                           'flex items-center justify-between rounded-lg px-3 py-1.5',
                           outcome.won
-                            ? 'bg-green-500/10 border border-green-500/30'
-                            : 'bg-white/5 border border-white/5'
+                            ? 'bg-emerald-500/15 border border-emerald-400/30'
+                            : 'bg-white/6 border border-white/10'
                         )}
                       >
                         <div className="flex items-center gap-2">
@@ -140,7 +140,7 @@ export const SnailRaceResults = React.memo(function SnailRaceResults({
                           <span className="text-[10px] font-bold text-white/60">
                             {snail?.name ?? `#${outcome.snailId}`} 단승
                           </span>
-                          <span className="text-[10px] text-white/40">
+                          <span className="text-[10px] text-white/50">
                             {outcome.amount >= 1000 ? `${outcome.amount / 1000}K` : outcome.amount}P
                           </span>
                           {outcome.won && (
@@ -162,12 +162,12 @@ export const SnailRaceResults = React.memo(function SnailRaceResults({
                   })}
 
                   {/* Net summary */}
-                  <div className="flex items-center justify-between pt-1.5 border-t border-white/5 mt-0.5">
-                    <span className="text-[10px] text-white/40 font-bold uppercase tracking-wider">최종 결과</span>
-                    <span className={cn(
-                      'text-sm font-black',
-                      netGain > 0 ? 'text-green-400' : netGain < 0 ? 'text-red-400' : 'text-white/50'
-                    )}>
+                <div className="flex items-center justify-between pt-1.5 border-t border-white/5 mt-0.5">
+                  <span className="text-[10px] text-white/40 font-bold uppercase tracking-wider">최종 결과</span>
+                  <span className={cn(
+                    'text-sm font-black',
+                    netGain > 0 ? 'text-green-400' : netGain < 0 ? 'text-red-400' : 'text-white/50'
+                  )}>
                       {netGain > 0 ? '+' : ''}{netGain >= 1000 || netGain <= -1000
                         ? `${(netGain / 1000).toFixed(1)}K`
                         : netGain}P

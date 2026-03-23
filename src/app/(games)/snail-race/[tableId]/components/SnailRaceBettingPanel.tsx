@@ -6,8 +6,8 @@ import { motion } from 'framer-motion';
 
 const SNAILS = [
   { id: 0, name: '지나', color: '#ef4444', shellLight: '#fca5a5', bodyColor: '#fde68a' },
-  { id: 1, name: '해연', color: '#3b82f6', shellLight: '#93c5fd', bodyColor: '#bbf7d0' },
-  { id: 2, name: '영', color: '#22c55e', shellLight: '#86efac', bodyColor: '#fde68a' },
+  { id: 1, name: '해연', color: '#3b82f6', shellLight: '#93c5fd', bodyColor: '#bfdbfe' },
+  { id: 2, name: '영', color: '#22c55e', shellLight: '#86efac', bodyColor: '#bbf7d0' },
   { id: 3, name: '뻥카', color: '#f59e0b', shellLight: '#fcd34d', bodyColor: '#fef3c7' },
   { id: 4, name: '우성', color: '#a855f7', shellLight: '#c4b5fd', bodyColor: '#ede9fe' },
   { id: 5, name: '테리', color: '#ec4899', shellLight: '#f9a8d4', bodyColor: '#fce7f3' },
@@ -18,7 +18,6 @@ const CHIPS = [100, 500, 1000, 5000];
 
 interface SnailRaceBettingPanelProps {
   gameState: 'betting' | 'racing' | 'result';
-  balance: number;
   myBets: Record<string, number>;
   selectedChip: number;
   setSelectedChip: (chip: number) => void;
@@ -27,6 +26,25 @@ interface SnailRaceBettingPanelProps {
   participants: number[];
   odds: Record<number, number>;
 }
+
+const PANEL_CSS = `
+@keyframes chipPulse {
+  from { box-shadow: 0 0 0 0 rgba(250,204,21,0.22); }
+  to { box-shadow: 0 0 0 10px rgba(250,204,21,0); }
+}
+`;
+
+const BetBadge: React.FC<{ label: string; value: string; tone: 'default' | 'ok'; }> = ({ label, value, tone }) => (
+  <div className={cn(
+    'rounded-xl border px-2.5 py-1 text-[10px] font-black tracking-wider',
+    tone === 'ok'
+      ? 'text-[#86efac] border-[#22c55e]/40 bg-[#22c55e]/10'
+      : 'text-white/60 border-white/15 bg-white/5',
+  )}>
+    <p className="uppercase text-[8px]">{label}</p>
+    <p>{value}</p>
+  </div>
+);
 
 const SnailRaceBettingPanelComponent: React.FC<SnailRaceBettingPanelProps> = ({
   gameState,
@@ -39,23 +57,17 @@ const SnailRaceBettingPanelComponent: React.FC<SnailRaceBettingPanelProps> = ({
   odds,
 }) => {
   const isBetting = gameState === 'betting';
+  const hasAnyBet = Object.values(myBets).some((amount) => amount > 0);
 
-  // Find which snailId (if any) the user has bet on
   const bettedSnailId = React.useMemo(() => {
     const entry = Object.entries(myBets).find(([, amt]) => amt > 0);
     if (!entry) return null;
-    const [key] = entry;
-    // key format: "win:snailId"
-    const parts = key.split(':');
-    const id = Number(parts[1]);
-    return isNaN(id) ? null : id;
+    const id = Number(entry[0].split(':')[1]);
+    return Number.isNaN(id) ? null : id;
   }, [myBets]);
 
-  const betsEntries = Object.entries(myBets).filter(([, amt]) => amt > 0);
-
-  // Snails not in participants
-  const waitingSnails = SNAILS.filter(s => !participants.includes(s.id));
-  const participantSnails = SNAILS.filter(s => participants.includes(s.id));
+  const participantSnails = SNAILS.filter((s) => participants.includes(s.id));
+  const waitingSnails = SNAILS.filter((s) => !participants.includes(s.id));
 
   const handleCardClick = async (snailId: number) => {
     if (!isBetting) return;
@@ -63,165 +75,144 @@ const SnailRaceBettingPanelComponent: React.FC<SnailRaceBettingPanelProps> = ({
   };
 
   return (
-    <div className={cn(
-      'flex-shrink-0 flex flex-col bg-slate-100/90 dark:bg-black/90 border-t border-slate-200 dark:border-white/10 transition-colors',
-      !isBetting && 'pointer-events-none opacity-50'
-    )}>
-
-      {/* Participant snail cards */}
-      <div className="px-3 pt-3 pb-2">
-        {participants.length === 0 ? (
-          <div className="flex items-center justify-center py-4 text-xs text-slate-400 dark:text-white/30 font-medium">
-            다음 라운드 준비 중...
+    <div
+      className={cn(
+        'flex-shrink-0 bg-black/65 border-t border-white/15 transition-colors',
+        !isBetting && 'pointer-events-none opacity-55',
+      )}
+      style={{ boxShadow: '0 -20px 40px rgba(0,0,0,0.2)' }}
+    >
+      <style dangerouslySetInnerHTML={{ __html: PANEL_CSS }} />
+      <div className="max-w-6xl mx-auto px-3 pt-3 pb-2">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap">
+              <BetBadge label="진행상태" value={isBetting ? '베팅' : gameState === 'racing' ? '레이싱' : '정산'} tone="ok" />
+              <BetBadge label="참여달팽이" value={`${participants.length || 0} / 7`} tone="default" />
+            </div>
+            <BetBadge
+              label="선택 칩"
+              value={`${selectedChip >= 1000 ? `${selectedChip / 1000}K` : selectedChip}P`}
+              tone="ok"
+            />
           </div>
-        ) : (
-          <>
-            <p className="text-[9px] font-bold text-slate-400 dark:text-white/30 uppercase tracking-widest mb-2 text-center">
-              출전 달팽이 — 1등 맞추기
-            </p>
-            <div className="flex justify-center gap-2 md:gap-3 max-w-lg mx-auto">
-              {participantSnails.map((snail) => {
+
+          <div className="grid grid-cols-2 xl:grid-cols-4 gap-2">
+            {participants.length === 0 ? (
+              <div className="col-span-full rounded-2xl border border-white/10 px-4 py-3 bg-white/5 text-xs text-white/50 text-center font-black uppercase tracking-[0.12em]">
+                다음 라운드 준비 중입니다
+              </div>
+            ) : (
+              participantSnails.map((snail) => {
                 const snailOdds = odds[snail.id];
                 const isBetted = bettedSnailId === snail.id;
-                const otherBetted = bettedSnailId !== null && bettedSnailId !== snail.id;
                 const betAmount = myBets[`win:${snail.id}`] ?? 0;
 
                 return (
                   <motion.button
                     key={snail.id}
                     onClick={() => handleCardClick(snail.id)}
+                    whileTap={{ scale: 0.96 }}
                     disabled={!isBetting}
-                    whileTap={{ scale: 0.94 }}
                     className={cn(
-                      'flex-1 flex flex-col items-center gap-1.5 rounded-xl p-2.5 border-2 transition-all duration-200 min-w-0',
+                      'relative overflow-hidden rounded-2xl border-2 py-3 pl-3 pr-2 text-left transition',
                       isBetted
-                        ? 'border-green-400 bg-green-500/10 shadow-[0_0_12px_rgba(74,222,128,0.3)]'
-                        : otherBetted
-                        ? 'border-slate-300/40 dark:border-white/10 bg-slate-200/40 dark:bg-white/5 opacity-60'
-                        : 'border-slate-300/60 dark:border-white/15 bg-white/60 dark:bg-white/5 hover:border-slate-400 dark:hover:border-white/30 hover:bg-white/80 dark:hover:bg-white/10'
+                        ? 'border-emerald-300/80 bg-emerald-400/15'
+                        : 'border-white/15 bg-white/5 hover:border-white/30 hover:bg-white/8',
                     )}
+                    style={{ boxShadow: isBetted ? `0 0 0 1px ${snail.color}55` : undefined }}
                   >
-                    {/* Color circle */}
-                    <div
-                      className="w-10 h-10 rounded-full flex items-center justify-center text-xl shadow-lg flex-shrink-0"
-                      style={{
-                        backgroundColor: snail.color,
-                        boxShadow: isBetted ? `0 0 14px ${snail.color}88` : `0 3px 8px rgba(0,0,0,0.3)`,
-                      }}
-                    >
-                      🐌
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="h-11 w-11 rounded-full border-2 border-white/35 flex items-center justify-center text-xl shrink-0 shadow-lg"
+                        style={{ backgroundColor: snail.color }}
+                      >
+                        🐌
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-black text-white/90">{snail.name}</p>
+                        <p className="text-[10px] text-white/50">
+                          배당 <span className="font-black text-white/75">{snailOdds ? `${snailOdds.toFixed(1)}x` : '—'}</span>
+                        </p>
+                      </div>
+                      <div className="ml-auto self-stretch flex flex-col items-end justify-end gap-1">
+                        {isBetted ? (
+                          <span className="inline-flex h-6 min-w-12 px-2 rounded-full bg-emerald-500 text-white text-[10px] font-black items-center justify-center">
+                            {betAmount >= 1000 ? `${(betAmount / 1000).toFixed(1)}K` : betAmount}P
+                          </span>
+                        ) : (
+                          <span className="text-[9px] text-white/40">선택</span>
+                        )}
+                        {isBetted && (
+                          <span className="text-[9px] text-white/55">진행중</span>
+                        )}
+                      </div>
                     </div>
-
-                    {/* Name */}
-                    <span className={cn(
-                      'text-xs font-black leading-tight',
-                      isBetted ? 'text-green-600 dark:text-green-400' : 'text-slate-700 dark:text-white/90'
-                    )}>
+                    {isBetted && <motion.span
+                      className="absolute left-3 right-3 bottom-2 h-0.5 bg-emerald-300/70 rounded-full"
+                      initial={{ width: '0%' }}
+                      animate={{ width: '85%' }}
+                      transition={{ duration: 0.2 }}
+                    />}
+                  </motion.button>
+                );
+              })
+            )}
+            {participants.length > 0 && waitingSnails.length > 0 && (
+              <div className="col-span-full rounded-2xl border border-white/10 bg-white/[0.03] p-2 text-[10px] text-white/50">
+                <span className="font-black uppercase tracking-[0.16em] text-white/70">대기</span>
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {waitingSnails.map((snail) => (
+                    <span key={snail.id} className="px-2 py-1 rounded-full border border-white/10 text-[9px] bg-white/5 flex items-center gap-1">
+                      <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: snail.color }} />
                       {snail.name}
                     </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
 
-                    {/* Odds */}
-                    {snailOdds !== undefined ? (
-                      <span className="text-[11px] font-black text-yellow-600 dark:text-yellow-400 font-mono">
-                        {snailOdds.toFixed(1)}x
-                      </span>
-                    ) : (
-                      <span className="text-[11px] text-slate-400 dark:text-white/30">—</span>
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 justify-between border-t border-white/10 pt-2">
+            <div className="w-full sm:flex-1 flex justify-center sm:justify-start gap-2 overflow-x-auto py-0.5 pl-1 sm:pl-0 scrollbar-hide">
+              {CHIPS.map((chip) => {
+                const isSelected = selectedChip === chip;
+                return (
+                  <motion.button
+                    key={chip}
+                    onClick={() => setSelectedChip(chip)}
+                    animate={isSelected ? { y: -4, scale: 1.06 } : { y: 0, scale: 1 }}
+                    transition={{ type: 'spring', stiffness: 320, damping: 24 }}
+                    className={cn(
+                      'relative h-11 min-w-11 rounded-full border-2 flex items-center justify-center',
+                      isSelected
+                        ? 'border-yellow-300/80 bg-white/15'
+                        : 'border-white/20 bg-black/30 hover:bg-white/10',
                     )}
-
-                    {/* Bet amount badge */}
-                    {isBetted && betAmount > 0 && (
-                      <span className="text-[9px] font-black bg-green-500 text-white px-1.5 py-0.5 rounded-full leading-none">
-                        {betAmount >= 1000 ? `${(betAmount / 1000).toFixed(betAmount % 1000 === 0 ? 0 : 1)}K` : betAmount}P
-                      </span>
-                    )}
-
-                    {/* "선택" label when not bet */}
-                    {!isBetted && (
-                      <span className="text-[9px] text-slate-400 dark:text-white/30 leading-none">
-                        선택
-                      </span>
-                    )}
+                    style={{
+                      boxShadow: isSelected ? '0 0 0 8px rgba(250,204,21,0.1)' : undefined,
+                      backgroundImage: isSelected
+                        ? 'repeating-conic-gradient(from 0deg, #333 0deg 15deg, #4f46e5 15deg 30deg)'
+                        : 'repeating-conic-gradient(from 0deg, #111 0deg 15deg, #222 15deg 30deg)',
+                    }}
+                  >
+                    <div className="absolute inset-[2px] rounded-full border border-white/20 flex items-center justify-center">
+                      <span className="text-[10px] font-black text-white">{chip >= 1000 ? `${chip / 1000}K` : chip}</span>
+                    </div>
                   </motion.button>
                 );
               })}
             </div>
 
-            {/* Waiting snails */}
-            {waitingSnails.length > 0 && (
-              <div className="flex items-center justify-center gap-1.5 mt-2 flex-wrap">
-                <span className="text-[9px] text-slate-400 dark:text-white/30 font-bold">대기:</span>
-                {waitingSnails.map((snail) => (
-                  <span
-                    key={snail.id}
-                    className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-slate-200/60 dark:bg-white/5 text-slate-500 dark:text-white/40 border border-slate-300/40 dark:border-white/10"
-                  >
-                    <span
-                      className="w-2 h-2 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: snail.color }}
-                    />
-                    {snail.name}
-                  </span>
-                ))}
-              </div>
-            )}
-          </>
-        )}
-      </div>
-
-      {/* Action Bar */}
-      <div className="bg-white dark:bg-[#0a0a0a] border-t border-slate-200 dark:border-white/10 shadow-[0_-20px_40px_rgba(0,0,0,0.05)] dark:shadow-[0_-20px_40px_rgba(0,0,0,0.9)] pb-[calc(0.5rem+env(safe-area-inset-bottom))] z-30">
-        <div className="max-w-2xl mx-auto px-3 py-2 flex items-center gap-2">
-          {/* Chips */}
-          <div className="flex gap-2 flex-1 justify-center items-center min-h-[56px]">
-            {CHIPS.map((chip) => {
-              const isSelected = selectedChip === chip;
-              return (
-                <motion.button
-                  key={chip}
-                  onClick={() => setSelectedChip(chip)}
-                  animate={isSelected ? { y: -8, scale: 1.12 } : { y: 0, scale: 1 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                  className={cn(
-                    'relative w-12 h-12 rounded-full border-[3px] flex items-center justify-center flex-shrink-0',
-                    isSelected
-                      ? 'border-yellow-400 shadow-[0_8px_16px_rgba(0,0,0,0.3)] dark:shadow-[0_8px_16px_rgba(0,0,0,0.8),0_0_12px_rgba(250,204,21,0.5)] z-10'
-                      : 'border-slate-300 dark:border-[#333] hover:border-slate-400 dark:hover:border-[#666] active:scale-95 shadow-md'
-                  )}
-                  style={{
-                    background: isSelected
-                      ? 'repeating-conic-gradient(from 0deg, #333 0deg 15deg, #555 15deg 30deg)'
-                      : 'repeating-conic-gradient(from 0deg, #111 0deg 15deg, #222 15deg 30deg)',
-                  }}
-                >
-                  <div className={cn(
-                    'absolute inset-[3px] rounded-full border-[2px] border-white/20 flex items-center justify-center shadow-[inset_0_0_8px_rgba(0,0,0,0.8)]',
-                    chip >= 5000 ? 'bg-gradient-to-b from-purple-500 to-purple-900'
-                      : chip >= 1000 ? 'bg-gradient-to-b from-blue-500 to-blue-900'
-                        : chip >= 500 ? 'bg-gradient-to-b from-red-500 to-red-900'
-                          : 'bg-gradient-to-b from-green-500 to-green-900'
-                  )}>
-                    <div className="absolute inset-1 rounded-full border border-white/10" />
-                    <span className="text-[10px] font-black text-white drop-shadow-[0_2px_2px_rgba(0,0,0,1)] z-10 tracking-tighter">
-                      {chip >= 1000 ? `${chip / 1000}K` : chip}
-                    </span>
-                  </div>
-                  {isSelected && (
-                    <div className="absolute -inset-2 bg-yellow-400/20 rounded-full blur-md -z-10" />
-                  )}
-                </motion.button>
-              );
-            })}
+            <button
+              onClick={clearBets}
+              disabled={!isBetting || !hasAnyBet}
+              className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-red-300/50 bg-red-500/5 hover:bg-red-500/20 text-red-300 text-[11px] font-black uppercase tracking-wider disabled:opacity-35 disabled:cursor-not-allowed transition"
+              style={{ animation: isBetting && hasAnyBet ? 'chipPulse 1.6s ease-out infinite' : undefined }}
+            >
+              베팅 초기화
+            </button>
           </div>
-
-          {/* Clear button */}
-          <button
-            onClick={clearBets}
-            disabled={!isBetting || betsEntries.length === 0}
-            className="px-3 py-2.5 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-950/60 hover:bg-red-100 dark:hover:bg-red-900/80 active:bg-red-200 dark:active:bg-red-800 text-red-600 dark:text-red-200 text-[10px] font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed uppercase tracking-wider shadow-sm whitespace-nowrap flex-shrink-0"
-          >
-            베팅취소
-          </button>
         </div>
       </div>
     </div>

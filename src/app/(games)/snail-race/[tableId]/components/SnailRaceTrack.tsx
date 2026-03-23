@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useEffect, useRef, useState } from 'react';
+import React, { useMemo } from 'react';
 
 /* ─────────────────────────────────────────────────────────
    SNAIL ROSTER (all 7)
@@ -254,6 +254,22 @@ const GLOBAL_CSS = `
 @keyframes statusBadgePulse {
   from { box-shadow: 0 0 0 0 rgba(74,222,128,0.4); }
   to   { box-shadow: 0 0 0 6px rgba(74,222,128,0); }
+}
+
+/* ── Camera shake during peak racing ── */
+@keyframes trackRumble {
+  0% { transform: translate(0, 0); }
+  20% { transform: translate(-0.6px, 0.3px); }
+  40% { transform: translate(0.8px, -0.3px); }
+  60% { transform: translate(-0.7px, 0.5px); }
+  80% { transform: translate(0.5px, -0.4px); }
+  100% { transform: translate(0, 0); }
+}
+
+/* ── Winner spotlight ── */
+@keyframes winnerSpotlight {
+  0%, 100% { opacity: 0.35; transform: translateX(-50%) scale(0.96); }
+  50% { opacity: 0.72; transform: translateX(-50%) scale(1.06); }
 }
 `;
 
@@ -635,18 +651,7 @@ function CountdownOverlay({
   gameState: string;
   timeRemaining: number;
 }) {
-  const [showGo, setShowGo] = useState(false);
-  const prevStateRef = useRef(gameState);
-
-  useEffect(() => {
-    if (prevStateRef.current !== 'racing' && gameState === 'racing') {
-      setShowGo(true);
-      const t = setTimeout(() => setShowGo(false), 1900);
-      prevStateRef.current = gameState;
-      return () => clearTimeout(t);
-    }
-    prevStateRef.current = gameState;
-  }, [gameState]);
+  const showGo = gameState === 'racing' && timeRemaining >= 13;
 
   if (showGo) {
     return (
@@ -799,8 +804,17 @@ const SnailRaceTrackComponent: React.FC<SnailRaceTrackProps> = ({
           border: '3px solid #15803d',
           boxShadow:
             '0 8px 40px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -2px 0 rgba(0,0,0,0.3)',
+          animation: isRacing ? 'trackRumble 0.2s linear infinite' : undefined,
         }}
       >
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              'radial-gradient(circle at 50% -12%, rgba(253,224,71,0.2), transparent 50%), radial-gradient(circle at 50% 112%, rgba(251,191,36,0.12), transparent 42%)',
+          }}
+        />
+
         {/* Grass texture — subtle horizontal lines */}
         <div
           className="absolute inset-0 pointer-events-none opacity-[0.12]"
@@ -984,6 +998,19 @@ const SnailRaceTrackComponent: React.FC<SnailRaceTrackProps> = ({
                     className="absolute top-0 bottom-0 right-0 overflow-hidden"
                     style={{ left: 72 }}
                   >
+                    {isWinner && (
+                      <div
+                        className="absolute top-1/2 left-[82%] pointer-events-none z-10"
+                        style={{
+                          width: 220,
+                          height: 180,
+                          background: 'radial-gradient(ellipse at center, rgba(251,191,36,0.3) 0%, rgba(250,204,21,0.1) 45%, transparent 75%)',
+                          transform: 'translate(-50%, -50%)',
+                          animation: 'winnerSpotlight 0.9s ease-in-out infinite',
+                        }}
+                      />
+                    )}
+
                     {/* Finish line — checkered */}
                     <div
                       className="absolute top-0 bottom-0 right-3 z-10 pointer-events-none"

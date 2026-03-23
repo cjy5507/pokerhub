@@ -17,6 +17,31 @@ interface SnailRaceClientProps {
 const LOADING_STYLE = 'fixed inset-0 z-50 bg-slate-50 dark:bg-[#1a1c20] flex items-center justify-center';
 const TABLE_STYLE = 'fixed inset-0 z-50 bg-slate-50 dark:bg-[#1a1c20] flex flex-col overflow-hidden select-none relative font-sans text-slate-900 dark:text-white';
 const BG_GRID_STYLE = { backgroundSize: '40px 40px' } as const;
+const STADIUM_EFFECTS_CSS = `
+@keyframes raceGlowShift {
+  0% { transform: translateX(-8%) scale(1); opacity: 0.24; }
+  50% { transform: translateX(6%) scale(1.08); opacity: 0.44; }
+  100% { transform: translateX(-8%) scale(1); opacity: 0.24; }
+}
+@keyframes raceNoiseSweep {
+  0% { transform: translateY(-25%); }
+  100% { transform: translateY(25%); }
+}
+@keyframes pulseRadar {
+  0% { opacity: 0.26; transform: scale(0.94); }
+  100% { opacity: 0; transform: scale(1.26); }
+}
+@media (max-width: 420px) {
+  .snail-countdown-center {
+    display: none;
+  }
+}
+@media (max-width: 520px) {
+  .snail-live-message {
+    display: none;
+  }
+}
+`;
 
 const SNAIL_NAMES: Record<number, string> = {
   0: '\uC9C0\uB098', 1: '\uD574\uC5F0', 2: '\uC601', 3: '\uBF59\uCE74', 4: '\uC6B0\uC131', 5: '\uD14C\uB9AC', 6: '\uACBD\uC6D0',
@@ -53,15 +78,32 @@ export function SnailRaceClient({ tableId, userId, initialBalance }: SnailRaceCl
 
   return (
     <div className={TABLE_STYLE}>
+      <style dangerouslySetInnerHTML={{ __html: STADIUM_EFFECTS_CSS }} />
       {/* Backgrounds */}
-      <div className="absolute inset-0 pointer-events-none transition-colors bg-[radial-gradient(circle_at_50%_0%,#f1f5f9_0%,#e2e8f0_60%)] dark:bg-[radial-gradient(circle_at_50%_0%,#374151_0%,#1a1c20_60%)] opacity-80" />
+      <div className="absolute inset-0 pointer-events-none transition-colors bg-[radial-gradient(circle_at_50%_0%,#ecfccb_0%,#dcfce7_45%,#d9f99d_100%)] dark:bg-[radial-gradient(circle_at_50%_0%,#14532d_0%,#052e16_56%,#020617_100%)] opacity-85" />
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            'radial-gradient(circle at 18% 18%, rgba(34,197,94,0.38), transparent 42%), radial-gradient(circle at 85% 16%, rgba(132,204,22,0.24), transparent 36%)',
+          animation: 'raceGlowShift 11s ease-in-out infinite',
+        }}
+      />
       <div
         className="absolute inset-0 opacity-100 pointer-events-none bg-[linear-gradient(rgba(0,0,0,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.05)_1px,transparent_1px)] dark:bg-[linear-gradient(rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.1)_1px,transparent_1px)]"
         style={BG_GRID_STYLE}
       />
+      <div
+        className="absolute inset-0 pointer-events-none opacity-[0.08] dark:opacity-[0.14]"
+        style={{
+          background:
+            'repeating-linear-gradient(180deg, rgba(255,255,255,0.25) 0, rgba(255,255,255,0.25) 1px, transparent 1px, transparent 4px)',
+          animation: 'raceNoiseSweep 7.2s linear infinite',
+        }}
+      />
 
       {/* Header */}
-      <header className="flex-shrink-0 flex items-center justify-between px-3 md:px-4 z-30 border-b border-slate-200/50 dark:border-white/5 bg-white/60 dark:bg-black/60 backdrop-blur-md" style={{ height: '52px' }}>
+      <header className="flex-shrink-0 flex items-center justify-between px-3 md:px-4 z-30 border-b border-emerald-400/25 dark:border-emerald-300/20 bg-white/70 dark:bg-black/50 backdrop-blur-xl" style={{ height: '52px' }}>
         {/* Left: back + title + phase */}
         <div className="flex items-center gap-2 md:gap-3 min-w-0">
           <Link
@@ -73,7 +115,7 @@ export function SnailRaceClient({ tableId, userId, initialBalance }: SnailRaceCl
 
           <div className="flex items-center gap-2 min-w-0">
             <h1 className="text-xs md:text-sm font-bold text-slate-800 dark:text-white/90 whitespace-nowrap">
-              🐌 달팽이 레이스
+              🐌 달팽이 레이스 라이브
             </h1>
 
             {/* Phase indicator */}
@@ -99,7 +141,7 @@ export function SnailRaceClient({ tableId, userId, initialBalance }: SnailRaceCl
         </div>
 
         {/* Center: Prominent countdown timer */}
-        <div className="absolute left-1/2 -translate-x-1/2 flex items-baseline gap-1">
+        <div className="snail-countdown-center absolute left-1/2 -translate-x-1/2 flex items-baseline gap-1">
           {gameState === 'betting' && (
             <>
               <span
@@ -150,6 +192,21 @@ export function SnailRaceClient({ tableId, userId, initialBalance }: SnailRaceCl
           </button>
         </div>
       </header>
+
+      <div className="relative z-30 h-7 border-b border-emerald-400/20 bg-emerald-100/60 dark:bg-emerald-950/40 backdrop-blur-md">
+        <div className="absolute inset-0 flex items-center px-3 md:px-4">
+          <div className="flex items-center gap-2 text-[10px] font-bold tracking-[0.18em] uppercase text-emerald-700 dark:text-emerald-200">
+            <span className="relative inline-flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-80 animate-ping" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+            </span>
+            LIVE FEED
+          </div>
+          <div className="snail-live-message ml-4 text-[10px] text-emerald-800/80 dark:text-emerald-100/70 font-semibold truncate">
+            {gameState === 'betting' ? '배당 집계 중 · 마지막 스퍼트 타이밍을 노리세요' : gameState === 'racing' ? '레이스 진행 중 · 트랙 이벤트가 순위를 바꿉니다' : '결과 정산 중 · 다음 라운드 출전 달팽이 선정 중'}
+          </div>
+        </div>
+      </div>
 
       {/* Event banner */}
       {activeEvent && (
@@ -233,6 +290,15 @@ export function SnailRaceClient({ tableId, userId, initialBalance }: SnailRaceCl
         participants={participants}
         odds={odds}
       />
+      {gameState === 'racing' && (
+        <div className="pointer-events-none absolute top-28 right-4 z-20 hidden md:flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-lime-500/80">
+          <span
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-lime-400/35 bg-black/45"
+            style={{ animation: 'pulseRadar 1.6s ease-out infinite' }}
+          />
+          TRACK RADAR
+        </div>
+      )}
     </div>
   );
 }

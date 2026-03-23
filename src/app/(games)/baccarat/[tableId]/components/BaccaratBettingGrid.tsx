@@ -14,6 +14,27 @@ interface BaccaratBettingGridProps {
 }
 
 const chips = [100, 500, 1000, 5000, 10000, 50000];
+const BETTING_GRID_CSS = `
+@keyframes bettingZonePulse {
+  0% { box-shadow: 0 0 0 0 rgba(52,211,153,0.18); }
+  100% { box-shadow: 0 0 0 14px rgba(52,211,153,0); }
+}
+@media (max-width: 480px) {
+  .chip-scroll-row {
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+    scrollbar-width: none;
+  }
+  .chip-scroll-row::-webkit-scrollbar {
+    display: none;
+  }
+  .bet-action-buttons {
+    width: 100%;
+  }
+}
+`;
 
 const BaccaratBettingGridComponent: React.FC<BaccaratBettingGridProps> = ({
     gameState,
@@ -25,6 +46,7 @@ const BaccaratBettingGridComponent: React.FC<BaccaratBettingGridProps> = ({
 }) => {
     return (
         <div className="flex-shrink-0 flex flex-col relative z-20 bg-slate-100/90 dark:bg-black/90 border-t border-slate-200 dark:border-white/10 lg:pt-4 transition-colors">
+            <style dangerouslySetInnerHTML={{ __html: BETTING_GRID_CSS }} />
 
             {/* Betting Grid */}
             <div className="w-full max-w-4xl mx-auto px-2 lg:px-6 py-2 lg:pb-6 relative flex-1 min-h-[140px] sm:min-h-[180px] md:min-h-[220px] flex flex-col justify-end">
@@ -78,7 +100,7 @@ const BaccaratBettingGridComponent: React.FC<BaccaratBettingGridProps> = ({
             <div className="bg-white dark:bg-[#0a0a0a] p-2 md:p-4 border-t border-slate-200 dark:border-white/10 shadow-[0_-20px_40px_rgba(0,0,0,0.05)] dark:shadow-[0_-20px_40px_rgba(0,0,0,0.9)] pb-[calc(0.5rem+env(safe-area-inset-bottom))] transition-colors z-30">
                 <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center gap-2 sm:gap-4 sm:justify-between">
                     {/* Chip Selection */}
-                    <div className="flex flex-wrap justify-center gap-2 md:gap-4 w-full sm:flex-1 sm:flex-nowrap px-2 py-1 items-center sm:items-end min-h-[60px] sm:min-h-[70px]">
+                    <div className="chip-scroll-row flex flex-wrap justify-center gap-2 md:gap-4 w-full sm:flex-1 sm:flex-nowrap px-2 py-1 items-center sm:items-end min-h-[60px] sm:min-h-[70px]">
                         {chips.map(chip => {
                             const isSelected = selectedChip === chip;
                             return (
@@ -117,7 +139,7 @@ const BaccaratBettingGridComponent: React.FC<BaccaratBettingGridProps> = ({
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex sm:flex-col gap-2 shrink-0 w-full sm:w-auto justify-center">
+                    <div className="bet-action-buttons flex sm:flex-col gap-2 shrink-0 w-full sm:w-auto justify-center">
                         <button
                             disabled={gameState !== 'betting'}
                             className="px-2 sm:px-4 md:px-6 py-3 min-w-[50px] whitespace-nowrap rounded-xl border border-slate-300 dark:border-white/10 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 active:bg-slate-300 dark:active:bg-white/20 text-slate-700 dark:text-white/90 text-[10px] md:text-xs font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed uppercase tracking-wider shadow-sm flex-1"
@@ -155,6 +177,9 @@ interface BetButtonProps {
 
 const BetButton = ({ zone, label, ratio, color, gameState, betAmount, placeBet, flex = 1, isMain = false }: BetButtonProps) => {
     const isBetting = gameState === 'betting';
+    const betButtonStyle = isBetting
+        ? { flex, animation: 'bettingZonePulse 1.8s ease-out infinite' }
+        : { flex };
 
     const colors = {
         blue: "bg-white/90 dark:bg-gradient-to-br dark:from-[#1e3a8a]/80 dark:to-[#172554]/90 border-blue-200 dark:border-[#3b82f6]/40 hover:border-blue-400 dark:hover:border-[#3b82f6]/80 text-blue-700 dark:text-[#bfdbfe] shadow-sm dark:shadow-[inset_0_0_20px_rgba(59,130,246,0.1)]",
@@ -168,7 +193,7 @@ const BetButton = ({ zone, label, ratio, color, gameState, betAmount, placeBet, 
         <button
             onClick={() => placeBet(zone)}
             disabled={!isBetting}
-            style={{ flex }}
+            style={betButtonStyle}
             className={cn(
                 "rounded-xl border-[1.5px] transition-all duration-300 relative flex flex-col items-center justify-center overflow-hidden group backdrop-blur-sm",
                 c,

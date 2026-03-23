@@ -61,6 +61,14 @@ const DEALER_STAGE_CSS = `
   0% { transform: scale(1); }
   100% { transform: scale(1.12); }
 }
+@keyframes blindPulse {
+  0% { opacity: 0.42; }
+  100% { opacity: 0.74; }
+}
+@keyframes labelRise {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 `;
 
 const BaccaratDealerComponent: React.FC<BaccaratDealerProps> = ({
@@ -92,6 +100,24 @@ const BaccaratDealerComponent: React.FC<BaccaratDealerProps> = ({
           : "betting";
     return getDealerPhrase(dealer, state);
   }, [gameState, dealer, playerScore, bankerScore]);
+
+  const phaseLabel =
+    gameState === "betting"
+      ? "베팅 받는 중"
+      : gameState === "dealing"
+        ? "카드 오픈 중"
+        : gameState === "result"
+          ? "결과 정산 중"
+          : "다음 라운드 준비";
+
+  const winnerLabel =
+    gameState === "result" && playerScore !== null && bankerScore !== null
+      ? playerScore > bankerScore
+        ? "PLAYER WIN"
+        : bankerScore > playerScore
+          ? "BANKER WIN"
+          : "TIE"
+      : null;
 
   return (
     <div className="flex-1 relative flex flex-col justify-center items-center py-4 md:py-6 min-h-[250px] lg:min-h-0 overflow-x-hidden">
@@ -141,6 +167,12 @@ const BaccaratDealerComponent: React.FC<BaccaratDealerProps> = ({
         <span className="text-[10px] font-black" style={{ color: dealer.color }}>
           {dealer.name}
         </span>
+      </div>
+
+      <div className="relative z-20 w-full max-w-3xl mb-2 px-3">
+        <div className="mx-auto rounded-full border border-white/20 bg-black/45 backdrop-blur px-4 py-1 text-center text-[10px] md:text-xs font-black tracking-[0.18em] uppercase text-white/85" style={{ animation: "labelRise 0.28s ease-out both" }}>
+          {phaseLabel}
+        </div>
       </div>
 
       <div className="flex items-center justify-center w-full max-w-4xl mx-auto mt-5 mb-2 md:mb-4 z-20">
@@ -355,6 +387,31 @@ const BaccaratDealerComponent: React.FC<BaccaratDealerProps> = ({
           )}
         </div>
       </div>
+
+      <AnimatePresence>
+        {gameState !== "betting" && (
+          <motion.div
+            key={`blind-${gameState}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-30 pointer-events-none flex items-center justify-center"
+          >
+            <div
+              className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(15,23,42,0.2),rgba(2,6,23,0.78))]"
+              style={{ animation: "blindPulse 1s ease-in-out infinite alternate" }}
+            />
+            <div className="relative rounded-2xl border border-white/20 bg-black/60 px-5 py-3 text-center backdrop-blur">
+              <p className="text-xs font-black tracking-[0.2em] uppercase text-white/75">
+                {gameState === "dealing" ? "DEALING" : "RESULT"}
+              </p>
+              <p className="mt-1 text-sm md:text-base font-black text-white">
+                {gameState === "dealing" ? "카드를 오픈하고 있습니다" : winnerLabel ?? "결과 집계 중"}
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

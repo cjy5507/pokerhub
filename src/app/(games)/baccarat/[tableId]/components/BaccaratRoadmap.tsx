@@ -38,6 +38,11 @@ const BaccaratRoadmapComponent: React.FC<BaccaratRoadmapProps> = ({ history, gam
       </div>
 
       <div className="flex-1 min-h-0 rounded-2xl border border-white/15 bg-black/45 p-2 md:p-3 overflow-hidden flex flex-col">
+        {visibleHistory.length === 0 && (
+          <div className="rounded-xl border border-white/15 bg-white/5 px-3 py-2 mb-2 text-[11px] text-white/60 font-black tracking-[0.1em] uppercase text-center">
+            아직 결과 내역이 없습니다
+          </div>
+        )}
         <div className="grid grid-cols-6 gap-1.5">
           <AnimatePresence>
             {visibleHistory.map((res, i) => {
@@ -65,6 +70,30 @@ const BaccaratRoadmapComponent: React.FC<BaccaratRoadmapProps> = ({ history, gam
           </AnimatePresence>
         </div>
       </div>
+
+      {visibleHistory.length > 0 && (
+        <div className="mt-2 rounded-xl border border-white/15 bg-black/45 px-2 py-1.5">
+          <p className="text-[9px] text-white/45 font-black uppercase tracking-[0.14em] mb-1">최근 흐름</p>
+          <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
+            {visibleHistory.slice(-14).map((res, index) => (
+              <span
+                key={`${res}-${index}`}
+                className="w-5 h-5 rounded-full text-[10px] font-black flex items-center justify-center border border-white/20"
+                style={{
+                  background:
+                    res === 'P'
+                      ? 'rgba(59,130,246,0.3)'
+                      : res === 'B'
+                        ? 'rgba(239,68,68,0.3)'
+                        : 'rgba(34,197,94,0.3)',
+                }}
+              >
+                {res}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="mt-2 grid grid-cols-3 gap-2">
         <div className="rounded-xl border border-blue-400/30 bg-blue-950/50 px-2 py-2 text-center">

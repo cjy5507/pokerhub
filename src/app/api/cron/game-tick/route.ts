@@ -1,11 +1,17 @@
 import { syncBaccaratState } from '@/app/(games)/baccarat/actions';
 import { syncSnailRaceState } from '@/app/(games)/snail-race/actions';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 const BACCARAT_TABLE_ID = 'vip-room';
 const SNAIL_RACE_TABLE_ID = 'main';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const protectedToken = process.env.CRON_SYNC_TOKEN;
+  const urlToken = new URL(request.url).searchParams.get('token');
+  if (protectedToken && urlToken !== protectedToken) {
+    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  }
+
   const startedAt = Date.now();
   const results = {
     baccarat: { ok: false as boolean, error: null as string | null },

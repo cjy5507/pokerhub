@@ -18,13 +18,23 @@ const LOADING_STYLE = 'fixed inset-0 z-50 bg-slate-50 dark:bg-[#1a1c20] flex ite
 const TABLE_STYLE = 'fixed inset-0 z-50 bg-slate-50 dark:bg-[#1a1c20] flex flex-col overflow-hidden select-none relative font-sans text-slate-900 dark:text-white';
 const BG_GRID_STYLE = { backgroundSize: '40px 40px' } as const;
 
+const SNAIL_NAMES: Record<number, string> = {
+  0: '\uC9C0\uB098', 1: '\uD574\uC5F0', 2: '\uC601', 3: '\uBF59\uCE74', 4: '\uC6B0\uC131', 5: '\uD14C\uB9AC', 6: '\uACBD\uC6D0',
+};
+const EVENT_INFO: Record<string, { emoji: string; label: string; getMessage: (name: string) => string }> = {
+  obstacle: { emoji: '\uD83E\uDEA8', label: '\uB3CC\uBA69\uC774!', getMessage: (n) => `${n}\uAC00 \uB3CC\uC5D0 \uBD80\uB52A\uD600\uC2B5\uB2C8\uB2E4! \uD83D\uDE35` },
+  mushroom: { emoji: '\uD83C\uDF44', label: '\uB3C5\uBC84\uC12F!', getMessage: (n) => `${n}\uAC00 \uB3C5\uBC84\uC12F\uC744 \uBC1F\uC558\uC2B5\uB2C8\uB2E4! \uD83E\uDD22` },
+  boost: { emoji: '\u26A1', label: '\uBC88\uAC1C \uBD80\uC2A4\uD2B8!', getMessage: (n) => `${n}\uC5D0\uAC8C \uBC88\uAC1C \uBD80\uC2A4\uD2B8! \uD83D\uDCA8` },
+  rain: { emoji: '\uD83C\uDF27\uFE0F', label: '\uC18C\uB098\uAE30!', getMessage: () => '\uC18C\uB098\uAE30\uB85C \uC21C\uC704\uAC00 \uB4A4\uC11E\uC785\uB2C8\uB2E4! \uD83C\uDF00' },
+};
+
 
 export function SnailRaceClient({ tableId, userId, initialBalance }: SnailRaceClientProps) {
   const {
     gameState, timeRemaining, isMuted, setIsMuted,
     selectedChip, setSelectedChip, balance, myBets, history,
     raceResult, isMounted, isDesktop, placeBet, clearBets,
-    participants, odds,
+    participants, odds, activeEvent, cosmeticEvent,
   } = useSnailRace(tableId, userId, initialBalance);
 
   if (!isMounted) {
@@ -141,6 +151,23 @@ export function SnailRaceClient({ tableId, userId, initialBalance }: SnailRaceCl
         </div>
       </header>
 
+      {/* Event banner */}
+      {activeEvent && (
+        <div className="absolute top-[52px] left-0 right-0 z-40 mx-3 mt-2">
+          <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-gradient-to-r from-red-500/20 to-red-500/5 border border-red-500/30 backdrop-blur-md animate-[slideUpFade_0.3s_ease-out]">
+            <span className="text-xl">{EVENT_INFO[activeEvent.type]?.emoji}</span>
+            <div>
+              <span className="text-xs font-bold text-red-300">{EVENT_INFO[activeEvent.type]?.label}</span>
+              <p className="text-xs text-white/80">
+                {EVENT_INFO[activeEvent.type]?.getMessage(
+                  SNAIL_NAMES[activeEvent.targetSnailId ?? 0] ?? '\uB2EC\uD3BD\uC774'
+                )}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Main game area */}
       <div className="flex-1 flex flex-col xl:flex-row relative min-h-0 z-10 w-full overflow-hidden">
         {/* Desktop sidebar (history) */}
@@ -162,6 +189,8 @@ export function SnailRaceClient({ tableId, userId, initialBalance }: SnailRaceCl
             raceResult={raceResult}
             timeRemaining={timeRemaining}
             participants={participants}
+            activeEvent={activeEvent}
+            cosmeticEvent={cosmeticEvent}
           />
 
           {/* Results overlay */}
@@ -178,6 +207,18 @@ export function SnailRaceClient({ tableId, userId, initialBalance }: SnailRaceCl
       {/* Mobile history strip */}
       {!isDesktop && (
         <SnailRaceHistory history={history} />
+      )}
+
+      {/* Commentary bar */}
+      {gameState === 'racing' && activeEvent && (
+        <div className="flex-shrink-0 mx-3 mb-2 px-3 py-2 rounded-lg bg-black/30 backdrop-blur-sm flex items-center gap-2 z-20">
+          <span className="text-sm">{'\uD83C\uDFA4\uFE0F'}</span>
+          <p className="text-[11px] text-slate-200">
+            {EVENT_INFO[activeEvent.type]?.getMessage(
+              SNAIL_NAMES[activeEvent.targetSnailId ?? 0] ?? '\uB2EC\uD3BD\uC774'
+            )}
+          </p>
+        </div>
       )}
 
       {/* Betting Panel */}

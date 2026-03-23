@@ -25,6 +25,10 @@ export interface SnailRaceTrackProps {
   timeRemaining?: number;
   /** IDs of the 3 snails participating in this round */
   participants?: number[];
+  /** Currently active server-side race event */
+  activeEvent?: { type: string; targetSnailId?: number; timestamp: number } | null;
+  /** Client-only cosmetic event */
+  cosmeticEvent?: { type: string; snailId: number } | null;
 }
 
 /* ─────────────────────────────────────────────────────────
@@ -238,6 +242,12 @@ const GLOBAL_CSS = `
 /* ── Slime trail grow ── */
 @keyframes slimeGrow {
   from { width: 0%; }
+}
+
+/* ── Fade in (cosmetic events) ── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 0.8; transform: translateY(0); }
 }
 
 /* ── Status badge pulse ── */
@@ -739,6 +749,8 @@ const SnailRaceTrackComponent: React.FC<SnailRaceTrackProps> = ({
   raceResult,
   timeRemaining = 0,
   participants,
+  activeEvent,
+  cosmeticEvent,
 }) => {
   const raceData = useMemo<RaceData | null>(() => {
     if (!raceResult) return null;
@@ -1011,6 +1023,22 @@ const SnailRaceTrackComponent: React.FC<SnailRaceTrackProps> = ({
                         place={place}
                       />
                     </div>
+
+                    {/* Race event emoji effect */}
+                    {(activeEvent?.targetSnailId === snail.id || (activeEvent?.type === 'rain' && activeEvent?.targetSnailId == null)) && (
+                      <span className="absolute right-[20%] top-1/2 -translate-y-1/2 text-lg animate-bounce z-20">
+                        {activeEvent?.type === 'obstacle' ? '\uD83E\uDEA8' :
+                         activeEvent?.type === 'mushroom' ? '\uD83C\uDF44' :
+                         activeEvent?.type === 'boost' ? '\u26A1' : '\uD83C\uDF27\uFE0F'}
+                      </span>
+                    )}
+
+                    {/* Cosmetic event emoji */}
+                    {cosmeticEvent?.snailId === snail.id && (
+                      <span className="absolute right-[40%] top-0 text-sm opacity-80 animate-[fadeIn_0.3s_ease-out] z-10">
+                        {cosmeticEvent.type}
+                      </span>
+                    )}
                   </div>
                 </div>
               );

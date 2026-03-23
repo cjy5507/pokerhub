@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { createOptionalClient } from '@/lib/supabase/client';
 import { useCountdown } from '@/hooks/useCountdown';
 import { syncSnailRaceState, placeSnailRaceBet, clearSnailRaceBets } from '../actions';
+import type { RaceEvent } from '../actions';
 
 type SnailRaceState = 'betting' | 'racing' | 'result';
 
@@ -55,6 +56,9 @@ export function useSnailRace(tableId: string, userId: string | null, initialBala
   const [isDesktop, setIsDesktop] = useState(false);
   const [participants, setParticipants] = useState<number[]>([]);
   const [odds, setOdds] = useState<Record<number, number>>({});
+  const [events, setEvents] = useState<RaceEvent[]>([]);
+  const [activeEvent, setActiveEvent] = useState<RaceEvent | null>(null);
+  const [cosmeticEvent, setCosmeticEvent] = useState<{ type: string; snailId: number } | null>(null);
 
   const gameStateRef = useRef<SnailRaceState>('betting');
   const roundIdRef = useRef<string | null>(null);
@@ -125,6 +129,13 @@ export function useSnailRace(tableId: string, userId: string | null, initialBala
       setParticipants(prev => {
         if (prev.length === newParticipants.length && prev.every((id: number, i: number) => id === newParticipants[i])) return prev;
         return newParticipants;
+      });
+    }
+
+    if (round && Array.isArray(round.events)) {
+      setEvents(prev => {
+        if (prev.length === round.events.length) return prev;
+        return round.events;
       });
     }
 
@@ -255,10 +266,50 @@ export function useSnailRace(tableId: string, userId: string | null, initialBala
     }
   }, [gameState, tableId]);
 
+  // Event trigger effect — schedule banner display for each server event
+  useEffect(() => {
+    if (gameState !== 'racing' || events.length === 0) {
+      setActiveEvent(null);
+      return;
+    }
+    const timers = events.map((event) => {
+      return setTimeout(() => {
+        setActiveEvent(event);
+        setTimeout(() => setActiveEvent(prev => prev === event ? null : prev), 2500);
+      }, event.timestamp);
+    });
+    return () => timers.forEach(clearTimeout);
+  }, [gameState, events]);
+
+  // Cosmetic events — client-only visual flair
+  useEffect(() => {
+    if (gameState !== 'racing' || participants.length === 0) {
+      setCosmeticEvent(null);
+      return;
+    }
+
+    const COSMETICS = ['\uD83D\uDCA8', '\uD83D\uDE34', '\uD83C\uDFB5', '\uD83E\uDD8B'];
+    let timer: ReturnType<typeof setTimeout>;
+
+    const scheduleNext = () => {
+      const delay = 2000 + Math.random() * 2000;
+      timer = setTimeout(() => {
+        const emoji = COSMETICS[Math.floor(Math.random() * COSMETICS.length)];
+        const targetSnail = participants[Math.floor(Math.random() * participants.length)];
+        setCosmeticEvent({ type: emoji, snailId: targetSnail });
+        setTimeout(() => setCosmeticEvent(null), 1500);
+        scheduleNext();
+      }, delay);
+    };
+
+    scheduleNext();
+    return () => clearTimeout(timer);
+  }, [gameState, participants]);
+
   return {
     gameState, timeRemaining, isMuted, setIsMuted,
     selectedChip, setSelectedChip, balance, myBets, history,
     raceResult, isMounted, isDesktop, placeBet, clearBets,
-    participants, odds,
+    participants, odds, activeEvent, cosmeticEvent,
   };
 }

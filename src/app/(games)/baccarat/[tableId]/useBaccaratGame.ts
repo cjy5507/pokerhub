@@ -12,6 +12,7 @@ const PHASE_DEALING_MS = 5000;
 const CARD_REVEAL_INTERVAL_MS = 800;
 const CARD_DEAL_SOUND_INTERVAL_MS = 200;
 const STATE_SYNC_THROTTLE_MS = 350;
+const FALLBACK_SYNC_INTERVAL_MS = 2500;
 
 function shallowEqualObject(a: Record<string, number>, b: Record<string, number>) {
   const aKeys = Object.keys(a);
@@ -208,6 +209,14 @@ export function useBaccaratGame(tableId: string, userId: string | null, initialB
     const timer = setTimeout(() => void requestStateSync(true), delay);
     return () => clearTimeout(timer);
   }, [phaseEndsAtMs, serverTimeOffsetMs, requestStateSync]);
+
+  // Fallback watchdog sync: keeps rounds progressing even if realtime channel is flaky.
+  useEffect(() => {
+    const timer = setInterval(() => {
+      void requestStateSync();
+    }, FALLBACK_SYNC_INTERVAL_MS);
+    return () => clearInterval(timer);
+  }, [requestStateSync]);
 
   // Card reveal logic
   useEffect(() => {

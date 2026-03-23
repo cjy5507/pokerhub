@@ -13,6 +13,7 @@ type RaceHistoryEntry = { first: number; second: number; third: number };
 type RaceResult = { seed: string; finishOrder: number[] } | null;
 
 const STATE_SYNC_THROTTLE_MS = 350;
+const FALLBACK_SYNC_INTERVAL_MS = 2500;
 
 function shallowEqualObject(a: Record<string, number>, b: Record<string, number>) {
   const aKeys = Object.keys(a);
@@ -234,6 +235,14 @@ export function useSnailRace(tableId: string, userId: string | null, initialBala
     const timer = setTimeout(() => void requestStateSync(true), delay);
     return () => clearTimeout(timer);
   }, [phaseEndsAtMs, serverTimeOffsetMs, requestStateSync]);
+
+  // Fallback watchdog sync: prevents stuck state when realtime broadcast is unavailable.
+  useEffect(() => {
+    const timer = setInterval(() => {
+      void requestStateSync();
+    }, FALLBACK_SYNC_INTERVAL_MS);
+    return () => clearInterval(timer);
+  }, [requestStateSync]);
 
   const placeBet = useCallback(async (snailId: number) => {
     if (gameState !== 'betting') return;

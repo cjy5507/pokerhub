@@ -3,7 +3,16 @@
   "buildCommand": "npm run build",
   "devCommand": "npm run dev",
   "installCommand": "npm install",
+  "crons": [
+    {
+      "path": "/api/cron/game-tick",
+      "schedule": "* * * * *"
+    }
+  ],
   "functions": {
+    "src/app/api/cron/game-tick/route.ts": {
+      "maxDuration": 60
+    },
     "src/app/api/poker/[tableId]/route.ts": {
       "maxDuration": 60
     }

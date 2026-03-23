@@ -179,7 +179,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    if (!isMobileDrawerOpen || disableRoomSubscription) {
+    if (disableRoomSubscription) {
       return;
     }
 
@@ -285,7 +285,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         supabase.removeChannel(channel);
       }
     };
-  }, [activeRoomId, isMobileDrawerOpen, disableRoomSubscription]);
+  }, [activeRoomId, disableRoomSubscription]);
 
   // Refresh rooms every 30s only while drawer is open
   useEffect(() => {

@@ -83,9 +83,12 @@ export function useSnailRace(tableId: string, userId: string | null, initialBala
     return () => media.removeEventListener('change', handleChange);
   }, []);
 
+  const isMutedRef = useRef(isMuted);
+  useEffect(() => { isMutedRef.current = isMuted; }, [isMuted]);
+
   const playSound = useCallback((audio: HTMLAudioElement | null) => {
-    if (!isMuted && audio) { audio.currentTime = 0; audio.play().catch(() => {}); }
-  }, [isMuted]);
+    if (!isMutedRef.current && audio) { audio.currentTime = 0; audio.play().catch(() => {}); }
+  }, []); // stable reference — no deps
 
   const applyState = useCallback((data: any) => {
     if (!data || !data.table) return;
@@ -102,7 +105,7 @@ export function useSnailRace(tableId: string, userId: string | null, initialBala
 
     // Update odds
     if (serverOdds && typeof serverOdds === 'object') {
-      setOdds(serverOdds);
+      setOdds(prev => shallowEqualObject(prev, serverOdds) ? prev : serverOdds);
     }
 
     const nextRoundId = table.currentRoundId ?? null;

@@ -9,6 +9,7 @@ import { sendChatMessage, getChatMessages } from '../actions';
 import type { ChatRoomData, ChatMessageData } from '../actions';
 import { useSession } from '@/components/providers/SessionProvider';
 import { createOptionalClient } from '@/lib/supabase/client';
+import { useChat } from '@/components/chat/ChatProvider';
 
 interface ChatRoomClientProps {
   room: ChatRoomData;
@@ -18,10 +19,10 @@ interface ChatRoomClientProps {
 export default function ChatRoomClient({ room, initialMessages }: ChatRoomClientProps) {
   const router = useRouter();
   const session = useSession();
+  const { setDisableRoomSubscription } = useChat();
   const [messages, setMessages] = useState<ChatMessageData[]>(initialMessages);
   const [input, setInput] = useState('');
   const [isSending, setIsSending] = useState(false);
-  const [sseRetry, setSseRetry] = useState(0);
   const [sendError, setSendError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(initialMessages.length >= 20);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -104,44 +105,14 @@ export default function ChatRoomClient({ room, initialMessages }: ChatRoomClient
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // SSE: real-time message subscription (fallback when NEXT_PUBLIC_CHAT_USE_REALTIME is not set)
+  // Disable ChatProvider's room subscription while this dedicated page is mounted
   useEffect(() => {
-    if (process.env.NEXT_PUBLIC_CHAT_USE_REALTIME === 'true') return;
-    const eventSource = new EventSource(`/api/chat/${room.id}`);
-    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    setDisableRoomSubscription(true);
+    return () => setDisableRoomSubscription(false);
+  }, [setDisableRoomSubscription]);
 
-    eventSource.onmessage = (event) => {
-      try {
-        const parsed = JSON.parse(event.data);
-        if (parsed.type === 'message' && parsed.data) {
-          setMessages((prev) => {
-            if (prev.some((m) => m.id === parsed.data.id)) return prev;
-            return [...prev, parsed.data as ChatMessageData];
-          });
-        }
-      } catch {
-        // Ignore parse errors
-      }
-    };
-
-    eventSource.onerror = () => {
-      eventSource.close();
-      // Auto-reconnect after 3 seconds by bumping retry counter
-      reconnectTimer = setTimeout(() => {
-        setSseRetry((prev) => prev + 1);
-      }, 3000);
-    };
-
-    return () => {
-      eventSource.close();
-      if (reconnectTimer) clearTimeout(reconnectTimer);
-    };
-  }, [room.id, sseRetry]);
-
-  // Supabase Realtime subscription (active when NEXT_PUBLIC_CHAT_USE_REALTIME=true)
+  // Supabase Realtime subscription for new chat messages
   useEffect(() => {
-    if (process.env.NEXT_PUBLIC_CHAT_USE_REALTIME !== 'true') return;
-
     const supabase = createOptionalClient();
     if (!supabase) return;
 

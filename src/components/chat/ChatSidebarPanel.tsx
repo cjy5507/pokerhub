@@ -21,6 +21,7 @@ export default function ChatSidebarPanel() {
 
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -41,6 +42,7 @@ export default function ChatSidebarPanel() {
     } catch {
       setInputValue(content);
     }
+    inputRef.current?.focus();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -137,6 +139,7 @@ export default function ChatSidebarPanel() {
           ) : (
             <>
               <input
+                ref={inputRef}
                 type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
